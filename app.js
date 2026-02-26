@@ -35,28 +35,32 @@ window.onload = function () {
 // =====================================================================
 // CARREGAMENTO DE DADOS VIA API REST (substitui google.script.run)
 // =====================================================================
+function normalizarJogos(data) {
+  return data.map(row => ({
+    d: formatarData(row["DATA"]),
+    a: row["ANO COMPETICAO"],
+    m: row["MANDO"],
+    p: (row["GOL CORINTHIANS"] === "" ? "0" : row["GOL CORINTHIANS"]) + "x" + (row["GOL ADVERSARIO"] === "" ? "0" : row["GOL ADVERSARIO"]),
+    r: row["RESULTADO"] ? String(row["RESULTADO"]).trim() : "",
+    adv: row["TIME ADVERSARIO"],
+    c: row["COMPETIÇÃO"],
+    e: row["ESTADIO"],
+    t: row["TECNICO CORINTHIANS"],
+    lnk: row["LINK"] ? String(row["LINK"]).trim() : ""
+  }));
+}
+
 async function carregarDados() {
+  const anoAtual = new Date().getFullYear();
+
+  // Fase 1: carrega apenas o ano atual e libera a tela
   try {
-    const resp = await fetch(`${API_URL}?page=1&limit=10000`);
+    const resp = await fetch(`${API_URL}?ano=${anoAtual}`);
     const json = await resp.json();
+    if (!json.data) throw new Error(json.erro || 'Resposta inesperada: ' + JSON.stringify(json).slice(0, 300));
 
-    if (!json.data) {
-      throw new Error(json.erro || 'Resposta inesperada: ' + JSON.stringify(json).slice(0, 300));
-    }
-
-    dadosGlobais = json.data.map(row => ({
-      d: formatarData(row["DATA"]),
-      a: row["ANO COMPETICAO"],
-      m: row["MANDO"],
-      p: (row["GOL CORINTHIANS"] === "" ? "0" : row["GOL CORINTHIANS"]) + "x" + (row["GOL ADVERSARIO"] === "" ? "0" : row["GOL ADVERSARIO"]),
-      r: row["RESULTADO"] ? String(row["RESULTADO"]).trim() : "",
-      adv: row["TIME ADVERSARIO"],
-      c: row["COMPETIÇÃO"],
-      e: row["ESTADIO"],
-      t: row["TECNICO CORINTHIANS"],
-      lnk: row["LINK"] ? String(row["LINK"]).trim() : ""
-    }));
-    document.getElementById('msg-status').innerText = `${dadosGlobais.length.toLocaleString('pt-BR')} jogos carregados!`;
+    dadosGlobais = normalizarJogos(json.data);
+    document.getElementById('msg-status').innerText = `Carregando histórico completo...`;
     popularAnos();
     popularListasDinamicas(dadosGlobais);
     resetPaginacao();
@@ -64,13 +68,28 @@ async function carregarDados() {
     const overlay = document.getElementById('loading-overlay');
     overlay.style.opacity = '0';
     setTimeout(() => overlay.style.display = 'none', 500);
-
   } catch (err) {
     console.error("Erro ao carregar dados:", err);
     document.getElementById('msg-status').innerText = "Erro ao carregar dados. Tente recarregar a página.";
     const overlay = document.getElementById('loading-overlay');
     overlay.style.opacity = '0';
     setTimeout(() => overlay.style.display = 'none', 500);
+    return;
+  }
+
+  // Fase 2: carrega o histórico completo em background sem travar a UI
+  try {
+    const resp = await fetch(`${API_URL}`);
+    const json = await resp.json();
+    if (!json.data) return;
+
+    dadosGlobais = normalizarJogos(json.data);
+    document.getElementById('msg-status').innerText = `${dadosGlobais.length.toLocaleString('pt-BR')} jogos carregados!`;
+    popularAnos();
+    popularListasDinamicas(dadosGlobais);
+    resetPaginacao();
+  } catch (err) {
+    console.error("Erro ao carregar histórico completo:", err);
   }
 }
 

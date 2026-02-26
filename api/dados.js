@@ -20,13 +20,21 @@ function buscar(url) {
 }
 
 module.exports = async function handler(req, res) {
-  const { page = 1, limit = 500 } = req.query;
-  const url = `https://script.google.com/macros/s/AKfycbzrkyGBdn7WGN7yH-Y1IswgW6B5heRD8khBkCNjEGTHiDUR6lDcTCGr3fDaNurXyMkB/exec?page=${page}&limit=${limit}`;
+  const { ano } = req.query;
+  const url = `https://script.google.com/macros/s/AKfycbzrkyGBdn7WGN7yH-Y1IswgW6B5heRD8khBkCNjEGTHiDUR6lDcTCGr3fDaNurXyMkB/exec?page=1&limit=10000`;
 
   try {
     const data = await buscar(url);
+
+    let resultado = data;
+    if (ano && data.data) {
+      const filtrado = data.data.filter(row => String(row["ANO COMPETICAO"]) === ano);
+      resultado = { ...data, data: filtrado, total: filtrado.length, totalPages: 1 };
+    }
+
     res.setHeader('Access-Control-Allow-Origin', '*');
-    res.json(data);
+    res.setHeader('Cache-Control', 's-maxage=3600, stale-while-revalidate=86400');
+    res.json(resultado);
   } catch (err) {
     res.status(500).json({ erro: err.message });
   }
