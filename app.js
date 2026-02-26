@@ -85,9 +85,6 @@ async function carregarDados() {
 
     dadosGlobais = normalizarJogos(json.data);
     document.getElementById('msg-status').innerText = `${dadosGlobais.length.toLocaleString('pt-BR')} jogos carregados!`;
-    popularAnos();
-    popularListasDinamicas(dadosGlobais);
-    resetPaginacao();
   } catch (err) {
     console.error("Erro ao carregar histórico completo:", err);
   }
