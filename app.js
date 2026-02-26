@@ -37,40 +37,25 @@ window.onload = function () {
 // =====================================================================
 async function carregarDados() {
   try {
-    // Busca todas as páginas da API
-    let pagina = 1;
-    let totalPaginas = 1;
-    let todos = [];
+    const resp = await fetch(`${API_URL}?page=1&limit=10000`);
+    const json = await resp.json();
 
-    while (pagina <= totalPaginas) {
-      const resp = await fetch(`${API_URL}?page=${pagina}&limit=500`);
-      const json = await resp.json();
-
-      if (!json.data) {
-        throw new Error(json.erro || 'Resposta inesperada: ' + JSON.stringify(json).slice(0, 300));
-      }
-
-      totalPaginas = json.totalPages;
-
-      // Normaliza os dados para o mesmo formato abreviado que o código original usa
-      const normalizados = json.data.map(row => ({
-        d: formatarData(row["DATA"]),
-        a: row["ANO"],
-        m: row["MANDO"],
-        p: (row["GOL CORINTHIANS"] === "" ? "0" : row["GOL CORINTHIANS"]) + "x" + (row["GOL ADVERSARIO"] === "" ? "0" : row["GOL ADVERSARIO"]),
-        r: row["RESULTADO"] ? String(row["RESULTADO"]).trim() : "",
-        adv: row["ADVERSARIO"],
-        c: row["COMPETIÇÃO"],
-        e: row["ESTADIO"],
-        t: row["TECNICO CORINTHIANS"],
-        lnk: row["LINK"] ? String(row["LINK"]).trim() : ""
-      }));
-
-      todos = todos.concat(normalizados);
-      pagina++;
+    if (!json.data) {
+      throw new Error(json.erro || 'Resposta inesperada: ' + JSON.stringify(json).slice(0, 300));
     }
 
-    dadosGlobais = todos;
+    dadosGlobais = json.data.map(row => ({
+      d: formatarData(row["DATA"]),
+      a: row["ANO"],
+      m: row["MANDO"],
+      p: (row["GOL CORINTHIANS"] === "" ? "0" : row["GOL CORINTHIANS"]) + "x" + (row["GOL ADVERSARIO"] === "" ? "0" : row["GOL ADVERSARIO"]),
+      r: row["RESULTADO"] ? String(row["RESULTADO"]).trim() : "",
+      adv: row["ADVERSARIO"],
+      c: row["COMPETIÇÃO"],
+      e: row["ESTADIO"],
+      t: row["TECNICO CORINTHIANS"],
+      lnk: row["LINK"] ? String(row["LINK"]).trim() : ""
+    }));
     document.getElementById('msg-status').innerText = `${dadosGlobais.length.toLocaleString('pt-BR')} jogos carregados!`;
     popularAnos();
     popularListasDinamicas(dadosGlobais);
