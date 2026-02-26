@@ -45,6 +45,11 @@ async function carregarDados() {
     while (pagina <= totalPaginas) {
       const resp = await fetch(`${API_URL}?page=${pagina}&limit=500`);
       const json = await resp.json();
+
+      if (!json.data) {
+        throw new Error(json.erro || 'Resposta inesperada: ' + JSON.stringify(json).slice(0, 300));
+      }
+
       totalPaginas = json.totalPages;
 
       // Normaliza os dados para o mesmo formato abreviado que o código original usa
