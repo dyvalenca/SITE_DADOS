@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dashboard Histórico Corinthians</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body onclick="fecharDropdowns(event)">
+
+<div id="loading-overlay">
+  <div class="loading-box">
+    <div class="spinner-border spinner-corinthians" role="status"></div>
+    <h4 class="fw-bold">Preparando Dashboard</h4>
+    <p class="text-muted small">Processando histórico e organizando layout.</p>
+    <div class="progress" style="height: 5px;">
+      <div class="progress-bar bg-dark progress-bar-striped progress-bar-animated" style="width: 100%"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container-fluid">
+  <div class="header-painel d-flex justify-content-between align-items-center">
+    <div>
+      <h2 class="mb-0">Dashboard Histórico Corinthians</h2>
+      <p class="text-muted mb-0">Status: <span id="msg-status">Conectando...</span></p>
+    </div>
+  </div>
+
+  <div class="secao-filtros">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <p class="small fw-bold text-uppercase text-muted mb-0" style="letter-spacing: 0.05em;">Filtros</p>
+      <button class="btn btn-outline-danger btn-sm" onclick="limparFiltros()">Limpar Filtros</button>
+    </div>
+    <div class="row g-3">
+      <div class="col-md-3">
+        <label class="small fw-bold text-uppercase">Período (Ano)</label>
+        <div class="d-flex align-items-center gap-1 mb-2">
+          <select id="fAnoDe" class="form-select form-select-sm" onchange="aoMudarFiltroPrincipal()"></select>
+          <span class="label-ano">até</span>
+          <select id="fAnoAte" class="form-select form-select-sm" onchange="aoMudarFiltroPrincipal()"></select>
+        </div>
+        <label class="small fw-bold text-uppercase">Data Exata</label>
+        <div class="d-flex align-items-center gap-1">
+          <input type="date" id="fDataDe" class="form-control form-control-sm" onchange="aoMudarFiltroPrincipal()">
+          <span class="label-ano">até</span>
+          <input type="date" id="fDataAte" class="form-control form-control-sm" onchange="aoMudarFiltroPrincipal()">
+        </div>
+      </div>
+
+      <div class="col-md-2">
+        <label class="small fw-bold text-uppercase">Mando</label>
+        <select id="fMando" class="form-select form-select-sm mb-2" onchange="aoMudarFiltroPrincipal()">
+          <option value="">Todos</option>
+          <option value="MANDANTE">MANDANTE</option>
+          <option value="VISITANTE">VISITANTE</option>
+          <option value="NEUTRO">NEUTRO</option>
+        </select>
+        <label class="small fw-bold text-uppercase">Competição</label>
+        <div id="fComp" class="dropdown-check-list">
+          <span class="anchor" onclick="toggleDropdown('fComp')">Todas</span>
+          <div class="items"></div>
+        </div>
+        <div class="form-check form-switch mt-1">
+          <input class="form-check-input" type="checkbox" id="excComp" onchange="resetPaginacao()">
+          <label class="exceto-label" for="excComp">EXCETO SELECIONADOS</label>
+        </div>
+      </div>
+
+      <div class="col-md-3">
+        <label class="small fw-bold text-uppercase">Adversário</label>
+        <div id="fAdv" class="dropdown-check-list mb-1">
+          <span class="anchor" onclick="toggleDropdown('fAdv')">Todos</span>
+          <div class="items"></div>
+        </div>
+        <div class="form-check form-switch">
+          <input class="form-check-input" type="checkbox" id="fClassicos" onchange="aoMudarFiltroPrincipal()">
+          <label class="form-check-label" for="fClassicos">APENAS CLÁSSICOS</label>
+        </div>
+        <div class="form-check form-switch">
+          <input class="form-check-input" type="checkbox" id="excAdv" onchange="resetPaginacao()">
+          <label class="exceto-label" for="excAdv">EXCETO SELECIONADOS</label>
+        </div>
+      </div>
+
+      <div class="col-md-3">
+        <label class="small fw-bold text-uppercase">Estádio</label>
+        <div id="fEst" class="dropdown-check-list mb-1">
+          <span class="anchor" onclick="toggleDropdown('fEst')">Todos</span>
+          <div class="items"></div>
+        </div>
+        <div class="form-check form-switch">
+          <input class="form-check-input" type="checkbox" id="fNQA" onchange="aoMudarFiltroPrincipal()">
+          <label class="form-check-label" for="fNQA">APENAS NQA</label>
+        </div>
+        <div class="form-check form-switch">
+          <input class="form-check-input" type="checkbox" id="excEst" onchange="resetPaginacao()">
+          <label class="exceto-label" for="excEst">EXCETO SELECIONADOS</label>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-3 mt-1">
+      <div class="col-md-3">
+        <label class="small fw-bold text-uppercase">Gols do Corinthians</label>
+        <div id="fGolsPro" class="dropdown-check-list">
+          <span class="anchor" onclick="toggleDropdown('fGolsPro')">Todos</span>
+          <div class="items"></div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <label class="small fw-bold text-uppercase">Gols Contra</label>
+        <div id="fGolsCon" class="dropdown-check-list">
+          <span class="anchor" onclick="toggleDropdown('fGolsCon')">Todos</span>
+          <div class="items"></div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <label class="small fw-bold text-uppercase">Saldo de Gols</label>
+        <div id="fSaldo" class="dropdown-check-list">
+          <span class="anchor" onclick="toggleDropdown('fSaldo')">Todos</span>
+          <div class="items"></div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <label class="small fw-bold text-uppercase">Técnico</label>
+        <div id="fTec" class="dropdown-check-list">
+          <span class="anchor" onclick="toggleDropdown('fTec')">Todos</span>
+          <div class="items"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="secao-filtros">
+    <p class="small fw-bold text-uppercase text-muted mb-2" style="letter-spacing: 0.05em;">Métricas</p>
+    <div class="resumo-container" style="margin-bottom: 0;">
+      <div class="card-resumo"><h6>Jogos</h6><h2 id="res-jogos">0</h2></div>
+      <div class="card-resumo"><h6>Vitórias</h6><h2 id="res-vits">0</h2></div>
+      <div class="card-resumo"><h6>% Vitórias</h6><h2 id="res-vits-perc">0%</h2></div>
+      <div class="card-resumo"><h6>Vitória 1x0</h6><h2 id="res-vits1x0" class="text-primary">0</h2></div>
+      <div class="card-resumo"><h6>Vitórias +3</h6><h2 id="res-vits3">0</h2></div>
+      <div class="card-resumo"><h6>Empates</h6><h2 id="res-emps">0</h2></div>
+      <div class="card-resumo"><h6>% Empates</h6><h2 id="res-emps-perc">0%</h2></div>
+      <div class="card-resumo"><h6>Derrotas</h6><h2 id="res-ders">0</h2></div>
+      <div class="card-resumo"><h6>% Derrotas</h6><h2 id="res-ders-perc">0%</h2></div>
+      <div class="card-resumo"><h6>Derrotas -3</h6><h2 id="res-ders3">0</h2></div>
+      <div class="card-resumo"><h6>Gols Pró</h6><h2 id="res-gp">0</h2></div>
+      <div class="card-resumo"><h6>Média Gols</h6><h2 id="res-gp-media">0.0</h2></div>
+      <div class="card-resumo"><h6>Jogos S/ Marcar</h6><h2 id="res-zero-pro">0</h2></div>
+      <div class="card-resumo"><h6>% S/ Marcar</h6><h2 id="res-zero-pro-perc">0%</h2></div>
+      <div class="card-resumo"><h6>Gols Contra</h6><h2 id="res-gc">0</h2></div>
+      <div class="card-resumo"><h6>Média Gols C.</h6><h2 id="res-gc-media">0.0</h2></div>
+      <div class="card-resumo"><h6>Jogos S/ Sofrer</h6><h2 id="res-zero-con">0</h2></div>
+      <div class="card-resumo"><h6>% S/ Sofrer</h6><h2 id="res-zero-con-perc">0%</h2></div>
+      <div class="card-resumo"><h6>Saldo</h6><h2 id="res-sg">0</h2></div>
+      <div class="card-resumo"><h6>Pontos</h6><h2 id="res-pontos" class="text-success">0</h2></div>
+      <div class="card-resumo"><h6>Aproveitamento</h6><h2 id="res-aprov">0%</h2></div>
+    </div>
+  </div>
+
+  <div class="table-responsive">
+    <table class="table table-hover border mb-0">
+      <thead>
+        <tr>
+          <th>Data</th>
+          <th>Competição</th>
+          <th class="text-center">Placar</th>
+          <th>Adversário</th>
+          <th>Mando</th>
+          <th>Estádio</th>
+          <th>Técnico</th>
+          <th class="text-center">Vídeo</th>
+        </tr>
+      </thead>
+      <tbody id="tabelaCorpo" class="small">
+        <tr><td colspan="8" class="text-center">Aguardando dados...</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="paginacao-footer">
+    <div class="small text-muted">Exibindo página <span id="pAtual">1</span> de <span id="pTotal">1</span></div>
+    <div class="btn-group">
+      <button class="btn btn-outline-dark btn-sm" id="btnAnt" onclick="mudarPagina(-1)">Anterior</button>
+      <button class="btn btn-outline-dark btn-sm" id="btnProx" onclick="mudarPagina(1)">Próximo</button>
+    </div>
+  </div>
+
+  <div class="grafico-container">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h5 class="fw-bold mb-0" id="tituloTabTec">Estatísticas por Técnico</h5>
+      <div class="btn-group btn-group-sm">
+        <button id="btnGrpTec"  class="btn btn-dark"         onclick="mudarAgrupamento('tec')">Técnico</button>
+        <button id="btnGrpComp" class="btn btn-outline-dark" onclick="mudarAgrupamento('comp')">Competição</button>
+        <button id="btnGrpAno"  class="btn btn-outline-dark" onclick="mudarAgrupamento('ano')">Ano</button>
+        <button id="btnGrpAdv"  class="btn btn-outline-dark" onclick="mudarAgrupamento('adv')">Adversário</button>
+      </div>
+    </div>
+    <div style="overflow-x:auto; max-height:400px; overflow-y:auto; border:1px solid #dee2e6; border-radius:6px;">
+      <table class="table table-hover table-bordered mb-0 small" style="min-width:1050px;">
+        <thead id="tabelaTecnicosCabecalho" style="position:sticky;top:0;z-index:5;background:#000;color:#fff;"></thead>
+        <tbody id="tabelaTecnicosCorpo"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="grafico-container">
+    <div class="text-center mb-3">
+      <h5 id="titulo-grafico" class="fw-bold">Evolução de Atributos por Ano</h5>
+      <div class="d-flex flex-wrap justify-content-center gap-1 mt-2">
+        <button class="btn btn-sm btn-dark btn-metrica" data-metrica="aproveitamento" onclick="trocarMetrica(this)">Aproveitamento</button>
+        <button class="btn btn-sm btn-outline-dark btn-metrica" data-metrica="jogos" onclick="trocarMetrica(this)">Jogos</button>
+        <button class="btn btn-sm btn-outline-dark btn-metrica" data-metrica="vitorias" onclick="trocarMetrica(this)">Vitórias</button>
+        <button class="btn btn-sm btn-outline-dark btn-metrica" data-metrica="perc_vitorias" onclick="trocarMetrica(this)">% Vitórias</button>
+        <button class="btn btn-sm btn-outline-dark btn-metrica" data-metrica="vits1x0" onclick="trocarMetrica(this)">Vitória 1x0</button>
+        <button class="btn btn-sm btn-outline-dark btn-metrica" data-metrica="vits3" onclick="trocarMetrica(this)">Vitórias +3</button>
+        <button class="btn btn-sm btn-outline-dark btn-metrica" data-metrica="empates" onclick="trocarMetrica(this)">Empates</button>
+        <button class="btn btn-sm btn-outline-dark btn-metrica" data-metrica="perc_empates" onclick="trocarMetrica(this)">% Empates</button>
+        <button class="btn btn-sm btn-outline-dark btn-metrica" data-metrica="derrotas" onclick="trocarMetrica(this)">Derrotas</button>
+        <button class="btn btn-sm btn-outline-dark btn-metrica" data-metrica="perc_derrotas" onclick="trocarMetrica(this)">% Derrotas</button>
+        <button class="btn btn-sm btn-outline-dark btn-metrica" data-metrica="ders3" onclick="trocarMetrica(this)">Derrotas -3</button>
+        <button class="btn btn-sm btn-outline-dark btn-metrica" data-metrica="gols_pro" onclick="trocarMetrica(this)">Gols Pró</button>
+        <button class="btn btn-sm btn-outline-dark btn-metrica" data-metrica="media_gols" onclick="trocarMetrica(this)">Média Gols</button>
+        <button class="btn btn-sm btn-outline-dark btn-metrica" data-metrica="s_marcar" onclick="trocarMetrica(this)">S/ Marcar</button>
+        <button class="btn btn-sm btn-outline-dark btn-metrica" data-metrica="perc_s_marcar" onclick="trocarMetrica(this)">% S/ Marcar</button>
+        <button class="btn btn-sm btn-outline-dark btn-metrica" data-metrica="gols_contra" onclick="trocarMetrica(this)">Gols Contra</button>
+        <button class="btn btn-sm btn-outline-dark btn-metrica" data-metrica="media_gols_c" onclick="trocarMetrica(this)">Média Gols C.</button>
+        <button class="btn btn-sm btn-outline-dark btn-metrica" data-metrica="s_sofrer" onclick="trocarMetrica(this)">S/ Sofrer</button>
+        <button class="btn btn-sm btn-outline-dark btn-metrica" data-metrica="perc_s_sofrer" onclick="trocarMetrica(this)">% S/ Sofrer</button>
+        <button class="btn btn-sm btn-outline-dark btn-metrica" data-metrica="saldo" onclick="trocarMetrica(this)">Saldo</button>
+        <button class="btn btn-sm btn-outline-dark btn-metrica" data-metrica="pontos" onclick="trocarMetrica(this)">Pontos</button>
+      </div>
+    </div>
+    <canvas id="graficoEvolucao" height="100"></canvas>
+  </div>
+
+  <div id="video-modal" onclick="if(event.target===this)fecharVideo()">
+    <div class="video-modal-box">
+      <button class="btn-fechar-video" onclick="fecharVideo()" title="Fechar">✕</button>
+      <iframe id="video-frame" src="" style="width:100%;height:540px;border:none;" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
+    </div>
+  </div>
+
+  <div class="grafico-container">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h5 class="fw-bold mb-0">Comparativo de Resultados (V/E/D) - Últimos 30 Anos</h5>
+      <div class="form-check form-switch border rounded p-2 bg-light shadow-sm">
+        <input class="form-check-input ms-0 me-2" type="checkbox" id="fAcumulado" onchange="renderizarGraficoComparativo(dadosFiltrados)">
+        <label class="form-check-label fw-bold small text-dark" for="fAcumulado">CONSIDERAR VALORES ACUMULADOS</label>
+      </div>
+    </div>
+    <canvas id="graficoComparativo" height="100"></canvas>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
