@@ -44,6 +44,9 @@ async function carregarDados() {
       throw new Error(json.erro || 'Resposta inesperada: ' + JSON.stringify(json).slice(0, 300));
     }
 
+    console.log('Colunas disponíveis:', Object.keys(json.data[0]));
+    console.log('Primeiro registro bruto:', json.data[0]);
+
     dadosGlobais = json.data.map(row => ({
       d: formatarData(row["DATA"]),
       a: row["ANO"],
