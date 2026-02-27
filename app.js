@@ -637,8 +637,10 @@ function render() {
     if (r === 'VITORIA') cl = 'vitoria'; else if (r === 'EMPATE') cl = 'empate'; else if (r === 'DERROTA') cl = 'derrota';
     const esc = v => (v || '').toString().replace(/&/g, '&amp;').replace(/"/g, '&quot;');
     const videoCell = j.lnk ? `<td class="text-center"><button class="btn-play" data-link="${esc(j.lnk)}" title="Assistir jogo">▶</button></td>` : '<td></td>';
-    return `<tr class="${cl}"><td>${j.d}</td><td class="filtro-celula" data-filtro="comp" data-valor="${esc(j.c)}">${j.c}</td><td class="text-center"><span class="placar">${j.p}</span></td><td class="filtro-celula" data-filtro="adv" data-valor="${esc(j.adv)}">${j.adv}</td><td class="filtro-celula" data-filtro="mando" data-valor="${esc(j.m)}">${j.m}</td><td class="filtro-celula" data-filtro="est" data-valor="${esc(j.e)}">${j.e}</td><td class="filtro-celula" data-filtro="tec" data-valor="${esc(j.t)}">${j.t}</td>${videoCell}</tr>`;
-  }).join('') || '<tr><td colspan="8" class="text-center">Nenhum jogo encontrado.</td></tr>';
+    const tweetText = encodeURIComponent(`⚽ Corinthians ${j.p} | ${j.adv || ''}\n🏆 ${j.c || ''}\n📅 ${j.d || ''}`);
+    const twitterCell = `<td class="text-center"><a class="btn-tweet" href="https://twitter.com/intent/tweet?text=${tweetText}" target="_blank" rel="noopener" title="Compartilhar no X/Twitter">𝕏</a></td>`;
+    return `<tr class="${cl}"><td>${j.d}</td><td class="filtro-celula" data-filtro="comp" data-valor="${esc(j.c)}">${j.c}</td><td class="text-center"><span class="placar">${j.p}</span></td><td class="filtro-celula" data-filtro="adv" data-valor="${esc(j.adv)}">${j.adv}</td><td class="filtro-celula" data-filtro="mando" data-valor="${esc(j.m)}">${j.m}</td><td class="filtro-celula" data-filtro="est" data-valor="${esc(j.e)}">${j.e}</td><td class="filtro-celula" data-filtro="tec" data-valor="${esc(j.t)}">${j.t}</td>${videoCell}${twitterCell}</tr>`;
+  }).join('') || '<tr><td colspan="9" class="text-center">Nenhum jogo encontrado.</td></tr>';
   document.getElementById('pAtual').innerText = paginaAtual;
   document.getElementById('pTotal').innerText = totalPaginas;
   document.getElementById('btnAnt').disabled = (paginaAtual <= 1);

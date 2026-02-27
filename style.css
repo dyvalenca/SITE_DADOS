@@ -36,6 +36,8 @@ body { background-color: #fdfdfd; padding: 20px; font-family: 'Segoe UI', sans-s
 
 .btn-play { background: #dc3545; color: white; border: none; border-radius: 50%; width: 26px; height: 26px; cursor: pointer; font-size: 0.65rem; display: inline-flex; align-items: center; justify-content: center; transition: background-color 0.15s; padding: 0; }
 .btn-play:hover { background: #bb2d3b; transform: scale(1.1); }
+.btn-tweet { background: #000; color: white; border-radius: 50%; width: 26px; height: 26px; font-size: 0.7rem; display: inline-flex; align-items: center; justify-content: center; text-decoration: none; transition: background-color 0.15s; font-weight: bold; }
+.btn-tweet:hover { background: #333; transform: scale(1.1); color: white; }
 #video-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.88); z-index: 9998; justify-content: center; align-items: center; }
 .video-modal-box { position: relative; width: 92%; max-width: 1000px; background: #000; border-radius: 10px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.8); }
 .btn-fechar-video { position: absolute; top: 10px; right: 14px; background: rgba(255,255,255,0.15); border: none; color: #fff; font-size: 1.2rem; cursor: pointer; z-index: 1; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: background 0.15s; }
