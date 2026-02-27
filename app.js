@@ -38,9 +38,20 @@ window.onload = function () {
 function limparTexto(val) {
   if (val === null || val === undefined || val === '') return '';
   return String(val)
+    .normalize('NFC')
     .replace(/[\u00A0\u200B-\u200D\uFEFF\u2028\u2029\u0000-\u001F\u007F]/g, '')
     .replace(/\s+/g, ' ')
     .trim();
+}
+
+function diagnosticarCampo(raw, campo, data) {
+  if (raw === '' || raw == null) return '';
+  const limpo = limparTexto(raw);
+  if (!limpo) {
+    const codepoints = [...String(raw)].map(c => 'U+' + c.codePointAt(0).toString(16).toUpperCase().padStart(4, '0')).join(' ');
+    console.warn(`[CAMPO VAZIO APÓS LIMPEZA] data=${data} | campo=${campo} | raw=${JSON.stringify(String(raw))} | codepoints: ${codepoints}`);
+  }
+  return limpo;
 }
 
 function normalizarJogos(data) {
@@ -51,7 +62,7 @@ function normalizarJogos(data) {
     p: (row["GOL CORINTHIANS"] === "" ? "0" : row["GOL CORINTHIANS"]) + "x" + (row["GOL ADVERSARIO"] === "" ? "0" : row["GOL ADVERSARIO"]),
     r: limparTexto(row["RESULTADO"]),
     adv: limparTexto(row["TIME ADVERSARIO"]),
-    c: limparTexto(row["COMPETIÇÃO"]),
+    c: diagnosticarCampo(row["COMPETIÇÃO"], "COMPETIÇÃO", row["DATA"]),
     e: limparTexto(row["ESTADIO"]),
     t: limparTexto(row["TECNICO CORINTHIANS"]),
     lnk: limparTexto(row["LINK"])
