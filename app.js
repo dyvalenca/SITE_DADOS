@@ -35,18 +35,26 @@ window.onload = function () {
 // =====================================================================
 // CARREGAMENTO DE DADOS VIA API REST (substitui google.script.run)
 // =====================================================================
+function limparTexto(val) {
+  if (val === null || val === undefined || val === '') return '';
+  return String(val)
+    .replace(/[\u00A0\u200B-\u200D\uFEFF\u2028\u2029\u0000-\u001F\u007F]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 function normalizarJogos(data) {
   return data.map(row => ({
     d: formatarData(row["DATA"]),
     a: row["ANO COMPETICAO"],
-    m: row["MANDO"],
+    m: limparTexto(row["MANDO"]),
     p: (row["GOL CORINTHIANS"] === "" ? "0" : row["GOL CORINTHIANS"]) + "x" + (row["GOL ADVERSARIO"] === "" ? "0" : row["GOL ADVERSARIO"]),
-    r: row["RESULTADO"] ? String(row["RESULTADO"]).trim() : "",
-    adv: row["TIME ADVERSARIO"],
-    c: row["COMPETIÇÃO"],
-    e: row["ESTADIO"],
-    t: row["TECNICO CORINTHIANS"],
-    lnk: row["LINK"] ? String(row["LINK"]).trim() : ""
+    r: limparTexto(row["RESULTADO"]),
+    adv: limparTexto(row["TIME ADVERSARIO"]),
+    c: limparTexto(row["COMPETIÇÃO"]),
+    e: limparTexto(row["ESTADIO"]),
+    t: limparTexto(row["TECNICO CORINTHIANS"]),
+    lnk: limparTexto(row["LINK"])
   }));
 }
 
