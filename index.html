@@ -2,272 +2,462 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Dashboard Histórico Corinthians</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
-  <link rel="stylesheet" href="style.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Almanaque do Timão</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #0a0a0a;
+      color: #e5e5e5;
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+    }
+
+    /* ── HEADER ──────────────────────────────────────────── */
+    header {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      background: #000; border-bottom: 1px solid #1c1c1c;
+      padding: 0 28px; height: 58px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .logo { font-size: 1.05rem; font-weight: 900; letter-spacing: -0.5px; color: #fff; }
+    .logo span { color: #7c3aed; }
+    .header-nav { display: flex; align-items: center; gap: 14px; }
+    .btn-nav {
+      color: #888; font-size: 0.8rem; text-decoration: none;
+      border: 1px solid #2a2a2a; border-radius: 8px; padding: 6px 14px;
+      transition: all 0.15s; white-space: nowrap;
+    }
+    .btn-nav:hover { color: #fff; border-color: #444; }
+    #anoSel {
+      background: #111; color: #fff; border: 1px solid #2a2a2a;
+      border-radius: 8px; padding: 6px 10px; font-size: 0.8rem;
+      cursor: pointer; font-family: 'Inter', sans-serif; outline: none;
+    }
+
+    /* ── LAYOUT ──────────────────────────────────────────── */
+    main {
+      padding-top: 90px; padding-bottom: 80px;
+      max-width: 960px; margin: 0 auto;
+      padding-left: 20px; padding-right: 20px;
+    }
+
+    section { margin-bottom: 48px; }
+
+    .section-title {
+      font-size: 0.65rem; font-weight: 700;
+      letter-spacing: 2.5px; text-transform: uppercase;
+      color: #444; margin-bottom: 18px;
+      padding-bottom: 10px; border-bottom: 1px solid #1a1a1a;
+    }
+
+    /* ── LOADING ─────────────────────────────────────────── */
+    #loading {
+      text-align: center; padding: 80px 20px;
+      color: #444; font-size: 0.85rem; letter-spacing: 2px;
+    }
+    .spinner {
+      width: 32px; height: 32px; border: 3px solid #1f1f1f;
+      border-top-color: #7c3aed; border-radius: 50%;
+      animation: spin 0.8s linear infinite; margin: 0 auto 16px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── EFICIÊNCIA ──────────────────────────────────────── */
+    .eficiencia-grid {
+      display: grid; grid-template-columns: 220px 1fr; gap: 16px; align-items: stretch;
+    }
+    .card-aprov {
+      background: #111; border: 1px solid #1c1c1c; border-radius: 16px;
+      padding: 28px 24px; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; text-align: center;
+    }
+    .aprov-valor {
+      font-size: 4rem; font-weight: 900; line-height: 1;
+      letter-spacing: -4px; color: #fff;
+    }
+    .aprov-label {
+      font-size: 0.62rem; font-weight: 700; letter-spacing: 2px;
+      color: #444; text-transform: uppercase; margin-top: 8px;
+    }
+    .aprov-pts {
+      font-size: 0.75rem; color: #555; margin-top: 6px;
+    }
+    .contadores-grid {
+      display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;
+    }
+    .contador-item {
+      background: #111; border: 1px solid #1c1c1c;
+      border-radius: 14px; padding: 18px 20px;
+    }
+    .contador-valor {
+      font-size: 2.4rem; font-weight: 900; letter-spacing: -1.5px; line-height: 1;
+    }
+    .contador-label {
+      font-size: 0.62rem; font-weight: 700; letter-spacing: 2px;
+      text-transform: uppercase; color: #444; margin-top: 5px;
+    }
+    .contador-item.jogs .contador-valor { color: #fff; }
+    .contador-item.vits .contador-valor { color: #22c55e; }
+    .contador-item.emps .contador-valor { color: #6b7280; }
+    .contador-item.ders .contador-valor { color: #ef4444; }
+
+    /* ── GOLS ────────────────────────────────────────────── */
+    .gols-bar-card {
+      background: #111; border: 1px solid #1c1c1c;
+      border-radius: 14px; padding: 20px 22px; margin-bottom: 12px;
+    }
+    .gols-bar-labels {
+      display: flex; justify-content: space-between;
+      font-size: 0.78rem; font-weight: 600; margin-bottom: 10px;
+    }
+    .gols-bar-labels .gp { color: #7c3aed; }
+    .gols-bar-labels .gc { color: #ef4444; }
+    .gols-bar {
+      height: 10px; background: #1a1a1a;
+      border-radius: 5px; overflow: hidden; display: flex;
+    }
+    .bar-gp { background: #7c3aed; transition: width 0.5s ease; }
+    .bar-gc { background: #ef4444; transition: width 0.5s ease; }
+    .gols-metricas { display: flex; gap: 10px; flex-wrap: wrap; }
+    .gol-metrica {
+      background: #111; border: 1px solid #1c1c1c;
+      border-radius: 12px; padding: 14px 18px; flex: 1; min-width: 130px;
+    }
+    .gol-metrica-valor { font-size: 1.7rem; font-weight: 900; letter-spacing: -0.5px; line-height: 1; }
+    .gol-metrica-label {
+      font-size: 0.62rem; font-weight: 700; letter-spacing: 1.5px;
+      text-transform: uppercase; color: #444; margin-top: 5px;
+    }
+    .gol-metrica.media-gp .gol-metrica-valor { color: #7c3aed; }
+    .gol-metrica.media-gc .gol-metrica-valor { color: #ef4444; }
+
+    /* ── TIMELINE ────────────────────────────────────────── */
+    .timeline-wrap {
+      border: 1px solid #1c1c1c; border-radius: 14px; overflow: hidden;
+    }
+    .timeline-item {
+      display: grid;
+      grid-template-columns: 88px 1fr auto 60px;
+      gap: 12px; align-items: center;
+      padding: 10px 16px;
+      border-left: 3px solid #1c1c1c;
+      border-bottom: 1px solid #111;
+      font-size: 0.82rem;
+      transition: background 0.1s;
+    }
+    .timeline-item:last-child { border-bottom: none; }
+    .timeline-item:hover { background: #111; }
+    .timeline-item.vitoria { border-left-color: #22c55e; }
+    .timeline-item.empate  { border-left-color: #4b5563; }
+    .timeline-item.derrota { border-left-color: #ef4444; }
+    .tl-data { color: #555; font-size: 0.72rem; white-space: nowrap; }
+    .tl-info { min-width: 0; }
+    .tl-comp {
+      font-size: 0.6rem; font-weight: 700; letter-spacing: 1.2px;
+      text-transform: uppercase; color: #555;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .tl-adv {
+      font-weight: 600; white-space: nowrap;
+      overflow: hidden; text-overflow: ellipsis; color: #e5e5e5;
+    }
+    .tl-placar { font-weight: 900; font-size: 1rem; letter-spacing: -0.5px; color: #fff; white-space: nowrap; text-align: right; }
+    .tl-mando {
+      font-size: 0.6rem; font-weight: 700; padding: 3px 8px;
+      border-radius: 5px; white-space: nowrap; text-align: center;
+    }
+    .tl-mando.casa { background: #14251a; color: #4ade80; }
+    .tl-mando.fora { background: #141a2e; color: #818cf8; }
+
+    /* ── COMPETIÇÕES ─────────────────────────────────────── */
+    .comp-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px;
+    }
+    .comp-card {
+      background: #111; border: 1px solid #1c1c1c;
+      border-radius: 12px; padding: 16px;
+    }
+    .comp-name {
+      font-size: 0.72rem; font-weight: 700;
+      color: #e5e5e5; margin-bottom: 8px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .comp-aprov {
+      font-size: 1.9rem; font-weight: 900;
+      letter-spacing: -1px; line-height: 1;
+      color: #7c3aed; margin-bottom: 8px;
+    }
+    .comp-detail { display: flex; gap: 8px; flex-wrap: wrap; font-size: 0.68rem; color: #555; }
+    .comp-detail .v { color: #22c55e; }
+    .comp-detail .d { color: #ef4444; }
+    .comp-detail .e { color: #6b7280; }
+
+    /* ── RESPONSIVO ──────────────────────────────────────── */
+    @media (max-width: 640px) {
+      .eficiencia-grid { grid-template-columns: 1fr; }
+      .contadores-grid { grid-template-columns: repeat(4, 1fr); }
+      .contador-item { padding: 12px 10px; }
+      .contador-valor { font-size: 1.6rem; }
+      .timeline-item { grid-template-columns: 72px 1fr auto; }
+      .tl-mando { display: none; }
+      main { padding-left: 14px; padding-right: 14px; }
+    }
+  </style>
 </head>
-<body onclick="fecharDropdowns(event)">
+<body>
 
-<div id="loading-overlay">
-  <div class="loading-box">
-    <div class="spinner-border spinner-corinthians" role="status"></div>
-    <h4 class="fw-bold">Preparando Dashboard</h4>
-    <p class="text-muted small">Processando histórico e organizando layout.</p>
-    <div class="progress" style="height: 5px;">
-      <div class="progress-bar bg-dark progress-bar-striped progress-bar-animated" style="width: 100%"></div>
-    </div>
+<header>
+  <div class="logo">Almanaque <span>do Timão</span></div>
+  <div class="header-nav">
+    <a href="dashboard.html" class="btn-nav">📊 Dashboard</a>
+    <select id="anoSel" onchange="carregarAno(this.value)"></select>
   </div>
-</div>
+</header>
 
-<div class="container-fluid">
-  <div class="header-painel d-flex justify-content-between align-items-center">
-    <div>
-      <h2 class="mb-0">Dashboard Histórico Corinthians</h2>
-      <p class="text-muted mb-0">Status: <span id="msg-status">Conectando...</span></p>
-    </div>
+<main>
+  <div id="loading">
+    <div class="spinner"></div>
+    Carregando dados...
   </div>
 
-  <div class="secao-filtros">
-    <div class="d-flex justify-content-between align-items-center mb-2">
-      <p class="small fw-bold text-uppercase text-muted mb-0" style="letter-spacing: 0.05em;">Filtros</p>
-      <button class="btn btn-outline-danger btn-sm" onclick="limparFiltros()">Limpar Filtros</button>
-    </div>
-    <div class="row g-3">
-      <div class="col-md-3">
-        <label class="small fw-bold text-uppercase">Período (Ano)</label>
-        <div class="d-flex align-items-center gap-1 mb-2">
-          <select id="fAnoDe" class="form-select form-select-sm" onchange="aoMudarFiltroPrincipal()"></select>
-          <span class="label-ano">até</span>
-          <select id="fAnoAte" class="form-select form-select-sm" onchange="aoMudarFiltroPrincipal()"></select>
-        </div>
-        <label class="small fw-bold text-uppercase">Data Exata</label>
-        <div class="d-flex align-items-center gap-1">
-          <input type="date" id="fDataDe" class="form-control form-control-sm" onchange="aoMudarFiltroPrincipal()">
-          <span class="label-ano">até</span>
-          <input type="date" id="fDataAte" class="form-control form-control-sm" onchange="aoMudarFiltroPrincipal()">
-        </div>
+  <!-- EFICIÊNCIA -->
+  <section id="sec-eficiencia" style="display:none">
+    <div class="section-title">Painel de Eficiência</div>
+    <div class="eficiencia-grid">
+      <div class="card-aprov">
+        <div class="aprov-valor" id="aproveitamento">–</div>
+        <div class="aprov-label">Aproveitamento</div>
+        <div class="aprov-pts" id="aprov-pts"></div>
       </div>
-
-      <div class="col-md-2">
-        <label class="small fw-bold text-uppercase">Mando</label>
-        <select id="fMando" class="form-select form-select-sm mb-2" onchange="aoMudarFiltroPrincipal()">
-          <option value="">Todos</option>
-          <option value="MANDANTE">MANDANTE</option>
-          <option value="VISITANTE">VISITANTE</option>
-          <option value="NEUTRO">NEUTRO</option>
-        </select>
-        <label class="small fw-bold text-uppercase">Competição</label>
-        <div id="fComp" class="dropdown-check-list">
-          <span class="anchor" onclick="toggleDropdown('fComp')">Todas</span>
-          <div class="items"></div>
+      <div class="contadores-grid">
+        <div class="contador-item jogs">
+          <div class="contador-valor" id="n-jogos">0</div>
+          <div class="contador-label">Jogos</div>
         </div>
-        <div class="form-check form-switch mt-1">
-          <input class="form-check-input" type="checkbox" id="excComp" onchange="resetPaginacao()">
-          <label class="exceto-label" for="excComp">EXCETO SELECIONADOS</label>
+        <div class="contador-item vits">
+          <div class="contador-valor" id="n-vits">0</div>
+          <div class="contador-label">Vitórias</div>
         </div>
-      </div>
-
-      <div class="col-md-3">
-        <label class="small fw-bold text-uppercase">Adversário</label>
-        <div id="fAdv" class="dropdown-check-list mb-1">
-          <span class="anchor" onclick="toggleDropdown('fAdv')">Todos</span>
-          <div class="items"></div>
+        <div class="contador-item emps">
+          <div class="contador-valor" id="n-emps">0</div>
+          <div class="contador-label">Empates</div>
         </div>
-        <div class="form-check form-switch">
-          <input class="form-check-input" type="checkbox" id="fClassicos" onchange="aoMudarFiltroPrincipal()">
-          <label class="form-check-label" for="fClassicos">APENAS CLÁSSICOS</label>
-        </div>
-        <div class="form-check form-switch">
-          <input class="form-check-input" type="checkbox" id="excAdv" onchange="resetPaginacao()">
-          <label class="exceto-label" for="excAdv">EXCETO SELECIONADOS</label>
-        </div>
-      </div>
-
-      <div class="col-md-3">
-        <label class="small fw-bold text-uppercase">Estádio</label>
-        <div id="fEst" class="dropdown-check-list mb-1">
-          <span class="anchor" onclick="toggleDropdown('fEst')">Todos</span>
-          <div class="items"></div>
-        </div>
-        <div class="form-check form-switch">
-          <input class="form-check-input" type="checkbox" id="fNQA" onchange="aoMudarFiltroPrincipal()">
-          <label class="form-check-label" for="fNQA">APENAS NQA</label>
-        </div>
-        <div class="form-check form-switch">
-          <input class="form-check-input" type="checkbox" id="excEst" onchange="resetPaginacao()">
-          <label class="exceto-label" for="excEst">EXCETO SELECIONADOS</label>
+        <div class="contador-item ders">
+          <div class="contador-valor" id="n-ders">0</div>
+          <div class="contador-label">Derrotas</div>
         </div>
       </div>
     </div>
+  </section>
 
-    <div class="row g-3 mt-1">
-      <div class="col-md-3">
-        <label class="small fw-bold text-uppercase">Gols do Corinthians</label>
-        <div id="fGolsPro" class="dropdown-check-list">
-          <span class="anchor" onclick="toggleDropdown('fGolsPro')">Todos</span>
-          <div class="items"></div>
-        </div>
+  <!-- GOLS -->
+  <section id="sec-gols" style="display:none">
+    <div class="section-title">Balanço de Gols</div>
+    <div class="gols-bar-card">
+      <div class="gols-bar-labels">
+        <span class="gp">Gols Pró — <strong id="gp-val">0</strong></span>
+        <span class="gc">Gols Contra — <strong id="gc-val">0</strong></span>
       </div>
-      <div class="col-md-3">
-        <label class="small fw-bold text-uppercase">Gols Contra</label>
-        <div id="fGolsCon" class="dropdown-check-list">
-          <span class="anchor" onclick="toggleDropdown('fGolsCon')">Todos</span>
-          <div class="items"></div>
-        </div>
-      </div>
-      <div class="col-md-3">
-        <label class="small fw-bold text-uppercase">Saldo de Gols</label>
-        <div id="fSaldo" class="dropdown-check-list">
-          <span class="anchor" onclick="toggleDropdown('fSaldo')">Todos</span>
-          <div class="items"></div>
-        </div>
-      </div>
-      <div class="col-md-3">
-        <label class="small fw-bold text-uppercase">Técnico</label>
-        <div id="fTec" class="dropdown-check-list">
-          <span class="anchor" onclick="toggleDropdown('fTec')">Todos</span>
-          <div class="items"></div>
-        </div>
+      <div class="gols-bar">
+        <div class="bar-gp" id="bar-gp" style="width:50%"></div>
+        <div class="bar-gc" id="bar-gc" style="width:50%"></div>
       </div>
     </div>
-  </div>
-
-  <div class="secao-filtros">
-    <p class="small fw-bold text-uppercase text-muted mb-2" style="letter-spacing: 0.05em;">Métricas</p>
-    <div class="resumo-container" style="margin-bottom: 0;">
-      <div class="card-resumo"><h6>Jogos</h6><h2 id="res-jogos">0</h2></div>
-      <div class="card-resumo"><h6>Vitórias</h6><h2 id="res-vits">0</h2></div>
-      <div class="card-resumo"><h6>% Vitórias</h6><h2 id="res-vits-perc">0%</h2></div>
-      <div class="card-resumo"><h6>Vitória 1x0</h6><h2 id="res-vits1x0" class="text-primary">0</h2></div>
-      <div class="card-resumo"><h6>Vitórias +3</h6><h2 id="res-vits3">0</h2></div>
-      <div class="card-resumo"><h6>Empates</h6><h2 id="res-emps">0</h2></div>
-      <div class="card-resumo"><h6>% Empates</h6><h2 id="res-emps-perc">0%</h2></div>
-      <div class="card-resumo"><h6>Derrotas</h6><h2 id="res-ders">0</h2></div>
-      <div class="card-resumo"><h6>% Derrotas</h6><h2 id="res-ders-perc">0%</h2></div>
-      <div class="card-resumo"><h6>Derrotas -3</h6><h2 id="res-ders3">0</h2></div>
-      <div class="card-resumo"><h6>Gols Pró</h6><h2 id="res-gp">0</h2></div>
-      <div class="card-resumo"><h6>Média Gols</h6><h2 id="res-gp-media">0.0</h2></div>
-      <div class="card-resumo"><h6>Jogos S/ Marcar</h6><h2 id="res-zero-pro">0</h2></div>
-      <div class="card-resumo"><h6>% S/ Marcar</h6><h2 id="res-zero-pro-perc">0%</h2></div>
-      <div class="card-resumo"><h6>Gols Contra</h6><h2 id="res-gc">0</h2></div>
-      <div class="card-resumo"><h6>Média Gols C.</h6><h2 id="res-gc-media">0.0</h2></div>
-      <div class="card-resumo"><h6>Jogos S/ Sofrer</h6><h2 id="res-zero-con">0</h2></div>
-      <div class="card-resumo"><h6>% S/ Sofrer</h6><h2 id="res-zero-con-perc">0%</h2></div>
-      <div class="card-resumo"><h6>Saldo</h6><h2 id="res-sg">0</h2></div>
-      <div class="card-resumo"><h6>Pontos</h6><h2 id="res-pontos" class="text-success">0</h2></div>
-      <div class="card-resumo"><h6>Aproveitamento</h6><h2 id="res-aprov">0%</h2></div>
-    </div>
-  </div>
-
-  <div class="table-responsive">
-    <table class="table table-hover border mb-0">
-      <thead>
-        <tr>
-          <th>Data</th>
-          <th>Competição</th>
-          <th class="text-center">Placar</th>
-          <th>Adversário</th>
-          <th>Mando</th>
-          <th>Estádio</th>
-          <th>Técnico</th>
-          <th class="text-center">Vídeo</th>
-          <th class="text-center">Stats</th>
-        </tr>
-      </thead>
-      <tbody id="tabelaCorpo" class="small">
-        <tr><td colspan="9" class="text-center">Aguardando dados...</td></tr>
-      </tbody>
-    </table>
-  </div>
-
-  <div class="paginacao-footer">
-    <div class="small text-muted">Exibindo página <span id="pAtual">1</span> de <span id="pTotal">1</span></div>
-    <div class="btn-group">
-      <button class="btn btn-outline-dark btn-sm" id="btnAnt" onclick="mudarPagina(-1)">Anterior</button>
-      <button class="btn btn-outline-dark btn-sm" id="btnProx" onclick="mudarPagina(1)">Próximo</button>
-    </div>
-  </div>
-
-  <div class="grafico-container">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-      <h5 class="fw-bold mb-0" id="tituloTabTec">Estatísticas por Técnico</h5>
-      <div class="btn-group btn-group-sm">
-        <button id="btnGrpTec"  class="btn btn-dark"         onclick="mudarAgrupamento('tec')">Técnico</button>
-        <button id="btnGrpComp" class="btn btn-outline-dark" onclick="mudarAgrupamento('comp')">Competição</button>
-        <button id="btnGrpAno"  class="btn btn-outline-dark" onclick="mudarAgrupamento('ano')">Ano</button>
-        <button id="btnGrpAdv"  class="btn btn-outline-dark" onclick="mudarAgrupamento('adv')">Adversário</button>
+    <div class="gols-metricas">
+      <div class="gol-metrica">
+        <div class="gol-metrica-valor" id="saldo-val" style="color:#22c55e">+0</div>
+        <div class="gol-metrica-label">Saldo de Gols</div>
+      </div>
+      <div class="gol-metrica media-gp">
+        <div class="gol-metrica-valor" id="media-gp-val">0.00</div>
+        <div class="gol-metrica-label">Méd. Gols Pró / Jogo</div>
+      </div>
+      <div class="gol-metrica media-gc">
+        <div class="gol-metrica-valor" id="media-gc-val">0.00</div>
+        <div class="gol-metrica-label">Méd. Gols Contra / Jogo</div>
       </div>
     </div>
-    <div style="overflow-x:auto; max-height:400px; overflow-y:auto; border:1px solid #dee2e6; border-radius:6px;">
-      <table class="table table-hover table-bordered mb-0 small" style="min-width:1050px;">
-        <thead id="tabelaTecnicosCabecalho" style="position:sticky;top:0;z-index:5;background:#000;color:#fff;"></thead>
-        <tbody id="tabelaTecnicosCorpo"></tbody>
-      </table>
-    </div>
-  </div>
+  </section>
 
-  <div class="grafico-container">
-    <div class="text-center mb-3">
-      <h5 id="titulo-grafico" class="fw-bold">Evolução de Atributos por Ano</h5>
-      <div class="d-flex flex-wrap justify-content-center gap-1 mt-2">
-        <button class="btn btn-sm btn-dark btn-metrica" data-metrica="aproveitamento" onclick="trocarMetrica(this)">Aproveitamento</button>
-        <button class="btn btn-sm btn-outline-dark btn-metrica" data-metrica="jogos" onclick="trocarMetrica(this)">Jogos</button>
-        <button class="btn btn-sm btn-outline-dark btn-metrica" data-metrica="vitorias" onclick="trocarMetrica(this)">Vitórias</button>
-        <button class="btn btn-sm btn-outline-dark btn-metrica" data-metrica="perc_vitorias" onclick="trocarMetrica(this)">% Vitórias</button>
-        <button class="btn btn-sm btn-outline-dark btn-metrica" data-metrica="vits1x0" onclick="trocarMetrica(this)">Vitória 1x0</button>
-        <button class="btn btn-sm btn-outline-dark btn-metrica" data-metrica="vits3" onclick="trocarMetrica(this)">Vitórias +3</button>
-        <button class="btn btn-sm btn-outline-dark btn-metrica" data-metrica="empates" onclick="trocarMetrica(this)">Empates</button>
-        <button class="btn btn-sm btn-outline-dark btn-metrica" data-metrica="perc_empates" onclick="trocarMetrica(this)">% Empates</button>
-        <button class="btn btn-sm btn-outline-dark btn-metrica" data-metrica="derrotas" onclick="trocarMetrica(this)">Derrotas</button>
-        <button class="btn btn-sm btn-outline-dark btn-metrica" data-metrica="perc_derrotas" onclick="trocarMetrica(this)">% Derrotas</button>
-        <button class="btn btn-sm btn-outline-dark btn-metrica" data-metrica="ders3" onclick="trocarMetrica(this)">Derrotas -3</button>
-        <button class="btn btn-sm btn-outline-dark btn-metrica" data-metrica="gols_pro" onclick="trocarMetrica(this)">Gols Pró</button>
-        <button class="btn btn-sm btn-outline-dark btn-metrica" data-metrica="media_gols" onclick="trocarMetrica(this)">Média Gols</button>
-        <button class="btn btn-sm btn-outline-dark btn-metrica" data-metrica="s_marcar" onclick="trocarMetrica(this)">S/ Marcar</button>
-        <button class="btn btn-sm btn-outline-dark btn-metrica" data-metrica="perc_s_marcar" onclick="trocarMetrica(this)">% S/ Marcar</button>
-        <button class="btn btn-sm btn-outline-dark btn-metrica" data-metrica="gols_contra" onclick="trocarMetrica(this)">Gols Contra</button>
-        <button class="btn btn-sm btn-outline-dark btn-metrica" data-metrica="media_gols_c" onclick="trocarMetrica(this)">Média Gols C.</button>
-        <button class="btn btn-sm btn-outline-dark btn-metrica" data-metrica="s_sofrer" onclick="trocarMetrica(this)">S/ Sofrer</button>
-        <button class="btn btn-sm btn-outline-dark btn-metrica" data-metrica="perc_s_sofrer" onclick="trocarMetrica(this)">% S/ Sofrer</button>
-        <button class="btn btn-sm btn-outline-dark btn-metrica" data-metrica="saldo" onclick="trocarMetrica(this)">Saldo</button>
-        <button class="btn btn-sm btn-outline-dark btn-metrica" data-metrica="pontos" onclick="trocarMetrica(this)">Pontos</button>
+  <!-- TIMELINE -->
+  <section id="sec-timeline" style="display:none">
+    <div class="section-title">Timeline de Resultados</div>
+    <div class="timeline-wrap" id="timeline-lista"></div>
+  </section>
+
+  <!-- COMPETIÇÕES -->
+  <section id="sec-comps" style="display:none">
+    <div class="section-title">Distribuição por Competição</div>
+    <div class="comp-grid" id="comp-grid"></div>
+  </section>
+</main>
+
+<script>
+const API_URL = "/api/dados";
+let dadosTodos = [];
+
+// ── Helpers ──────────────────────────────────────────────
+function rNorm(v) {
+  return (v || '').toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+}
+function limpar(val) {
+  if (val === null || val === undefined || val === '') return '';
+  return String(val).normalize('NFC')
+    .replace(/[\u00A0\u200B-\u200D\uFEFF\u2028\u2029\u0000-\u001F\u007F]/g, '')
+    .replace(/\s+/g, ' ').trim();
+}
+function formatarData(valor) {
+  if (!valor) return '';
+  if (typeof valor === 'string' && valor.includes('/')) return valor;
+  try {
+    const d = new Date(valor);
+    if (isNaN(d)) return valor;
+    return String(d.getUTCDate()).padStart(2,'0') + '/' +
+           String(d.getUTCMonth()+1).padStart(2,'0') + '/' + d.getUTCFullYear();
+  } catch(e) { return valor; }
+}
+function parseDataBR(str) {
+  if (!str) return new Date(0);
+  const p = str.split('/');
+  return p.length === 3 ? new Date(p[2], p[1]-1, p[0]) : new Date(str);
+}
+function normalizar(data) {
+  return data.map(row => ({
+    d:   formatarData(row["DATA"]),
+    a:   row["ANO COMPETICAO"],
+    m:   limpar(row["MANDO"]),
+    p:   (row["GOL CORINTHIANS"] === "" ? "0" : row["GOL CORINTHIANS"]) + "x" +
+         (row["GOL ADVERSARIO"] === "" ? "0" : row["GOL ADVERSARIO"]),
+    r:   limpar(row["RESULTADO"]),
+    adv: limpar(row["TIME ADVERSARIO"]),
+    c:   limpar(row["COMPETIÇÃO"]),
+  }));
+}
+
+// ── Inicialização ─────────────────────────────────────────
+async function iniciar() {
+  try {
+    const resp = await fetch(API_URL);
+    const json = await resp.json();
+    if (!json.data) throw new Error('Sem dados');
+    dadosTodos = normalizar(json.data);
+
+    const anos = [...new Set(dadosTodos.map(j => parseInt(j.a)))]
+      .filter(Boolean).sort((a,b) => b-a);
+
+    const sel = document.getElementById('anoSel');
+    anos.forEach(ano => sel.add(new Option(ano, ano)));
+    sel.value = anos[0];
+
+    renderizar(dadosTodos.filter(j => parseInt(j.a) === anos[0]));
+  } catch(err) {
+    document.getElementById('loading').innerHTML = 'Erro ao carregar dados.';
+    console.error(err);
+  }
+}
+
+function carregarAno(ano) {
+  const jogos = dadosTodos.filter(j => parseInt(j.a) === parseInt(ano));
+  if (jogos.length > 0) { renderizar(jogos); return; }
+  fetch(`${API_URL}?ano=${ano}`)
+    .then(r => r.json())
+    .then(json => { if (json.data) renderizar(normalizar(json.data)); })
+    .catch(console.error);
+}
+
+// ── Renderização ──────────────────────────────────────────
+function renderizar(jogos) {
+  document.getElementById('loading').style.display = 'none';
+  ['sec-eficiencia','sec-gols','sec-timeline','sec-comps'].forEach(id => {
+    document.getElementById(id).style.display = '';
+  });
+
+  // ── Estatísticas gerais
+  let vits = 0, emps = 0, ders = 0, gp = 0, gc = 0, pts = 0;
+  jogos.forEach(j => {
+    const r = rNorm(j.r);
+    const parts = (j.p || '0x0').split('x');
+    const pro = parseInt(parts[0]) || 0;
+    const con = parseInt(parts[1]) || 0;
+    gp += pro; gc += con;
+    if (r === 'VITORIA')  { vits++; pts += 3; }
+    else if (r === 'EMPATE')   { emps++; pts += 1; }
+    else if (r === 'DERROTA')  { ders++; }
+  });
+  const total = jogos.length || 1;
+  const aprov = total > 0 ? ((pts / (total * 3)) * 100).toFixed(1) : '0.0';
+
+  // Eficiência
+  document.getElementById('aproveitamento').textContent = aprov + '%';
+  document.getElementById('aprov-pts').textContent = pts + ' pts de ' + (total * 3) + ' disputados';
+  document.getElementById('n-jogos').textContent = jogos.length;
+  document.getElementById('n-vits').textContent = vits;
+  document.getElementById('n-emps').textContent = emps;
+  document.getElementById('n-ders').textContent = ders;
+
+  // Gols
+  document.getElementById('gp-val').textContent = gp;
+  document.getElementById('gc-val').textContent = gc;
+  const totalG = gp + gc || 1;
+  document.getElementById('bar-gp').style.width = ((gp / totalG) * 100).toFixed(1) + '%';
+  document.getElementById('bar-gc').style.width = ((gc / totalG) * 100).toFixed(1) + '%';
+  const saldo = gp - gc;
+  const saldoEl = document.getElementById('saldo-val');
+  saldoEl.textContent = (saldo >= 0 ? '+' : '') + saldo;
+  saldoEl.style.color = saldo > 0 ? '#22c55e' : saldo < 0 ? '#ef4444' : '#6b7280';
+  document.getElementById('media-gp-val').textContent = (gp / total).toFixed(2);
+  document.getElementById('media-gc-val').textContent = (gc / total).toFixed(2);
+
+  // Timeline — mais recente primeiro
+  const sorted = [...jogos].sort((a,b) => parseDataBR(b.d) - parseDataBR(a.d));
+  document.getElementById('timeline-lista').innerHTML = sorted.map(j => {
+    const r = rNorm(j.r);
+    const cl = r === 'VITORIA' ? 'vitoria' : r === 'EMPATE' ? 'empate' : 'derrota';
+    const mandoNorm = rNorm(j.m);
+    const isCasa = mandoNorm.includes('CASA') || mandoNorm === 'MANDANTE';
+    return `<div class="timeline-item ${cl}">
+      <span class="tl-data">${j.d}</span>
+      <div class="tl-info">
+        <div class="tl-comp">${j.c || '—'}</div>
+        <div class="tl-adv">${j.adv || '—'}</div>
       </div>
-    </div>
-    <canvas id="graficoEvolucao" height="100"></canvas>
-  </div>
+      <span class="tl-placar">${j.p}</span>
+      <span class="tl-mando ${isCasa ? 'casa' : 'fora'}">${isCasa ? 'Casa' : 'Fora'}</span>
+    </div>`;
+  }).join('');
 
-  <div id="video-modal" onclick="if(event.target===this)fecharVideo()">
-    <div class="video-modal-box">
-      <button class="btn-fechar-video" onclick="fecharVideo()" title="Fechar">✕</button>
-      <iframe id="video-frame" src="" style="width:100%;height:540px;border:none;" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
-    </div>
-  </div>
-
-  <div class="grafico-container">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-      <h5 class="fw-bold mb-0">Comparativo de Resultados (V/E/D) - Últimos 30 Anos</h5>
-      <div class="form-check form-switch border rounded p-2 bg-light shadow-sm">
-        <input class="form-check-input ms-0 me-2" type="checkbox" id="fAcumulado" onchange="renderizarGraficoComparativo(dadosFiltrados)">
-        <label class="form-check-label fw-bold small text-dark" for="fAcumulado">CONSIDERAR VALORES ACUMULADOS</label>
+  // Competições
+  const comps = {};
+  jogos.forEach(j => {
+    const comp = j.c || 'Outros';
+    if (!comps[comp]) comps[comp] = { v:0, e:0, d:0, pts:0, total:0 };
+    const r = rNorm(j.r);
+    comps[comp].total++;
+    if (r === 'VITORIA')  { comps[comp].v++; comps[comp].pts += 3; }
+    else if (r === 'EMPATE')   { comps[comp].e++; comps[comp].pts += 1; }
+    else if (r === 'DERROTA')  { comps[comp].d++; }
+  });
+  const compsOrdenadas = Object.entries(comps).sort((a,b) => b[1].total - a[1].total);
+  document.getElementById('comp-grid').innerHTML = compsOrdenadas.map(([comp, s]) => {
+    const ap = s.total > 0 ? ((s.pts / (s.total * 3)) * 100).toFixed(0) : 0;
+    return `<div class="comp-card">
+      <div class="comp-name" title="${comp}">${comp}</div>
+      <div class="comp-aprov">${ap}%</div>
+      <div class="comp-detail">
+        <span>J ${s.total}</span>
+        <span class="v">V ${s.v}</span>
+        <span class="e">E ${s.e}</span>
+        <span class="d">D ${s.d}</span>
       </div>
-    </div>
-    <canvas id="graficoComparativo" height="100"></canvas>
-  </div>
-</div>
+    </div>`;
+  }).join('');
+}
 
-<div id="stats-modal" onclick="if(event.target===this)fecharStats()" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.88); z-index:9999; overflow-y:auto;">
-  <div class="stats-modal-box">
-    <div class="stats-modal-header">
-      <h6 id="stats-titulo" class="mb-0 small fw-bold"></h6>
-      <button class="btn-fechar-stats" onclick="fecharStats()" title="Fechar">✕</button>
-    </div>
-    <div id="stats-lista"></div>
-  </div>
-</div>
-
-<script src="app.js"></script>
+iniciar();
+</script>
 </body>
 </html>
