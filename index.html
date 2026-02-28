@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Números Fieis — Corinthians</title>
+  <title>Números Fieis - Corinthians</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap" rel="stylesheet">
   <style>
@@ -24,7 +24,7 @@
       display: flex; align-items: center; justify-content: space-between;
     }
     .logo { font-size: 1.05rem; font-weight: 900; letter-spacing: -0.5px; color: #18181b; }
-    .logo span { color: #7c3aed; }
+    .logo span { color: #52525b; font-weight: 600; }
     .header-nav { display: flex; align-items: center; gap: 14px; }
     .btn-nav {
       color: #71717a; font-size: 0.8rem; text-decoration: none;
@@ -101,7 +101,7 @@
       text-transform: uppercase; color: #a1a1aa; margin-top: 5px;
     }
     .contador-item.jogs .contador-valor { color: #18181b; }
-    .contador-item.vits .contador-valor { color: #16a34a; }
+    .contador-item.vits .contador-valor { color: #2563eb; }
     .contador-item.emps .contador-valor { color: #9ca3af; }
     .contador-item.ders .contador-valor { color: #dc2626; }
 
@@ -141,7 +141,7 @@
     }
     .timeline-item {
       display: grid;
-      grid-template-columns: 88px 1fr auto 60px;
+      grid-template-columns: 88px 1fr auto auto;
       gap: 12px; align-items: center;
       padding: 10px 16px;
       border-left: 3px solid #e4e4e7;
@@ -151,7 +151,7 @@
     }
     .timeline-item:last-child { border-bottom: none; }
     .timeline-item:hover { background: #fafafa; }
-    .timeline-item.vitoria { border-left-color: #16a34a; }
+    .timeline-item.vitoria { border-left-color: #2563eb; }
     .timeline-item.empate  { border-left-color: #d4d4d8; }
     .timeline-item.derrota { border-left-color: #dc2626; }
     .tl-data { color: #9ca3af; font-size: 0.72rem; white-space: nowrap; }
@@ -165,13 +165,13 @@
       font-weight: 600; white-space: nowrap;
       overflow: hidden; text-overflow: ellipsis; color: #18181b;
     }
-    .tl-placar { font-weight: 900; font-size: 1rem; letter-spacing: -0.5px; color: #18181b; white-space: nowrap; text-align: right; }
-    .tl-mando {
-      font-size: 0.6rem; font-weight: 700; padding: 3px 8px;
-      border-radius: 5px; white-space: nowrap; text-align: center;
+    .tl-est {
+      font-size: 0.6rem; font-weight: 700; letter-spacing: 1.2px;
+      text-transform: uppercase; color: #a1a1aa;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
-    .tl-mando.casa { background: #f0fdf4; color: #16a34a; }
-    .tl-mando.fora { background: #eff6ff; color: #2563eb; }
+    .tl-placar { font-weight: 900; font-size: 1rem; letter-spacing: -0.5px; color: #18181b; white-space: nowrap; text-align: right; }
+    .tl-mando-icon { font-size: 1rem; line-height: 1; text-align: center; }
 
     /* ── COMPETIÇÕES ─────────────────────────────────────── */
     .comp-grid {
@@ -192,7 +192,7 @@
       color: #7c3aed; margin-bottom: 8px;
     }
     .comp-detail { display: flex; gap: 8px; flex-wrap: wrap; font-size: 0.68rem; color: #9ca3af; }
-    .comp-detail .v { color: #16a34a; }
+    .comp-detail .v { color: #2563eb; }
     .comp-detail .d { color: #dc2626; }
     .comp-detail .e { color: #9ca3af; }
 
@@ -202,8 +202,8 @@
       .contadores-grid { grid-template-columns: repeat(4, 1fr); }
       .contador-item { padding: 12px 10px; }
       .contador-valor { font-size: 1.6rem; }
-      .timeline-item { grid-template-columns: 72px 1fr auto; }
-      .tl-mando { display: none; }
+      .timeline-item { grid-template-columns: 72px 1fr auto auto; }
+      .tl-est { display: none; }
       main { padding-left: 14px; padding-right: 14px; }
     }
   </style>
@@ -211,7 +211,7 @@
 <body>
 
 <header>
-  <div class="logo">Números Fieis <span>— Corinthians</span></div>
+  <div class="logo">Números Fieis <span>- Corinthians</span></div>
   <div class="header-nav">
     <a href="dashboard.html" class="btn-nav">📊 Dashboard</a>
     <select id="anoSel" onchange="carregarAno(this.value)"></select>
@@ -335,6 +335,7 @@ function normalizar(data) {
     r:   limpar(row["RESULTADO"]),
     adv: limpar(row["TIME ADVERSARIO"]),
     c:   limpar(row["COMPETIÇÃO"]),
+    e:   limpar(row["ESTADIO"]),
   }));
 }
 
@@ -408,7 +409,7 @@ function renderizar(jogos) {
   const saldo = gp - gc;
   const saldoEl = document.getElementById('saldo-val');
   saldoEl.textContent = (saldo >= 0 ? '+' : '') + saldo;
-  saldoEl.style.color = saldo > 0 ? '#22c55e' : saldo < 0 ? '#ef4444' : '#6b7280';
+  saldoEl.style.color = saldo > 0 ? '#2563eb' : saldo < 0 ? '#dc2626' : '#9ca3af';
   document.getElementById('media-gp-val').textContent = (gp / total).toFixed(2);
   document.getElementById('media-gc-val').textContent = (gc / total).toFixed(2);
 
@@ -418,15 +419,18 @@ function renderizar(jogos) {
     const r = rNorm(j.r);
     const cl = r === 'VITORIA' ? 'vitoria' : r === 'EMPATE' ? 'empate' : 'derrota';
     const mandoNorm = rNorm(j.m);
-    const isCasa = mandoNorm.includes('CASA') || mandoNorm === 'MANDANTE';
+    const isMandante = mandoNorm.includes('CASA') || mandoNorm === 'MANDANTE';
+    const isVisitante = mandoNorm.includes('FORA') || mandoNorm === 'VISITANTE';
+    const mandoIcone = isMandante ? '🏠' : isVisitante ? '✈️' : '🏟️';
     return `<div class="timeline-item ${cl}">
       <span class="tl-data">${j.d}</span>
       <div class="tl-info">
         <div class="tl-comp">${j.c || '—'}</div>
         <div class="tl-adv">${j.adv || '—'}</div>
+        <div class="tl-est">${j.e || '—'}</div>
       </div>
+      <span class="tl-mando-icon" title="${j.m || ''}">${mandoIcone}</span>
       <span class="tl-placar">${j.p}</span>
-      <span class="tl-mando ${isCasa ? 'casa' : 'fora'}">${isCasa ? 'Casa' : 'Fora'}</span>
     </div>`;
   }).join('');
 
