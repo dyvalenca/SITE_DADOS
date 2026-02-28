@@ -153,6 +153,9 @@
     }
     .gol-metrica.media-gp .gol-metrica-valor { color: #7c3aed; }
     .gol-metrica.media-gc .gol-metrica-valor { color: #dc2626; }
+    .gol-metrica.gol-smar .gol-metrica-valor { color: #9333ea; }
+    .gol-metrica.gol-ssof .gol-metrica-valor { color: #2563eb; }
+    .gol-metrica-pct { font-size: 0.7rem; color: #9ca3af; margin-top: 2px; }
 
     /* ── TIMELINE ────────────────────────────────────────── */
     .timeline-wrap {
@@ -262,7 +265,7 @@
 
   <!-- EFICIÊNCIA -->
   <section id="sec-eficiencia" style="display:none">
-    <div class="section-title">Painel de Eficiência</div>
+    <div class="section-title">Painel dos Resultados</div>
     <div class="eficiencia-grid">
       <div class="card-aprov">
         <div class="aprov-valor" id="aproveitamento">–</div>
@@ -346,6 +349,16 @@
         <div class="gol-metrica-valor" id="media-gc-val">0.00</div>
         <div class="gol-metrica-label">Méd. Gols Contra / Jogo</div>
       </div>
+      <div class="gol-metrica gol-smar">
+        <div class="gol-metrica-valor" id="smar-val">0</div>
+        <div class="gol-metrica-label">Jogos S/ Marcar</div>
+        <div class="gol-metrica-pct" id="smar-pct">—</div>
+      </div>
+      <div class="gol-metrica gol-ssof">
+        <div class="gol-metrica-valor" id="ssof-val">0</div>
+        <div class="gol-metrica-label">Jogos S/ Sofrer</div>
+        <div class="gol-metrica-pct" id="ssof-pct">—</div>
+      </div>
     </div>
   </section>
 
@@ -359,6 +372,18 @@
   <section id="sec-comps" style="display:none">
     <div class="section-title">Distribuição por Competição</div>
     <div class="comp-grid" id="comp-grid"></div>
+  </section>
+
+  <!-- MANDO -->
+  <section id="sec-mando" style="display:none">
+    <div class="section-title">Painel por Mando</div>
+    <div class="comp-grid" id="mando-grid"></div>
+  </section>
+
+  <!-- TÉCNICOS -->
+  <section id="sec-tecnicos" style="display:none">
+    <div class="section-title">Painel por Técnicos</div>
+    <div class="comp-grid" id="tecnicos-grid"></div>
   </section>
 </main>
 
@@ -402,6 +427,7 @@ function normalizar(data) {
     adv: limpar(row["TIME ADVERSARIO"]),
     c:   limpar(row["COMPETIÇÃO"]),
     e:   limpar(row["ESTADIO"]),
+    t:   limpar(row["TECNICO CORINTHIANS"]),
   }));
 }
 
@@ -439,19 +465,21 @@ function carregarAno(ano) {
 // ── Renderização ──────────────────────────────────────────
 function renderizar(jogos) {
   document.getElementById('loading').style.display = 'none';
-  ['sec-eficiencia','sec-gols','sec-timeline','sec-comps'].forEach(id => {
+  ['sec-eficiencia','sec-gols','sec-timeline','sec-comps','sec-mando','sec-tecnicos'].forEach(id => {
     document.getElementById(id).style.display = '';
   });
 
   // ── Estatísticas gerais
   let vits = 0, emps = 0, ders = 0, gp = 0, gc = 0, pts = 0;
-  let vits1x0 = 0, vits3 = 0, ders3 = 0;
+  let vits1x0 = 0, vits3 = 0, ders3 = 0, sMar = 0, sSof = 0;
   jogos.forEach(j => {
     const r = rNorm(j.r);
     const parts = (j.p || '0x0').split('x');
     const pro = parseInt(parts[0]) || 0;
     const con = parseInt(parts[1]) || 0;
     gp += pro; gc += con;
+    if (pro === 0) sMar++;
+    if (con === 0) sSof++;
     if (r === 'VITORIA') {
       vits++; pts += 3;
       if (pro === 1 && con === 0) vits1x0++;
@@ -495,6 +523,10 @@ function renderizar(jogos) {
   saldoEl.style.color = saldo > 0 ? '#2563eb' : saldo < 0 ? '#dc2626' : '#9ca3af';
   document.getElementById('media-gp-val').textContent = (gp / total).toFixed(2);
   document.getElementById('media-gc-val').textContent = (gc / total).toFixed(2);
+  document.getElementById('smar-val').textContent = sMar;
+  document.getElementById('smar-pct').textContent = (sMar / total * 100).toFixed(0) + '% dos jogos';
+  document.getElementById('ssof-val').textContent = sSof;
+  document.getElementById('ssof-pct').textContent = (sSof / total * 100).toFixed(0) + '% dos jogos';
 
   // Timeline — mais recente primeiro
   const sorted = [...jogos].sort((a,b) => parseDataBR(b.d) - parseDataBR(a.d));
@@ -517,22 +549,24 @@ function renderizar(jogos) {
     </div>`;
   }).join('');
 
-  // Competições
-  const comps = {};
-  jogos.forEach(j => {
-    const comp = j.c || 'Outros';
-    if (!comps[comp]) comps[comp] = { v:0, e:0, d:0, pts:0, total:0 };
-    const r = rNorm(j.r);
-    comps[comp].total++;
-    if (r === 'VITORIA')  { comps[comp].v++; comps[comp].pts += 3; }
-    else if (r === 'EMPATE')   { comps[comp].e++; comps[comp].pts += 1; }
-    else if (r === 'DERROTA')  { comps[comp].d++; }
-  });
-  const compsOrdenadas = Object.entries(comps).sort((a,b) => b[1].total - a[1].total);
-  document.getElementById('comp-grid').innerHTML = compsOrdenadas.map(([comp, s]) => {
+  // ── Função auxiliar para montar cards de agrupamento
+  function agruparJogos(lista, keyFn) {
+    const map = {};
+    lista.forEach(j => {
+      const key = keyFn(j);
+      if (!map[key]) map[key] = { v:0, e:0, d:0, pts:0, total:0 };
+      const r = rNorm(j.r);
+      map[key].total++;
+      if (r === 'VITORIA')       { map[key].v++; map[key].pts += 3; }
+      else if (r === 'EMPATE')   { map[key].e++; map[key].pts += 1; }
+      else if (r === 'DERROTA')  { map[key].d++; }
+    });
+    return map;
+  }
+  function cardGrupo(nome, s, extra) {
     const ap = s.total > 0 ? ((s.pts / (s.total * 3)) * 100).toFixed(0) : 0;
     return `<div class="comp-card">
-      <div class="comp-name" title="${comp}">${comp}</div>
+      <div class="comp-name" title="${nome}">${extra || ''}${nome}</div>
       <div class="comp-aprov">${ap}%</div>
       <div class="comp-detail">
         <span>J ${s.total}</span>
@@ -541,7 +575,30 @@ function renderizar(jogos) {
         <span class="d">D ${s.d}</span>
       </div>
     </div>`;
-  }).join('');
+  }
+
+  // Competições
+  const comps = agruparJogos(jogos, j => j.c || 'Outros');
+  const compsOrdenadas = Object.entries(comps).sort((a,b) => b[1].total - a[1].total);
+  document.getElementById('comp-grid').innerHTML = compsOrdenadas.map(([n,s]) => cardGrupo(n,s)).join('');
+
+  // Mando
+  const MANDO_MAP = nome => {
+    const n = rNorm(nome);
+    if (n.includes('CASA') || n === 'MANDANTE') return 'Casa';
+    if (n.includes('FORA') || n === 'VISITANTE') return 'Fora';
+    return 'Neutro';
+  };
+  const MANDO_ICON = { 'Casa': '🏠 ', 'Fora': '✈️ ', 'Neutro': '🏟️ ' };
+  const mandos = agruparJogos(jogos, j => MANDO_MAP(j.m));
+  document.getElementById('mando-grid').innerHTML = ['Casa','Fora','Neutro']
+    .filter(k => mandos[k])
+    .map(k => cardGrupo(k, mandos[k], MANDO_ICON[k])).join('');
+
+  // Técnicos
+  const tecnicos = agruparJogos(jogos, j => j.t || 'Desconhecido');
+  const tecOrdenados = Object.entries(tecnicos).sort((a,b) => b[1].total - a[1].total);
+  document.getElementById('tecnicos-grid').innerHTML = tecOrdenados.map(([n,s]) => cardGrupo(n,s)).join('');
 }
 
 iniciar();
