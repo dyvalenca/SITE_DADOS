@@ -114,5 +114,20 @@
   </div>
 </main>
 
+<script>
+// Pré-carrega dados de jogos em background para acelerar jogos.html
+(function() {
+  try {
+    fetch('/api/dados')
+      .then(r => r.json())
+      .then(json => {
+        if (json && json.data) {
+          sessionStorage.setItem('nf_dados_cache', JSON.stringify(json.data));
+        }
+      })
+      .catch(function() {});
+  } catch(e) {}
+})();
+</script>
 </body>
 </html>
