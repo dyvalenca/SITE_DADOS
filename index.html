@@ -595,10 +595,17 @@ function renderizar(jogos) {
     .filter(k => mandos[k])
     .map(k => cardGrupo(k, mandos[k], MANDO_ICON[k])).join('');
 
-  // Técnicos
-  const tecnicos = agruparJogos(jogos, j => j.t || 'Desconhecido');
-  const tecOrdenados = Object.entries(tecnicos).sort((a,b) => b[1].total - a[1].total);
-  document.getElementById('tecnicos-grid').innerHTML = tecOrdenados.map(([n,s]) => cardGrupo(n,s)).join('');
+  // Técnicos (apenas a partir de 2001)
+  const jogosTec = jogos.filter(j => parseInt(j.a) >= 2001);
+  const secTec = document.getElementById('sec-tecnicos');
+  if (jogosTec.length === 0) {
+    secTec.style.display = 'none';
+  } else {
+    secTec.style.display = '';
+    const tecnicos = agruparJogos(jogosTec, j => j.t || 'Desconhecido');
+    const tecOrdenados = Object.entries(tecnicos).sort((a,b) => b[1].total - a[1].total);
+    document.getElementById('tecnicos-grid').innerHTML = tecOrdenados.map(([n,s]) => cardGrupo(n,s)).join('');
+  }
 }
 
 iniciar();
