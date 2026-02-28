@@ -68,7 +68,7 @@
 
     /* ── EFICIÊNCIA ──────────────────────────────────────── */
     .eficiencia-grid {
-      display: grid; grid-template-columns: 220px 1fr; gap: 16px; align-items: stretch;
+      display: grid; grid-template-columns: 200px 1fr; gap: 16px; align-items: stretch;
     }
     .card-aprov {
       background: #fff; border: 1px solid #e4e4e7; border-radius: 16px;
@@ -83,27 +83,31 @@
       font-size: 0.62rem; font-weight: 700; letter-spacing: 2px;
       color: #a1a1aa; text-transform: uppercase; margin-top: 8px;
     }
-    .aprov-pts {
-      font-size: 0.75rem; color: #9ca3af; margin-top: 6px;
+    .aprov-pts { font-size: 0.72rem; color: #9ca3af; margin-top: 6px; }
+    .aprov-jogos { font-size: 0.75rem; color: #a1a1aa; margin-top: 4px; }
+    /* grupos V/E/D */
+    .grupos-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
     }
-    .contadores-grid {
-      display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;
-    }
-    .contador-item {
+    .grupo-card {
       background: #fff; border: 1px solid #e4e4e7;
-      border-radius: 14px; padding: 18px 20px;
+      border-radius: 14px; padding: 18px 16px;
     }
-    .contador-valor {
-      font-size: 2.4rem; font-weight: 900; letter-spacing: -1.5px; line-height: 1;
+    .grupo-titulo {
+      font-size: 0.58rem; font-weight: 700; letter-spacing: 2px;
+      text-transform: uppercase; color: #a1a1aa; margin-bottom: 8px;
     }
-    .contador-label {
-      font-size: 0.62rem; font-weight: 700; letter-spacing: 2px;
-      text-transform: uppercase; color: #a1a1aa; margin-top: 5px;
+    .grupo-valor {
+      font-size: 2.6rem; font-weight: 900; letter-spacing: -2px; line-height: 1;
+      margin-bottom: 12px;
     }
-    .contador-item.jogs .contador-valor { color: #18181b; }
-    .contador-item.vits .contador-valor { color: #2563eb; }
-    .contador-item.emps .contador-valor { color: #9ca3af; }
-    .contador-item.ders .contador-valor { color: #dc2626; }
+    .grupo-card.vits .grupo-valor { color: #2563eb; }
+    .grupo-card.emps .grupo-valor { color: #9ca3af; }
+    .grupo-card.ders .grupo-valor { color: #dc2626; }
+    .grupo-mets { display: flex; flex-direction: column; gap: 5px; }
+    .grupo-met { display: flex; justify-content: space-between; font-size: 0.7rem; }
+    .grupo-met .gm-label { color: #a1a1aa; }
+    .grupo-met .gm-val { font-weight: 700; color: #3f3f46; }
 
     /* ── GOLS ────────────────────────────────────────────── */
     .gols-bar-card {
@@ -149,10 +153,26 @@
       transition: filter 0.1s;
     }
     .timeline-item:last-child { border-bottom: none; }
-    .timeline-item:hover { filter: brightness(0.96); }
-    .timeline-item.vitoria { background: #eff6ff; }
-    .timeline-item.empate  { background: #fefce8; }
-    .timeline-item.derrota { background: #fef2f2; }
+    .timeline-item:hover { filter: brightness(0.93); }
+    .timeline-item.vitoria { background: #bfdbfe; }
+    .timeline-item.empate  { background: #fde68a; }
+    .timeline-item.derrota { background: #fecaca; }
+    /* texto contextual por resultado */
+    .timeline-item.vitoria .tl-data { color: #3b82f6; }
+    .timeline-item.vitoria .tl-adv,
+    .timeline-item.vitoria .tl-placar { color: #1e40af; }
+    .timeline-item.vitoria .tl-comp,
+    .timeline-item.vitoria .tl-est { color: #60a5fa; }
+    .timeline-item.empate .tl-data { color: #b45309; }
+    .timeline-item.empate .tl-adv,
+    .timeline-item.empate .tl-placar { color: #78350f; }
+    .timeline-item.empate .tl-comp,
+    .timeline-item.empate .tl-est { color: #d97706; }
+    .timeline-item.derrota .tl-data { color: #ef4444; }
+    .timeline-item.derrota .tl-adv,
+    .timeline-item.derrota .tl-placar { color: #991b1b; }
+    .timeline-item.derrota .tl-comp,
+    .timeline-item.derrota .tl-est { color: #f87171; }
     .tl-data { color: #9ca3af; font-size: 0.72rem; white-space: nowrap; }
     .tl-info { min-width: 0; }
     .tl-comp {
@@ -198,9 +218,10 @@
     /* ── RESPONSIVO ──────────────────────────────────────── */
     @media (max-width: 640px) {
       .eficiencia-grid { grid-template-columns: 1fr; }
-      .contadores-grid { grid-template-columns: repeat(4, 1fr); }
-      .contador-item { padding: 12px 10px; }
-      .contador-valor { font-size: 1.6rem; }
+      .grupos-grid { grid-template-columns: repeat(3, 1fr); }
+      .grupo-card { padding: 14px 10px; }
+      .grupo-valor { font-size: 2rem; margin-bottom: 8px; }
+      .grupo-met { font-size: 0.65rem; }
       .timeline-item { grid-template-columns: 68px 1fr 24px 44px; }
       .tl-mando-icon { width: 24px; }
       .tl-placar { width: 44px; font-size: 0.9rem; }
@@ -232,23 +253,35 @@
         <div class="aprov-valor" id="aproveitamento">–</div>
         <div class="aprov-label">Aproveitamento</div>
         <div class="aprov-pts" id="aprov-pts"></div>
+        <div class="aprov-jogos"><span id="n-jogos">0</span> jogos</div>
       </div>
-      <div class="contadores-grid">
-        <div class="contador-item jogs">
-          <div class="contador-valor" id="n-jogos">0</div>
-          <div class="contador-label">Jogos</div>
+      <div class="grupos-grid">
+        <!-- Vitórias -->
+        <div class="grupo-card vits">
+          <div class="grupo-titulo">Vitórias</div>
+          <div class="grupo-valor" id="n-vits">0</div>
+          <div class="grupo-mets">
+            <div class="grupo-met"><span class="gm-label">%</span><span class="gm-val" id="n-vits-pct">—</span></div>
+            <div class="grupo-met"><span class="gm-label">Placar 1×0</span><span class="gm-val" id="n-vits-1x0">0</span></div>
+            <div class="grupo-met"><span class="gm-label">≥3 gols dif.</span><span class="gm-val" id="n-vits-3">0</span></div>
+          </div>
         </div>
-        <div class="contador-item vits">
-          <div class="contador-valor" id="n-vits">0</div>
-          <div class="contador-label">Vitórias</div>
+        <!-- Empates -->
+        <div class="grupo-card emps">
+          <div class="grupo-titulo">Empates</div>
+          <div class="grupo-valor" id="n-emps">0</div>
+          <div class="grupo-mets">
+            <div class="grupo-met"><span class="gm-label">%</span><span class="gm-val" id="n-emps-pct">—</span></div>
+          </div>
         </div>
-        <div class="contador-item emps">
-          <div class="contador-valor" id="n-emps">0</div>
-          <div class="contador-label">Empates</div>
-        </div>
-        <div class="contador-item ders">
-          <div class="contador-valor" id="n-ders">0</div>
-          <div class="contador-label">Derrotas</div>
+        <!-- Derrotas -->
+        <div class="grupo-card ders">
+          <div class="grupo-titulo">Derrotas</div>
+          <div class="grupo-valor" id="n-ders">0</div>
+          <div class="grupo-mets">
+            <div class="grupo-met"><span class="gm-label">%</span><span class="gm-val" id="n-ders-pct">—</span></div>
+            <div class="grupo-met"><span class="gm-label">≥3 gols dif.</span><span class="gm-val" id="n-ders-3">0</span></div>
+          </div>
         </div>
       </div>
     </div>
@@ -379,26 +412,43 @@ function renderizar(jogos) {
 
   // ── Estatísticas gerais
   let vits = 0, emps = 0, ders = 0, gp = 0, gc = 0, pts = 0;
+  let vits1x0 = 0, vits3 = 0, ders3 = 0;
   jogos.forEach(j => {
     const r = rNorm(j.r);
     const parts = (j.p || '0x0').split('x');
     const pro = parseInt(parts[0]) || 0;
     const con = parseInt(parts[1]) || 0;
     gp += pro; gc += con;
-    if (r === 'VITORIA')  { vits++; pts += 3; }
-    else if (r === 'EMPATE')   { emps++; pts += 1; }
-    else if (r === 'DERROTA')  { ders++; }
+    if (r === 'VITORIA') {
+      vits++; pts += 3;
+      if (pro === 1 && con === 0) vits1x0++;
+      if (pro - con >= 3) vits3++;
+    } else if (r === 'EMPATE') {
+      emps++; pts += 1;
+    } else if (r === 'DERROTA') {
+      ders++;
+      if (con - pro >= 3) ders3++;
+    }
   });
   const total = jogos.length || 1;
   const aprov = total > 0 ? ((pts / (total * 3)) * 100).toFixed(1) : '0.0';
+  const pctV = (vits / total * 100).toFixed(0) + '%';
+  const pctE = (emps / total * 100).toFixed(0) + '%';
+  const pctD = (ders / total * 100).toFixed(0) + '%';
 
   // Eficiência
   document.getElementById('aproveitamento').textContent = aprov + '%';
   document.getElementById('aprov-pts').textContent = pts + ' pts de ' + (total * 3) + ' disputados';
   document.getElementById('n-jogos').textContent = jogos.length;
   document.getElementById('n-vits').textContent = vits;
+  document.getElementById('n-vits-pct').textContent = pctV;
+  document.getElementById('n-vits-1x0').textContent = vits1x0;
+  document.getElementById('n-vits-3').textContent = vits3;
   document.getElementById('n-emps').textContent = emps;
+  document.getElementById('n-emps-pct').textContent = pctE;
   document.getElementById('n-ders').textContent = ders;
+  document.getElementById('n-ders-pct').textContent = pctD;
+  document.getElementById('n-ders-3').textContent = ders3;
 
   // Gols
   document.getElementById('gp-val').textContent = gp;
