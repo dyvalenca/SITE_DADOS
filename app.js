@@ -25,11 +25,13 @@ window.onload = function () {
   document.getElementById('tabelaCorpo').addEventListener('click', function (e) {
     const btn = e.target.closest('button[data-link]');
     if (btn) { abrirVideo(btn.dataset.link); return; }
+    const statsBtn = e.target.closest('button[data-stats]');
+    if (statsBtn) { abrirStats(statsBtn.dataset.stats); return; }
     const td = e.target.closest('td[data-filtro]');
     if (!td) return;
     filtrarPorCelula(td.dataset.filtro, td.dataset.valor);
   });
-  document.addEventListener('keydown', e => { if (e.key === 'Escape') fecharVideo(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') { fecharVideo(); fecharStats(); } });
 };
 
 // =====================================================================
@@ -624,6 +626,127 @@ function renderizarGraficoComparativo(lista) {
 // =====================================================================
 function mudarPagina(direcao) { paginaAtual += direcao; render(); }
 
+// =====================================================================
+// ESTATÍSTICAS DO JOGO (Modal de Sequências)
+// =====================================================================
+function abrirStats(jogoJson) {
+  const jogo = JSON.parse(jogoJson);
+  const partes = (jogo.p || '0x0').split('x');
+  const golsCor = parseInt(partes[0]) || 0;
+  const golsAdv = parseInt(partes[1]) || 0;
+  const dataJogo = parseDataBR(jogo.d);
+  const rNorm = v => (v || '').toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+  const isAmistoso = c => rNorm(c).includes("AMISTOSO");
+
+  // Todos os jogos até a data do jogo selecionado, sem amistosos, ordenados por data
+  const jogosValidos = dadosGlobais
+    .filter(j => !isAmistoso(j.c) && parseDataBR(j.d) <= dataJogo)
+    .sort((a, b) => parseDataBR(a.d) - parseDataBR(b.d));
+
+  // Encontra o índice do jogo selecionado (busca do mais recente para evitar duplicatas)
+  let idx = -1;
+  for (let i = jogosValidos.length - 1; i >= 0; i--) {
+    if (jogosValidos[i].d === jogo.d && jogosValidos[i].adv === jogo.adv && jogosValidos[i].p === jogo.p) {
+      idx = i; break;
+    }
+  }
+
+  document.getElementById('stats-titulo').innerHTML =
+    `Corinthians <span class="placar">${jogo.p}</span> | ${jogo.adv} | ${jogo.c} | ${jogo.d}`;
+
+  if (idx === -1) {
+    document.getElementById('stats-lista').innerHTML = '<p class="text-center text-muted py-3">Jogo não encontrado no histórico (pode ser amistoso).</p>';
+    document.getElementById('stats-modal').style.display = 'block';
+    return;
+  }
+
+  const condicoes = [
+    {
+      valido: rNorm(jogo.r) === 'EMPATE',
+      fn: j => rNorm(j.r) === 'EMPATE',
+      label: 'empatando'
+    },
+    {
+      valido: golsCor > 0,
+      fn: j => { const g = (j.p || '0x0').split('x'); return (parseInt(g[0]) || 0) > 0; },
+      label: 'marcando gols'
+    },
+    {
+      valido: golsCor === 0,
+      fn: j => { const g = (j.p || '0x0').split('x'); return (parseInt(g[0]) || 0) === 0; },
+      label: 'sem marcar gol'
+    },
+    {
+      valido: golsAdv > 0,
+      fn: j => { const g = (j.p || '0x0').split('x'); return (parseInt(g[1]) || 0) > 0; },
+      label: 'sofrendo gols'
+    },
+    {
+      valido: golsAdv === 0,
+      fn: j => { const g = (j.p || '0x0').split('x'); return (parseInt(g[1]) || 0) === 0; },
+      label: 'sem sofrer gol'
+    }
+  ];
+
+  const cards = condicoes
+    .filter(c => c.valido)
+    .map(c => {
+      const { streak, prevDate } = calcularSequenciaStats(jogosValidos, idx, c.fn);
+      if (!streak) return '';
+      const n = streak;
+      const s = n > 1 ? 's' : '';
+      let texto = `Com esse resultado <strong>(${jogo.p})</strong>, o Corinthians atingiu a marca de <strong>${n} jogo${s} consecutivo${s} ${c.label}</strong>.`;
+      let tweetExtra = '';
+      if (prevDate) {
+        const dias = diasEntreStats(prevDate, jogo.d);
+        texto += ` Essa marca não ocorria desde <strong>${prevDate}</strong> (há ${dias} dia${dias !== 1 ? 's' : ''}).`;
+        tweetExtra = `\nNão ocorria desde ${prevDate} (${dias} dias)`;
+      } else {
+        texto += ' Sem registro anterior desta sequência no histórico disponível.';
+      }
+      const tweetTxt = `⚽ Corinthians ${jogo.p} | ${jogo.adv}\n🏆 ${jogo.c} | 📅 ${jogo.d}\n\n${n} jogo${s} consecutivo${s} ${c.label}!${tweetExtra}\n\n#Corinthians #Timão`;
+      const tweetUrl = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(tweetTxt);
+      return `<div class="stat-card"><p class="stat-texto">${texto}</p><a class="btn-share-x" href="${tweetUrl}" target="_blank" rel="noopener">𝕏 Compartilhar no X</a></div>`;
+    })
+    .filter(Boolean);
+
+  document.getElementById('stats-lista').innerHTML = cards.length
+    ? cards.join('')
+    : '<p class="text-center text-muted py-3">Nenhuma sequência ativa para este jogo.</p>';
+  document.getElementById('stats-modal').style.display = 'block';
+}
+
+function calcularSequenciaStats(jogos, idx, fn) {
+  let streak = 0;
+  for (let i = idx; i >= 0; i--) {
+    if (fn(jogos[i])) streak++;
+    else break;
+  }
+  if (streak === 0) return { streak: 0, prevDate: null };
+  // Busca a última ocorrência desta sequência (>= streak) antes do início da sequência atual
+  let currentLen = 0, lastMatchEnd = -1;
+  for (let i = 0; i <= idx - streak; i++) {
+    if (fn(jogos[i])) {
+      currentLen++;
+      if (currentLen >= streak) lastMatchEnd = i;
+    } else {
+      currentLen = 0;
+    }
+  }
+  return { streak, prevDate: lastMatchEnd >= 0 ? jogos[lastMatchEnd].d : null };
+}
+
+function diasEntreStats(d1, d2) {
+  const a = parseDataBR(d1), b = parseDataBR(d2);
+  if (!a || !b) return '?';
+  return Math.round(Math.abs((b - a) / 86400000));
+}
+
+function fecharStats() {
+  const modal = document.getElementById('stats-modal');
+  if (modal) modal.style.display = 'none';
+}
+
 function render() {
   const corpo = document.getElementById('tabelaCorpo');
   const totalPaginas = Math.ceil(dadosFiltrados.length / itensPorPagina) || 1;
@@ -637,9 +760,9 @@ function render() {
     if (r === 'VITORIA') cl = 'vitoria'; else if (r === 'EMPATE') cl = 'empate'; else if (r === 'DERROTA') cl = 'derrota';
     const esc = v => (v || '').toString().replace(/&/g, '&amp;').replace(/"/g, '&quot;');
     const videoCell = j.lnk ? `<td class="text-center"><button class="btn-play" data-link="${esc(j.lnk)}" title="Assistir jogo">▶</button></td>` : '<td></td>';
-    const tweetText = encodeURIComponent(`⚽ Corinthians ${j.p} | ${j.adv || ''}\n🏆 ${j.c || ''}\n📅 ${j.d || ''}`);
-    const twitterCell = `<td class="text-center"><a class="btn-tweet" href="https://twitter.com/intent/tweet?text=${tweetText}" target="_blank" rel="noopener" title="Compartilhar no X/Twitter">𝕏</a></td>`;
-    return `<tr class="${cl}"><td>${j.d}</td><td class="filtro-celula" data-filtro="comp" data-valor="${esc(j.c)}">${j.c}</td><td class="text-center"><span class="placar">${j.p}</span></td><td class="filtro-celula" data-filtro="adv" data-valor="${esc(j.adv)}">${j.adv}</td><td class="filtro-celula" data-filtro="mando" data-valor="${esc(j.m)}">${j.m}</td><td class="filtro-celula" data-filtro="est" data-valor="${esc(j.e)}">${j.e}</td><td class="filtro-celula" data-filtro="tec" data-valor="${esc(j.t)}">${j.t}</td>${videoCell}${twitterCell}</tr>`;
+    const statsData = esc(JSON.stringify({d:j.d, p:j.p, c:j.c, adv:j.adv, r:j.r}));
+    const statsCell = `<td class="text-center"><button class="btn-stats" data-stats="${statsData}" title="Ver estatísticas do jogo">📊</button></td>`;
+    return `<tr class="${cl}"><td>${j.d}</td><td class="filtro-celula" data-filtro="comp" data-valor="${esc(j.c)}">${j.c}</td><td class="text-center"><span class="placar">${j.p}</span></td><td class="filtro-celula" data-filtro="adv" data-valor="${esc(j.adv)}">${j.adv}</td><td class="filtro-celula" data-filtro="mando" data-valor="${esc(j.m)}">${j.m}</td><td class="filtro-celula" data-filtro="est" data-valor="${esc(j.e)}">${j.e}</td><td class="filtro-celula" data-filtro="tec" data-valor="${esc(j.t)}">${j.t}</td>${videoCell}${statsCell}</tr>`;
   }).join('') || '<tr><td colspan="9" class="text-center">Nenhum jogo encontrado.</td></tr>';
   document.getElementById('pAtual').innerText = paginaAtual;
   document.getElementById('pTotal').innerText = totalPaginas;

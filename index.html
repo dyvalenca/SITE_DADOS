@@ -174,7 +174,7 @@
           <th>Estádio</th>
           <th>Técnico</th>
           <th class="text-center">Vídeo</th>
-          <th class="text-center">Compartilhar</th>
+          <th class="text-center">Stats</th>
         </tr>
       </thead>
       <tbody id="tabelaCorpo" class="small">
@@ -255,6 +255,16 @@
       </div>
     </div>
     <canvas id="graficoComparativo" height="100"></canvas>
+  </div>
+</div>
+
+<div id="stats-modal" onclick="if(event.target===this)fecharStats()" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.88); z-index:9999; overflow-y:auto;">
+  <div class="stats-modal-box">
+    <div class="stats-modal-header">
+      <h6 id="stats-titulo" class="mb-0 small fw-bold"></h6>
+      <button class="btn-fechar-stats" onclick="fecharStats()" title="Fechar">✕</button>
+    </div>
+    <div id="stats-lista"></div>
   </div>
 </div>
 
