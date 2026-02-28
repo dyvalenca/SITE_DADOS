@@ -450,17 +450,23 @@ function normalizar(data) {
 // ── Inicialização ─────────────────────────────────────────
 async function iniciar() {
   try {
-    let rawData;
-    const cached = sessionStorage.getItem('nf_dados_cache');
-    if (cached) {
-      rawData = JSON.parse(cached);
-    } else {
+    let rawData = null;
+
+    // Tenta usar cache do sessionStorage (pode falhar em Safari privado, WebView, etc.)
+    try {
+      const cached = sessionStorage.getItem('nf_dados_cache');
+      if (cached) rawData = JSON.parse(cached);
+    } catch(e) { rawData = null; }
+
+    // Se não há cache válido, busca da API
+    if (!rawData) {
       const resp = await fetch(API_URL);
       const json = await resp.json();
       if (!json.data) throw new Error('Sem dados');
       rawData = json.data;
-      sessionStorage.setItem('nf_dados_cache', JSON.stringify(rawData));
+      try { sessionStorage.setItem('nf_dados_cache', JSON.stringify(rawData)); } catch(e) {}
     }
+
     dadosTodos = normalizar(rawData);
 
     const anos = [...new Set(dadosTodos.map(j => parseInt(j.a)))]
