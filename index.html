@@ -3,15 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Almanaque do Timão</title>
+  <title>Números Fieis — Corinthians</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      background: #0a0a0a;
-      color: #e5e5e5;
+      background: #f1f1f3;
+      color: #18181b;
       font-family: 'Inter', sans-serif;
       min-height: 100vh;
     }
@@ -19,21 +19,21 @@
     /* ── HEADER ──────────────────────────────────────────── */
     header {
       position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-      background: #000; border-bottom: 1px solid #1c1c1c;
+      background: #fff; border-bottom: 1px solid #e4e4e7;
       padding: 0 28px; height: 58px;
       display: flex; align-items: center; justify-content: space-between;
     }
-    .logo { font-size: 1.05rem; font-weight: 900; letter-spacing: -0.5px; color: #fff; }
+    .logo { font-size: 1.05rem; font-weight: 900; letter-spacing: -0.5px; color: #18181b; }
     .logo span { color: #7c3aed; }
     .header-nav { display: flex; align-items: center; gap: 14px; }
     .btn-nav {
-      color: #888; font-size: 0.8rem; text-decoration: none;
-      border: 1px solid #2a2a2a; border-radius: 8px; padding: 6px 14px;
+      color: #71717a; font-size: 0.8rem; text-decoration: none;
+      border: 1px solid #d4d4d8; border-radius: 8px; padding: 6px 14px;
       transition: all 0.15s; white-space: nowrap;
     }
-    .btn-nav:hover { color: #fff; border-color: #444; }
+    .btn-nav:hover { color: #18181b; border-color: #a1a1aa; }
     #anoSel {
-      background: #111; color: #fff; border: 1px solid #2a2a2a;
+      background: #f4f4f5; color: #18181b; border: 1px solid #d4d4d8;
       border-radius: 8px; padding: 6px 10px; font-size: 0.8rem;
       cursor: pointer; font-family: 'Inter', sans-serif; outline: none;
     }
@@ -50,17 +50,17 @@
     .section-title {
       font-size: 0.65rem; font-weight: 700;
       letter-spacing: 2.5px; text-transform: uppercase;
-      color: #444; margin-bottom: 18px;
-      padding-bottom: 10px; border-bottom: 1px solid #1a1a1a;
+      color: #a1a1aa; margin-bottom: 18px;
+      padding-bottom: 10px; border-bottom: 1px solid #e4e4e7;
     }
 
     /* ── LOADING ─────────────────────────────────────────── */
     #loading {
       text-align: center; padding: 80px 20px;
-      color: #444; font-size: 0.85rem; letter-spacing: 2px;
+      color: #a1a1aa; font-size: 0.85rem; letter-spacing: 2px;
     }
     .spinner {
-      width: 32px; height: 32px; border: 3px solid #1f1f1f;
+      width: 32px; height: 32px; border: 3px solid #e4e4e7;
       border-top-color: #7c3aed; border-radius: 50%;
       animation: spin 0.8s linear infinite; margin: 0 auto 16px;
     }
@@ -71,26 +71,26 @@
       display: grid; grid-template-columns: 220px 1fr; gap: 16px; align-items: stretch;
     }
     .card-aprov {
-      background: #111; border: 1px solid #1c1c1c; border-radius: 16px;
+      background: #fff; border: 1px solid #e4e4e7; border-radius: 16px;
       padding: 28px 24px; display: flex; flex-direction: column;
       align-items: center; justify-content: center; text-align: center;
     }
     .aprov-valor {
       font-size: 4rem; font-weight: 900; line-height: 1;
-      letter-spacing: -4px; color: #fff;
+      letter-spacing: -4px; color: #18181b;
     }
     .aprov-label {
       font-size: 0.62rem; font-weight: 700; letter-spacing: 2px;
-      color: #444; text-transform: uppercase; margin-top: 8px;
+      color: #a1a1aa; text-transform: uppercase; margin-top: 8px;
     }
     .aprov-pts {
-      font-size: 0.75rem; color: #555; margin-top: 6px;
+      font-size: 0.75rem; color: #9ca3af; margin-top: 6px;
     }
     .contadores-grid {
       display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;
     }
     .contador-item {
-      background: #111; border: 1px solid #1c1c1c;
+      background: #fff; border: 1px solid #e4e4e7;
       border-radius: 14px; padding: 18px 20px;
     }
     .contador-valor {
@@ -98,16 +98,16 @@
     }
     .contador-label {
       font-size: 0.62rem; font-weight: 700; letter-spacing: 2px;
-      text-transform: uppercase; color: #444; margin-top: 5px;
+      text-transform: uppercase; color: #a1a1aa; margin-top: 5px;
     }
-    .contador-item.jogs .contador-valor { color: #fff; }
-    .contador-item.vits .contador-valor { color: #22c55e; }
-    .contador-item.emps .contador-valor { color: #6b7280; }
-    .contador-item.ders .contador-valor { color: #ef4444; }
+    .contador-item.jogs .contador-valor { color: #18181b; }
+    .contador-item.vits .contador-valor { color: #16a34a; }
+    .contador-item.emps .contador-valor { color: #9ca3af; }
+    .contador-item.ders .contador-valor { color: #dc2626; }
 
     /* ── GOLS ────────────────────────────────────────────── */
     .gols-bar-card {
-      background: #111; border: 1px solid #1c1c1c;
+      background: #fff; border: 1px solid #e4e4e7;
       border-radius: 14px; padding: 20px 22px; margin-bottom: 12px;
     }
     .gols-bar-labels {
@@ -115,75 +115,75 @@
       font-size: 0.78rem; font-weight: 600; margin-bottom: 10px;
     }
     .gols-bar-labels .gp { color: #7c3aed; }
-    .gols-bar-labels .gc { color: #ef4444; }
+    .gols-bar-labels .gc { color: #dc2626; }
     .gols-bar {
-      height: 10px; background: #1a1a1a;
+      height: 10px; background: #f0f0f2;
       border-radius: 5px; overflow: hidden; display: flex;
     }
     .bar-gp { background: #7c3aed; transition: width 0.5s ease; }
-    .bar-gc { background: #ef4444; transition: width 0.5s ease; }
+    .bar-gc { background: #dc2626; transition: width 0.5s ease; }
     .gols-metricas { display: flex; gap: 10px; flex-wrap: wrap; }
     .gol-metrica {
-      background: #111; border: 1px solid #1c1c1c;
+      background: #fff; border: 1px solid #e4e4e7;
       border-radius: 12px; padding: 14px 18px; flex: 1; min-width: 130px;
     }
-    .gol-metrica-valor { font-size: 1.7rem; font-weight: 900; letter-spacing: -0.5px; line-height: 1; }
+    .gol-metrica-valor { font-size: 1.7rem; font-weight: 900; letter-spacing: -0.5px; line-height: 1; color: #18181b; }
     .gol-metrica-label {
       font-size: 0.62rem; font-weight: 700; letter-spacing: 1.5px;
-      text-transform: uppercase; color: #444; margin-top: 5px;
+      text-transform: uppercase; color: #a1a1aa; margin-top: 5px;
     }
     .gol-metrica.media-gp .gol-metrica-valor { color: #7c3aed; }
-    .gol-metrica.media-gc .gol-metrica-valor { color: #ef4444; }
+    .gol-metrica.media-gc .gol-metrica-valor { color: #dc2626; }
 
     /* ── TIMELINE ────────────────────────────────────────── */
     .timeline-wrap {
-      border: 1px solid #1c1c1c; border-radius: 14px; overflow: hidden;
+      background: #fff; border: 1px solid #e4e4e7; border-radius: 14px; overflow: hidden;
     }
     .timeline-item {
       display: grid;
       grid-template-columns: 88px 1fr auto 60px;
       gap: 12px; align-items: center;
       padding: 10px 16px;
-      border-left: 3px solid #1c1c1c;
-      border-bottom: 1px solid #111;
+      border-left: 3px solid #e4e4e7;
+      border-bottom: 1px solid #f4f4f5;
       font-size: 0.82rem;
       transition: background 0.1s;
     }
     .timeline-item:last-child { border-bottom: none; }
-    .timeline-item:hover { background: #111; }
-    .timeline-item.vitoria { border-left-color: #22c55e; }
-    .timeline-item.empate  { border-left-color: #4b5563; }
-    .timeline-item.derrota { border-left-color: #ef4444; }
-    .tl-data { color: #555; font-size: 0.72rem; white-space: nowrap; }
+    .timeline-item:hover { background: #fafafa; }
+    .timeline-item.vitoria { border-left-color: #16a34a; }
+    .timeline-item.empate  { border-left-color: #d4d4d8; }
+    .timeline-item.derrota { border-left-color: #dc2626; }
+    .tl-data { color: #9ca3af; font-size: 0.72rem; white-space: nowrap; }
     .tl-info { min-width: 0; }
     .tl-comp {
       font-size: 0.6rem; font-weight: 700; letter-spacing: 1.2px;
-      text-transform: uppercase; color: #555;
+      text-transform: uppercase; color: #a1a1aa;
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
     .tl-adv {
       font-weight: 600; white-space: nowrap;
-      overflow: hidden; text-overflow: ellipsis; color: #e5e5e5;
+      overflow: hidden; text-overflow: ellipsis; color: #18181b;
     }
-    .tl-placar { font-weight: 900; font-size: 1rem; letter-spacing: -0.5px; color: #fff; white-space: nowrap; text-align: right; }
+    .tl-placar { font-weight: 900; font-size: 1rem; letter-spacing: -0.5px; color: #18181b; white-space: nowrap; text-align: right; }
     .tl-mando {
       font-size: 0.6rem; font-weight: 700; padding: 3px 8px;
       border-radius: 5px; white-space: nowrap; text-align: center;
     }
-    .tl-mando.casa { background: #14251a; color: #4ade80; }
-    .tl-mando.fora { background: #141a2e; color: #818cf8; }
+    .tl-mando.casa { background: #f0fdf4; color: #16a34a; }
+    .tl-mando.fora { background: #eff6ff; color: #2563eb; }
 
     /* ── COMPETIÇÕES ─────────────────────────────────────── */
     .comp-grid {
       display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px;
     }
     .comp-card {
-      background: #111; border: 1px solid #1c1c1c;
+      background: #fff; border: 1px solid #e4e4e7;
       border-radius: 12px; padding: 16px;
     }
     .comp-name {
       font-size: 0.72rem; font-weight: 700;
-      color: #e5e5e5; margin-bottom: 8px;
+      color: #3f3f46; margin-bottom: 8px;
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
     .comp-aprov {
@@ -191,10 +191,10 @@
       letter-spacing: -1px; line-height: 1;
       color: #7c3aed; margin-bottom: 8px;
     }
-    .comp-detail { display: flex; gap: 8px; flex-wrap: wrap; font-size: 0.68rem; color: #555; }
-    .comp-detail .v { color: #22c55e; }
-    .comp-detail .d { color: #ef4444; }
-    .comp-detail .e { color: #6b7280; }
+    .comp-detail { display: flex; gap: 8px; flex-wrap: wrap; font-size: 0.68rem; color: #9ca3af; }
+    .comp-detail .v { color: #16a34a; }
+    .comp-detail .d { color: #dc2626; }
+    .comp-detail .e { color: #9ca3af; }
 
     /* ── RESPONSIVO ──────────────────────────────────────── */
     @media (max-width: 640px) {
@@ -211,7 +211,7 @@
 <body>
 
 <header>
-  <div class="logo">Almanaque <span>do Timão</span></div>
+  <div class="logo">Números Fieis <span>— Corinthians</span></div>
   <div class="header-nav">
     <a href="dashboard.html" class="btn-nav">📊 Dashboard</a>
     <select id="anoSel" onchange="carregarAno(this.value)"></select>
