@@ -104,10 +104,25 @@
     .grupo-card.vits .grupo-valor { color: #2563eb; }
     .grupo-card.emps .grupo-valor { color: #9ca3af; }
     .grupo-card.ders .grupo-valor { color: #dc2626; }
-    .grupo-mets { display: flex; flex-direction: column; gap: 5px; }
-    .grupo-met { display: flex; justify-content: space-between; font-size: 0.7rem; }
-    .grupo-met .gm-label { color: #a1a1aa; }
-    .grupo-met .gm-val { font-weight: 700; color: #3f3f46; }
+    .grupo-mets { display: flex; gap: 6px; margin-top: 4px; }
+    .grupo-met {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; text-align: center;
+      padding: 8px 4px; border-radius: 10px;
+      background: rgba(0,0,0,0.04);
+    }
+    .grupo-met .gm-val {
+      font-size: 1.15rem; font-weight: 900;
+      letter-spacing: -0.5px; line-height: 1;
+    }
+    .grupo-met .gm-label {
+      font-size: 0.54rem; font-weight: 700;
+      letter-spacing: 0.6px; text-transform: uppercase;
+      color: #71717a; margin-top: 4px; line-height: 1.2;
+    }
+    .grupo-card.vits .gm-val { color: #2563eb; }
+    .grupo-card.emps .gm-val { color: #78716c; }
+    .grupo-card.ders .gm-val { color: #dc2626; }
 
     /* ── GOLS ────────────────────────────────────────────── */
     .gols-bar-card {
@@ -261,9 +276,18 @@
           <div class="grupo-titulo">Vitórias</div>
           <div class="grupo-valor" id="n-vits">0</div>
           <div class="grupo-mets">
-            <div class="grupo-met"><span class="gm-label">%</span><span class="gm-val" id="n-vits-pct">—</span></div>
-            <div class="grupo-met"><span class="gm-label">Placar 1×0</span><span class="gm-val" id="n-vits-1x0">0</span></div>
-            <div class="grupo-met"><span class="gm-label">≥3 gols dif.</span><span class="gm-val" id="n-vits-3">0</span></div>
+            <div class="grupo-met">
+              <span class="gm-val" id="n-vits-pct">—</span>
+              <span class="gm-label">dos jogos</span>
+            </div>
+            <div class="grupo-met">
+              <span class="gm-val" id="n-vits-1x0">0</span>
+              <span class="gm-label">placar 1×0</span>
+            </div>
+            <div class="grupo-met">
+              <span class="gm-val" id="n-vits-3">0</span>
+              <span class="gm-label">≥3 gols dif</span>
+            </div>
           </div>
         </div>
         <!-- Empates -->
@@ -271,7 +295,10 @@
           <div class="grupo-titulo">Empates</div>
           <div class="grupo-valor" id="n-emps">0</div>
           <div class="grupo-mets">
-            <div class="grupo-met"><span class="gm-label">%</span><span class="gm-val" id="n-emps-pct">—</span></div>
+            <div class="grupo-met">
+              <span class="gm-val" id="n-emps-pct">—</span>
+              <span class="gm-label">dos jogos</span>
+            </div>
           </div>
         </div>
         <!-- Derrotas -->
@@ -279,8 +306,14 @@
           <div class="grupo-titulo">Derrotas</div>
           <div class="grupo-valor" id="n-ders">0</div>
           <div class="grupo-mets">
-            <div class="grupo-met"><span class="gm-label">%</span><span class="gm-val" id="n-ders-pct">—</span></div>
-            <div class="grupo-met"><span class="gm-label">≥3 gols dif.</span><span class="gm-val" id="n-ders-3">0</span></div>
+            <div class="grupo-met">
+              <span class="gm-val" id="n-ders-pct">—</span>
+              <span class="gm-label">dos jogos</span>
+            </div>
+            <div class="grupo-met">
+              <span class="gm-val" id="n-ders-3">0</span>
+              <span class="gm-label">≥3 gols dif</span>
+            </div>
           </div>
         </div>
       </div>
