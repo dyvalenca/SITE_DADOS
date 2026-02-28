@@ -44,6 +44,7 @@ body { background-color: #fdfdfd; padding: 20px; font-family: 'Segoe UI', sans-s
 .btn-fechar-stats:hover { background: rgba(255,255,255,0.3); }
 .stat-card { padding: 16px; border-bottom: 1px solid #2e2e2e; }
 .stat-card:last-child { border-bottom: none; }
+.stat-card-inativo { opacity: 0.65; }
 .stat-texto { font-size: 0.87rem; line-height: 1.6; margin-bottom: 10px; color: #ddd; }
 .btn-share-x { background: #000; color: #fff; border: 1px solid #555; border-radius: 20px; padding: 4px 14px; font-size: 0.78rem; text-decoration: none; display: inline-flex; align-items: center; gap: 5px; transition: background 0.15s; }
 .btn-share-x:hover { background: #222; color: #fff; }

@@ -688,14 +688,14 @@ function abrirStats(jogoJson) {
     }
   ];
 
-  const cards = condicoes
-    .filter(c => c.valido)
-    .map(c => {
-      const { streak, prevDate } = calcularSequenciaStats(jogosValidos, idx, c.fn);
-      if (!streak) return '';
-      const n = streak;
-      const s = n > 1 ? 's' : '';
-      let texto = `Com esse resultado <strong>(${jogo.p})</strong>, o Corinthians atingiu a marca de <strong>${n} jogo${s} consecutivo${s} ${c.label}</strong>.`;
+  const cards = condicoes.map(c => {
+    const { streak, prevDate, ultimaLen, ultimaFim } = calcularSequenciaStats(jogosValidos, idx, c.fn);
+    let texto, tweetTxt;
+
+    if (streak > 0) {
+      // Condição ativa no jogo atual — mostra sequência atual
+      const n = streak, s = n > 1 ? 's' : '';
+      texto = `Com esse resultado <strong>(${jogo.p})</strong>, o Corinthians atingiu a marca de <strong>${n} jogo${s} consecutivo${s} ${c.label}</strong>.`;
       let tweetExtra = '';
       if (prevDate) {
         const dias = diasEntreStats(prevDate, jogo.d);
@@ -704,36 +704,63 @@ function abrirStats(jogoJson) {
       } else {
         texto += ' Sem registro anterior desta sequência no histórico disponível.';
       }
-      const tweetTxt = `⚽ Corinthians ${jogo.p} | ${jogo.adv}\n🏆 ${jogo.c} | 📅 ${jogo.d}\n\n${n} jogo${s} consecutivo${s} ${c.label}!${tweetExtra}\n\n#Corinthians #Timão`;
-      const tweetUrl = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(tweetTxt);
-      return `<div class="stat-card"><p class="stat-texto">${texto}</p><a class="btn-share-x" href="${tweetUrl}" target="_blank" rel="noopener">𝕏 Compartilhar no X</a></div>`;
-    })
-    .filter(Boolean);
+      tweetTxt = `⚽ Corinthians ${jogo.p} | ${jogo.adv}\n🏆 ${jogo.c} | 📅 ${jogo.d}\n\n${n} jogo${s} consecutivo${s} ${c.label}!${tweetExtra}\n\n#Corinthians #Timão`;
+    } else {
+      // Condição não ativa — mostra última sequência registrada
+      if (!ultimaFim) {
+        texto = `Com esse resultado <strong>(${jogo.p})</strong>, o Corinthians <strong>não está ${c.label}</strong> no momento. Sem registro anterior desta condição no histórico disponível.`;
+        tweetTxt = `⚽ Corinthians ${jogo.p} | ${jogo.adv}\n🏆 ${jogo.c} | 📅 ${jogo.d}\n\nSem registro de sequência de ${c.label} no histórico.\n\n#Corinthians #Timão`;
+      } else {
+        const n = ultimaLen, s = n > 1 ? 's' : '';
+        const dias = diasEntreStats(ultimaFim, jogo.d);
+        texto = `Com esse resultado <strong>(${jogo.p})</strong>, o Corinthians <strong>não está ${c.label}</strong> no momento. A última sequência de ${c.label} foi de <strong>${n} jogo${s} consecutivo${s}</strong>, encerrada em <strong>${ultimaFim}</strong> (há ${dias} dia${dias !== 1 ? 's' : ''}).`;
+        tweetTxt = `⚽ Corinthians ${jogo.p} | ${jogo.adv}\n🏆 ${jogo.c} | 📅 ${jogo.d}\n\nÚltima sequência de ${c.label}: ${n} jogo${s}, encerrada em ${ultimaFim} (há ${dias} dias)\n\n#Corinthians #Timão`;
+      }
+    }
 
-  document.getElementById('stats-lista').innerHTML = cards.length
-    ? cards.join('')
-    : '<p class="text-center text-muted py-3">Nenhuma sequência ativa para este jogo.</p>';
+    const tweetUrl = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(tweetTxt);
+    const cardClass = streak > 0 ? 'stat-card' : 'stat-card stat-card-inativo';
+    return `<div class="${cardClass}"><p class="stat-texto">${texto}</p><a class="btn-share-x" href="${tweetUrl}" target="_blank" rel="noopener">𝕏 Compartilhar no X</a></div>`;
+  });
+
+  document.getElementById('stats-lista').innerHTML = cards.join('');
   document.getElementById('stats-modal').style.display = 'block';
 }
 
 function calcularSequenciaStats(jogos, idx, fn) {
+  // Sequência atual (a partir do jogo selecionado, indo para trás)
   let streak = 0;
   for (let i = idx; i >= 0; i--) {
     if (fn(jogos[i])) streak++;
     else break;
   }
-  if (streak === 0) return { streak: 0, prevDate: null };
-  // Busca a última ocorrência desta sequência (>= streak) antes do início da sequência atual
-  let currentLen = 0, lastMatchEnd = -1;
-  for (let i = 0; i <= idx - streak; i++) {
-    if (fn(jogos[i])) {
-      currentLen++;
-      if (currentLen >= streak) lastMatchEnd = i;
-    } else {
-      currentLen = 0;
+
+  if (streak > 0) {
+    // Busca a última ocorrência desta sequência (>= streak) antes do início da sequência atual
+    let currentLen = 0, lastMatchEnd = -1;
+    for (let i = 0; i <= idx - streak; i++) {
+      if (fn(jogos[i])) {
+        currentLen++;
+        if (currentLen >= streak) lastMatchEnd = i;
+      } else {
+        currentLen = 0;
+      }
     }
+    return { streak, prevDate: lastMatchEnd >= 0 ? jogos[lastMatchEnd].d : null, ultimaLen: null, ultimaFim: null };
+  } else {
+    // Condição não ativa: busca a última sequência encerrada antes deste jogo
+    let lastEnd = -1;
+    for (let i = idx - 1; i >= 0; i--) {
+      if (fn(jogos[i])) { lastEnd = i; break; }
+    }
+    if (lastEnd === -1) return { streak: 0, prevDate: null, ultimaLen: 0, ultimaFim: null };
+    let lastLen = 0;
+    for (let i = lastEnd; i >= 0; i--) {
+      if (fn(jogos[i])) lastLen++;
+      else break;
+    }
+    return { streak: 0, prevDate: null, ultimaLen: lastLen, ultimaFim: jogos[lastEnd].d };
   }
-  return { streak, prevDate: lastMatchEnd >= 0 ? jogos[lastMatchEnd].d : null };
 }
 
 function diasEntreStats(d1, d2) {
