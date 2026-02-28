@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jogos por Ano — Números Fieis - Corinthians</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #f1f1f3;
+      color: #18181b;
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+    }
+
+    /* ── HEADER ──────────────────────────────────────────── */
+    header {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      background: #fff; border-bottom: 1px solid #e4e4e7;
+      padding: 0 28px; height: 58px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .logo { font-size: 1.05rem; font-weight: 900; letter-spacing: -0.5px; color: #18181b; }
+    .logo span { color: #52525b; font-weight: 600; }
+    .header-nav { display: flex; align-items: center; gap: 14px; }
+    .btn-nav {
+      color: #71717a; font-size: 0.8rem; text-decoration: none;
+      border: 1px solid #d4d4d8; border-radius: 8px; padding: 6px 14px;
+      transition: all 0.15s; white-space: nowrap;
+    }
+    .btn-nav:hover { color: #18181b; border-color: #a1a1aa; }
+
+    /* ── LAYOUT ──────────────────────────────────────────── */
+    main {
+      padding-top: 90px; padding-bottom: 80px;
+      max-width: 960px; margin: 0 auto;
+      padding-left: 20px; padding-right: 20px;
+    }
+
+    section { margin-bottom: 48px; }
+
+    .section-title {
+      font-size: 0.65rem; font-weight: 700;
+      letter-spacing: 2.5px; text-transform: uppercase;
+      color: #a1a1aa; margin-bottom: 18px;
+      padding-bottom: 10px; border-bottom: 1px solid #e4e4e7;
+    }
+
+    /* ── SELETOR DE ANO ──────────────────────────────────── */
+    .ano-control {
+      display: flex; align-items: center; gap: 14px;
+      margin-bottom: 40px;
+    }
+    .ano-label {
+      font-size: 0.65rem; font-weight: 700; letter-spacing: 2px;
+      text-transform: uppercase; color: #a1a1aa;
+    }
+    #anoSel {
+      background: #fff; color: #18181b; border: 1px solid #d4d4d8;
+      border-radius: 10px; padding: 8px 14px; font-size: 0.9rem;
+      cursor: pointer; font-family: 'Inter', sans-serif; outline: none;
+      font-weight: 700; letter-spacing: -0.3px;
+    }
+    #anoSel:hover { border-color: #a1a1aa; }
+
+    /* ── LOADING ─────────────────────────────────────────── */
+    #loading {
+      text-align: center; padding: 80px 20px;
+      color: #a1a1aa; font-size: 0.85rem; letter-spacing: 2px;
+    }
+    .spinner {
+      width: 32px; height: 32px; border: 3px solid #e4e4e7;
+      border-top-color: #7c3aed; border-radius: 50%;
+      animation: spin 0.8s linear infinite; margin: 0 auto 16px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── EFICIÊNCIA ──────────────────────────────────────── */
+    .eficiencia-grid {
+      display: grid; grid-template-columns: 200px 1fr; gap: 16px; align-items: stretch;
+    }
+    .card-aprov {
+      background: #fff; border: 1px solid #e4e4e7; border-radius: 16px;
+      padding: 28px 24px; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; text-align: center;
+    }
+    .aprov-valor {
+      font-size: 4rem; font-weight: 900; line-height: 1;
+      letter-spacing: -4px; color: #18181b;
+    }
+    .aprov-label {
+      font-size: 0.62rem; font-weight: 700; letter-spacing: 2px;
+      color: #a1a1aa; text-transform: uppercase; margin-top: 8px;
+    }
+    .aprov-pts { font-size: 0.72rem; color: #9ca3af; margin-top: 6px; }
+    .aprov-jogos { font-size: 0.75rem; color: #a1a1aa; margin-top: 4px; }
+    /* grupos V/E/D */
+    .grupos-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+    }
+    .grupo-card {
+      background: #fff; border: 1px solid #e4e4e7;
+      border-radius: 14px; padding: 18px 16px;
+    }
+    .grupo-titulo {
+      font-size: 0.58rem; font-weight: 700; letter-spacing: 2px;
+      text-transform: uppercase; color: #a1a1aa; margin-bottom: 8px;
+    }
+    .grupo-valor {
+      font-size: 2.6rem; font-weight: 900; letter-spacing: -2px; line-height: 1;
+      margin-bottom: 12px;
+    }
+    .grupo-card.vits .grupo-valor { color: #2563eb; }
+    .grupo-card.emps .grupo-valor { color: #9ca3af; }
+    .grupo-card.ders .grupo-valor { color: #dc2626; }
+    .grupo-mets { display: flex; gap: 6px; margin-top: 4px; }
+    .grupo-met {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; text-align: center;
+      padding: 8px 4px; border-radius: 10px;
+      background: rgba(0,0,0,0.04);
+    }
+    .grupo-met .gm-val {
+      font-size: 1.15rem; font-weight: 900;
+      letter-spacing: -0.5px; line-height: 1;
+    }
+    .grupo-met .gm-label {
+      font-size: 0.54rem; font-weight: 700;
+      letter-spacing: 0.6px; text-transform: uppercase;
+      color: #71717a; margin-top: 4px; line-height: 1.2;
+    }
+    .grupo-card.vits .gm-val { color: #2563eb; }
+    .grupo-card.emps .gm-val { color: #78716c; }
+    .grupo-card.ders .gm-val { color: #dc2626; }
+
+    /* ── GOLS ────────────────────────────────────────────── */
+    .gols-bar-card {
+      background: #fff; border: 1px solid #e4e4e7;
+      border-radius: 14px; padding: 20px 22px; margin-bottom: 12px;
+    }
+    .gols-bar-labels {
+      display: flex; justify-content: space-between;
+      font-size: 0.78rem; font-weight: 600; margin-bottom: 10px;
+    }
+    .gols-bar-labels .gp { color: #7c3aed; }
+    .gols-bar-labels .gc { color: #dc2626; }
+    .gols-bar {
+      height: 10px; background: #f0f0f2;
+      border-radius: 5px; overflow: hidden; display: flex;
+    }
+    .bar-gp { background: #7c3aed; transition: width 0.5s ease; }
+    .bar-gc { background: #dc2626; transition: width 0.5s ease; }
+    .gols-metricas { display: flex; gap: 10px; flex-wrap: wrap; }
+    .gol-metrica {
+      background: #fff; border: 1px solid #e4e4e7;
+      border-radius: 12px; padding: 14px 18px; flex: 1; min-width: 130px;
+    }
+    .gol-metrica-valor { font-size: 1.7rem; font-weight: 900; letter-spacing: -0.5px; line-height: 1; color: #18181b; }
+    .gol-metrica-label {
+      font-size: 0.62rem; font-weight: 700; letter-spacing: 1.5px;
+      text-transform: uppercase; color: #a1a1aa; margin-top: 5px;
+    }
+    .gol-metrica.media-gp .gol-metrica-valor { color: #7c3aed; }
+    .gol-metrica.media-gc .gol-metrica-valor { color: #dc2626; }
+    .gol-metrica.gol-smar .gol-metrica-valor { color: #9333ea; }
+    .gol-metrica.gol-ssof .gol-metrica-valor { color: #2563eb; }
+    .gol-metrica-pct { font-size: 0.7rem; color: #9ca3af; margin-top: 2px; }
+
+    /* ── TIMELINE ────────────────────────────────────────── */
+    .timeline-wrap {
+      background: #fff; border: 1px solid #e4e4e7; border-radius: 14px; overflow: hidden;
+    }
+    .timeline-item {
+      display: grid;
+      grid-template-columns: 88px 1fr 28px 52px;
+      gap: 12px; align-items: center;
+      padding: 10px 16px;
+      border-bottom: 1px solid rgba(0,0,0,0.05);
+      font-size: 0.82rem;
+      transition: filter 0.1s;
+    }
+    .timeline-item:last-child { border-bottom: none; }
+    .timeline-item:hover { filter: brightness(0.93); }
+    .timeline-item.vitoria { background: #bfdbfe; }
+    .timeline-item.empate  { background: #fde68a; }
+    .timeline-item.derrota { background: #fecaca; }
+    /* texto contextual por resultado */
+    .timeline-item.vitoria .tl-data { color: #3b82f6; }
+    .timeline-item.vitoria .tl-adv,
+    .timeline-item.vitoria .tl-placar { color: #1e40af; }
+    .timeline-item.vitoria .tl-comp,
+    .timeline-item.vitoria .tl-est { color: #60a5fa; }
+    .timeline-item.empate .tl-data { color: #b45309; }
+    .timeline-item.empate .tl-adv,
+    .timeline-item.empate .tl-placar { color: #78350f; }
+    .timeline-item.empate .tl-comp,
+    .timeline-item.empate .tl-est { color: #d97706; }
+    .timeline-item.derrota .tl-data { color: #ef4444; }
+    .timeline-item.derrota .tl-adv,
+    .timeline-item.derrota .tl-placar { color: #991b1b; }
+    .timeline-item.derrota .tl-comp,
+    .timeline-item.derrota .tl-est { color: #f87171; }
+    .tl-data { color: #9ca3af; font-size: 0.72rem; white-space: nowrap; }
+    .tl-info { min-width: 0; }
+    .tl-comp {
+      font-size: 0.6rem; font-weight: 700; letter-spacing: 1.2px;
+      text-transform: uppercase; color: #a1a1aa;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .tl-adv {
+      font-weight: 600; white-space: nowrap;
+      overflow: hidden; text-overflow: ellipsis; color: #18181b;
+    }
+    .tl-est {
+      font-size: 0.6rem; font-weight: 700; letter-spacing: 1.2px;
+      text-transform: uppercase; color: #a1a1aa;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .tl-placar { font-weight: 900; font-size: 1rem; letter-spacing: -0.5px; color: #18181b; white-space: nowrap; text-align: right; width: 52px; }
+    .tl-mando-icon { font-size: 1rem; line-height: 1; text-align: center; width: 28px; }
+
+    /* ── COMPETIÇÕES ─────────────────────────────────────── */
+    .comp-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px;
+    }
+    .comp-card {
+      background: #fff; border: 1px solid #e4e4e7;
+      border-radius: 12px; padding: 16px;
+    }
+    .comp-name {
+      font-size: 0.72rem; font-weight: 700;
+      color: #3f3f46; margin-bottom: 8px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .comp-aprov {
+      font-size: 1.9rem; font-weight: 900;
+      letter-spacing: -1px; line-height: 1;
+      color: #7c3aed; margin-bottom: 8px;
+    }
+    .comp-detail { display: flex; gap: 8px; flex-wrap: wrap; font-size: 0.68rem; color: #9ca3af; }
+    .comp-detail .v { color: #2563eb; }
+    .comp-detail .d { color: #dc2626; }
+    .comp-detail .e { color: #9ca3af; }
+
+    /* ── RESPONSIVO ──────────────────────────────────────── */
+    @media (max-width: 640px) {
+      .eficiencia-grid { grid-template-columns: 1fr; }
+      .grupos-grid { grid-template-columns: repeat(3, 1fr); }
+      .grupo-card { padding: 14px 10px; }
+      .grupo-valor { font-size: 2rem; margin-bottom: 8px; }
+      .grupo-met { font-size: 0.65rem; }
+      .timeline-item { grid-template-columns: 68px 1fr 24px 44px; }
+      .tl-mando-icon { width: 24px; }
+      .tl-placar { width: 44px; font-size: 0.9rem; }
+      main { padding-left: 14px; padding-right: 14px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Números Fieis <span>- Corinthians</span></div>
+  <div class="header-nav">
+    <a href="index.html" class="btn-nav">← Início</a>
+  </div>
+</header>
+
+<main>
+  <div class="ano-control">
+    <span class="ano-label">Temporada</span>
+    <select id="anoSel" onchange="carregarAno(this.value)"></select>
+  </div>
+
+  <div id="loading">
+    <div class="spinner"></div>
+    Carregando dados...
+  </div>
+
+  <!-- EFICIÊNCIA -->
+  <section id="sec-eficiencia" style="display:none">
+    <div class="section-title">Painel dos Resultados</div>
+    <div class="eficiencia-grid">
+      <div class="card-aprov">
+        <div class="aprov-valor" id="aproveitamento">–</div>
+        <div class="aprov-label">Aproveitamento</div>
+        <div class="aprov-pts" id="aprov-pts"></div>
+        <div class="aprov-jogos"><span id="n-jogos">0</span> jogos</div>
+      </div>
+      <div class="grupos-grid">
+        <!-- Vitórias -->
+        <div class="grupo-card vits">
+          <div class="grupo-titulo">Vitórias</div>
+          <div class="grupo-valor" id="n-vits">0</div>
+          <div class="grupo-mets">
+            <div class="grupo-met">
+              <span class="gm-val" id="n-vits-pct">—</span>
+              <span class="gm-label">dos jogos</span>
+            </div>
+            <div class="grupo-met">
+              <span class="gm-val" id="n-vits-1x0">0</span>
+              <span class="gm-label">placar 1×0</span>
+            </div>
+            <div class="grupo-met">
+              <span class="gm-val" id="n-vits-3">0</span>
+              <span class="gm-label">≥3 gols dif</span>
+            </div>
+          </div>
+        </div>
+        <!-- Empates -->
+        <div class="grupo-card emps">
+          <div class="grupo-titulo">Empates</div>
+          <div class="grupo-valor" id="n-emps">0</div>
+          <div class="grupo-mets">
+            <div class="grupo-met">
+              <span class="gm-val" id="n-emps-pct">—</span>
+              <span class="gm-label">dos jogos</span>
+            </div>
+          </div>
+        </div>
+        <!-- Derrotas -->
+        <div class="grupo-card ders">
+          <div class="grupo-titulo">Derrotas</div>
+          <div class="grupo-valor" id="n-ders">0</div>
+          <div class="grupo-mets">
+            <div class="grupo-met">
+              <span class="gm-val" id="n-ders-pct">—</span>
+              <span class="gm-label">dos jogos</span>
+            </div>
+            <div class="grupo-met">
+              <span class="gm-val" id="n-ders-3">0</span>
+              <span class="gm-label">≥3 gols dif</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- GOLS -->
+  <section id="sec-gols" style="display:none">
+    <div class="section-title">Balanço de Gols</div>
+    <div class="gols-bar-card">
+      <div class="gols-bar-labels">
+        <span class="gp">Gols Pró — <strong id="gp-val">0</strong></span>
+        <span class="gc">Gols Contra — <strong id="gc-val">0</strong></span>
+      </div>
+      <div class="gols-bar">
+        <div class="bar-gp" id="bar-gp" style="width:50%"></div>
+        <div class="bar-gc" id="bar-gc" style="width:50%"></div>
+      </div>
+    </div>
+    <div class="gols-metricas">
+      <div class="gol-metrica">
+        <div class="gol-metrica-valor" id="saldo-val" style="color:#22c55e">+0</div>
+        <div class="gol-metrica-label">Saldo de Gols</div>
+      </div>
+      <div class="gol-metrica media-gp">
+        <div class="gol-metrica-valor" id="media-gp-val">0.00</div>
+        <div class="gol-metrica-label">Méd. Gols Pró / Jogo</div>
+      </div>
+      <div class="gol-metrica media-gc">
+        <div class="gol-metrica-valor" id="media-gc-val">0.00</div>
+        <div class="gol-metrica-label">Méd. Gols Contra / Jogo</div>
+      </div>
+      <div class="gol-metrica gol-smar">
+        <div class="gol-metrica-valor" id="smar-val">0</div>
+        <div class="gol-metrica-label">Jogos S/ Marcar</div>
+        <div class="gol-metrica-pct" id="smar-pct">—</div>
+      </div>
+      <div class="gol-metrica gol-ssof">
+        <div class="gol-metrica-valor" id="ssof-val">0</div>
+        <div class="gol-metrica-label">Jogos S/ Sofrer</div>
+        <div class="gol-metrica-pct" id="ssof-pct">—</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TIMELINE -->
+  <section id="sec-timeline" style="display:none">
+    <div class="section-title">Timeline de Resultados</div>
+    <div class="timeline-wrap" id="timeline-lista"></div>
+  </section>
+
+  <!-- COMPETIÇÕES -->
+  <section id="sec-comps" style="display:none">
+    <div class="section-title">Distribuição por Competição</div>
+    <div class="comp-grid" id="comp-grid"></div>
+  </section>
+
+  <!-- MANDO -->
+  <section id="sec-mando" style="display:none">
+    <div class="section-title">Painel por Mando</div>
+    <div class="comp-grid" id="mando-grid"></div>
+  </section>
+
+  <!-- TÉCNICOS -->
+  <section id="sec-tecnicos" style="display:none">
+    <div class="section-title">Painel por Técnicos</div>
+    <div class="comp-grid" id="tecnicos-grid"></div>
+  </section>
+</main>
+
+<script>
+const API_URL = "/api/dados";
+let dadosTodos = [];
+
+// ── Helpers ──────────────────────────────────────────────
+function rNorm(v) {
+  return (v || '').toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+}
+function limpar(val) {
+  if (val === null || val === undefined || val === '') return '';
+  return String(val).normalize('NFC')
+    .replace(/[\u00A0\u200B-\u200D\uFEFF\u2028\u2029\u0000-\u001F\u007F]/g, '')
+    .replace(/\s+/g, ' ').trim();
+}
+function formatarData(valor) {
+  if (!valor) return '';
+  if (typeof valor === 'string' && valor.includes('/')) return valor;
+  try {
+    const d = new Date(valor);
+    if (isNaN(d)) return valor;
+    return String(d.getUTCDate()).padStart(2,'0') + '/' +
+           String(d.getUTCMonth()+1).padStart(2,'0') + '/' + d.getUTCFullYear();
+  } catch(e) { return valor; }
+}
+function parseDataBR(str) {
+  if (!str) return new Date(0);
+  const p = str.split('/');
+  return p.length === 3 ? new Date(p[2], p[1]-1, p[0]) : new Date(str);
+}
+function normalizar(data) {
+  return data.map(row => ({
+    d:   formatarData(row["DATA"]),
+    a:   row["ANO COMPETICAO"],
+    m:   limpar(row["MANDO"]),
+    p:   (row["GOL CORINTHIANS"] === "" ? "0" : row["GOL CORINTHIANS"]) + "x" +
+         (row["GOL ADVERSARIO"] === "" ? "0" : row["GOL ADVERSARIO"]),
+    r:   limpar(row["RESULTADO"]),
+    adv: limpar(row["TIME ADVERSARIO"]),
+    c:   limpar(row["COMPETIÇÃO"]),
+    e:   limpar(row["ESTADIO"]),
+    t:   limpar(row["TECNICO CORINTHIANS"]),
+  }));
+}
+
+// ── Inicialização ─────────────────────────────────────────
+async function iniciar() {
+  try {
+    const resp = await fetch(API_URL);
+    const json = await resp.json();
+    if (!json.data) throw new Error('Sem dados');
+    dadosTodos = normalizar(json.data);
+
+    const anos = [...new Set(dadosTodos.map(j => parseInt(j.a)))]
+      .filter(Boolean).sort((a,b) => b-a);
+
+    const sel = document.getElementById('anoSel');
+    anos.forEach(ano => sel.add(new Option(ano, ano)));
+    sel.value = anos[0];
+
+    renderizar(dadosTodos.filter(j => parseInt(j.a) === anos[0]));
+  } catch(err) {
+    document.getElementById('loading').innerHTML = 'Erro ao carregar dados.';
+    console.error(err);
+  }
+}
+
+function carregarAno(ano) {
+  const jogos = dadosTodos.filter(j => parseInt(j.a) === parseInt(ano));
+  if (jogos.length > 0) { renderizar(jogos); return; }
+  fetch(`${API_URL}?ano=${ano}`)
+    .then(r => r.json())
+    .then(json => { if (json.data) renderizar(normalizar(json.data)); })
+    .catch(console.error);
+}
+
+// ── Renderização ──────────────────────────────────────────
+function renderizar(jogos) {
+  document.getElementById('loading').style.display = 'none';
+  ['sec-eficiencia','sec-gols','sec-timeline','sec-comps','sec-mando','sec-tecnicos'].forEach(id => {
+    document.getElementById(id).style.display = '';
+  });
+
+  // ── Estatísticas gerais
+  let vits = 0, emps = 0, ders = 0, gp = 0, gc = 0, pts = 0;
+  let vits1x0 = 0, vits3 = 0, ders3 = 0, sMar = 0, sSof = 0;
+  jogos.forEach(j => {
+    const r = rNorm(j.r);
+    const parts = (j.p || '0x0').split('x');
+    const pro = parseInt(parts[0]) || 0;
+    const con = parseInt(parts[1]) || 0;
+    gp += pro; gc += con;
+    if (pro === 0) sMar++;
+    if (con === 0) sSof++;
+    if (r === 'VITORIA') {
+      vits++; pts += 3;
+      if (pro === 1 && con === 0) vits1x0++;
+      if (pro - con >= 3) vits3++;
+    } else if (r === 'EMPATE') {
+      emps++; pts += 1;
+    } else if (r === 'DERROTA') {
+      ders++;
+      if (con - pro >= 3) ders3++;
+    }
+  });
+  const total = jogos.length || 1;
+  const aprov = total > 0 ? ((pts / (total * 3)) * 100).toFixed(1) : '0.0';
+  const pctV = (vits / total * 100).toFixed(0) + '%';
+  const pctE = (emps / total * 100).toFixed(0) + '%';
+  const pctD = (ders / total * 100).toFixed(0) + '%';
+
+  // Eficiência
+  document.getElementById('aproveitamento').textContent = aprov + '%';
+  document.getElementById('aprov-pts').textContent = pts + ' pts de ' + (total * 3) + ' disputados';
+  document.getElementById('n-jogos').textContent = jogos.length;
+  document.getElementById('n-vits').textContent = vits;
+  document.getElementById('n-vits-pct').textContent = pctV;
+  document.getElementById('n-vits-1x0').textContent = vits1x0;
+  document.getElementById('n-vits-3').textContent = vits3;
+  document.getElementById('n-emps').textContent = emps;
+  document.getElementById('n-emps-pct').textContent = pctE;
+  document.getElementById('n-ders').textContent = ders;
+  document.getElementById('n-ders-pct').textContent = pctD;
+  document.getElementById('n-ders-3').textContent = ders3;
+
+  // Gols
+  document.getElementById('gp-val').textContent = gp;
+  document.getElementById('gc-val').textContent = gc;
+  const totalG = gp + gc || 1;
+  document.getElementById('bar-gp').style.width = ((gp / totalG) * 100).toFixed(1) + '%';
+  document.getElementById('bar-gc').style.width = ((gc / totalG) * 100).toFixed(1) + '%';
+  const saldo = gp - gc;
+  const saldoEl = document.getElementById('saldo-val');
+  saldoEl.textContent = (saldo >= 0 ? '+' : '') + saldo;
+  saldoEl.style.color = saldo > 0 ? '#2563eb' : saldo < 0 ? '#dc2626' : '#9ca3af';
+  document.getElementById('media-gp-val').textContent = (gp / total).toFixed(2);
+  document.getElementById('media-gc-val').textContent = (gc / total).toFixed(2);
+  document.getElementById('smar-val').textContent = sMar;
+  document.getElementById('smar-pct').textContent = (sMar / total * 100).toFixed(0) + '% dos jogos';
+  document.getElementById('ssof-val').textContent = sSof;
+  document.getElementById('ssof-pct').textContent = (sSof / total * 100).toFixed(0) + '% dos jogos';
+
+  // Timeline — mais recente primeiro
+  const sorted = [...jogos].sort((a,b) => parseDataBR(b.d) - parseDataBR(a.d));
+  document.getElementById('timeline-lista').innerHTML = sorted.map(j => {
+    const r = rNorm(j.r);
+    const cl = r === 'VITORIA' ? 'vitoria' : r === 'EMPATE' ? 'empate' : 'derrota';
+    const mandoNorm = rNorm(j.m);
+    const isMandante = mandoNorm.includes('CASA') || mandoNorm === 'MANDANTE';
+    const isVisitante = mandoNorm.includes('FORA') || mandoNorm === 'VISITANTE';
+    const mandoIcone = isMandante ? '🏠' : isVisitante ? '✈️' : '🏟️';
+    return `<div class="timeline-item ${cl}">
+      <span class="tl-data">${j.d}</span>
+      <div class="tl-info">
+        <div class="tl-comp">${j.c || '—'}</div>
+        <div class="tl-est">${j.e || '—'}</div>
+        <div class="tl-adv">${j.adv || '—'}</div>
+      </div>
+      <span class="tl-mando-icon" title="${j.m || ''}">${mandoIcone}</span>
+      <span class="tl-placar">${j.p}</span>
+    </div>`;
+  }).join('');
+
+  // ── Função auxiliar para montar cards de agrupamento
+  function agruparJogos(lista, keyFn) {
+    const map = {};
+    lista.forEach(j => {
+      const key = keyFn(j);
+      if (!map[key]) map[key] = { v:0, e:0, d:0, pts:0, total:0 };
+      const r = rNorm(j.r);
+      map[key].total++;
+      if (r === 'VITORIA')       { map[key].v++; map[key].pts += 3; }
+      else if (r === 'EMPATE')   { map[key].e++; map[key].pts += 1; }
+      else if (r === 'DERROTA')  { map[key].d++; }
+    });
+    return map;
+  }
+  function cardGrupo(nome, s, extra) {
+    const ap = s.total > 0 ? ((s.pts / (s.total * 3)) * 100).toFixed(0) : 0;
+    return `<div class="comp-card">
+      <div class="comp-name" title="${nome}">${extra || ''}${nome}</div>
+      <div class="comp-aprov">${ap}%</div>
+      <div class="comp-detail">
+        <span>J ${s.total}</span>
+        <span class="v">V ${s.v}</span>
+        <span class="e">E ${s.e}</span>
+        <span class="d">D ${s.d}</span>
+      </div>
+    </div>`;
+  }
+
+  // Competições
+  const comps = agruparJogos(jogos, j => j.c || 'Outros');
+  const compsOrdenadas = Object.entries(comps).sort((a,b) => b[1].total - a[1].total);
+  document.getElementById('comp-grid').innerHTML = compsOrdenadas.map(([n,s]) => cardGrupo(n,s)).join('');
+
+  // Mando
+  const MANDO_MAP = nome => {
+    const n = rNorm(nome);
+    if (n.includes('CASA') || n === 'MANDANTE') return 'Casa';
+    if (n.includes('FORA') || n === 'VISITANTE') return 'Fora';
+    return 'Neutro';
+  };
+  const MANDO_ICON = { 'Casa': '🏠 ', 'Fora': '✈️ ', 'Neutro': '🏟️ ' };
+  const mandos = agruparJogos(jogos, j => MANDO_MAP(j.m));
+  document.getElementById('mando-grid').innerHTML = ['Casa','Fora','Neutro']
+    .filter(k => mandos[k])
+    .map(k => cardGrupo(k, mandos[k], MANDO_ICON[k])).join('');
+
+  // Técnicos (apenas a partir de 2001)
+  const jogosTec = jogos.filter(j => parseInt(j.a) >= 2001);
+  const secTec = document.getElementById('sec-tecnicos');
+  if (jogosTec.length === 0) {
+    secTec.style.display = 'none';
+  } else {
+    secTec.style.display = '';
+    const tecnicos = agruparJogos(jogosTec, j => j.t || 'Desconhecido');
+    const tecOrdenados = Object.entries(tecnicos).sort((a,b) => b[1].total - a[1].total);
+    document.getElementById('tecnicos-grid').innerHTML = tecOrdenados.map(([n,s]) => cardGrupo(n,s)).join('');
+  }
+}
+
+iniciar();
+</script>
+</body>
+</html>
