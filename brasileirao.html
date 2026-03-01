@@ -803,15 +803,21 @@ function reordenarH2H(btn) {
 
 // ── Painel de jogos ───────────────────────────────────────
 function abrirPainel(adv) {
-  // Busca TODOS os jogos do Brasileirão contra esse adversário (sem filtro de período)
-  const jogosAdv = dadosBrasileirao.filter(j => j.adv === adv)
+  // Respeita o filtro de período ativo
+  const jogosAdv = getJogosFiltrados().filter(j => j.adv === adv)
     .sort((a, b) => parseDataBR(b.d) - parseDataBR(a.d));
 
   const ag = calcularAgregado(jogosAdv);
 
+  const periodoMeta = {
+    era:      'Brasileirão · Toda a Era',
+    titulos:  'Brasileirão · Anos de Título',
+    ultimos5: 'Brasileirão · Últimos 5 Anos',
+  }[periodoAtivo];
+
   document.getElementById('painel-adv-nome').textContent = adv;
   document.getElementById('painel-adv-meta').innerHTML =
-    `${ag.total} jogo${ag.total !== 1 ? 's' : ''} no Brasileirão · ` +
+    `${periodoMeta} · ${ag.total} jogo${ag.total !== 1 ? 's' : ''} · ` +
     `<strong>${ag.v}V</strong> · ` +
     `<span class="meta-e">${ag.e}E</span> · ` +
     `<span class="meta-d">${ag.d}D</span> · ` +
@@ -918,7 +924,8 @@ async function iniciar() {
     dadosBrasileirao = dadosTodos.filter(j => {
       const comp = rNorm(j.c);
       const ano  = parseInt(j.a);
-      return comp.includes('BRASILEIRO') && ano >= ANO_MIN;
+      // Exclui Série B (ex: 2008) e restringe ao período pontos corridos
+      return comp.includes('BRASILEIRO') && !comp.includes('SERIE B') && ano >= ANO_MIN;
     });
 
     if (dadosBrasileirao.length === 0) {
