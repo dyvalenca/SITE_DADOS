@@ -592,12 +592,18 @@ function normalizar(data) {
 }
 
 // ── Parsing ───────────────────────────────────────────────
-function parseJogo(j) {
-  const r = rNorm(j.r);
-  const parts = (j.p || '0x0').split('x');
+// No Brasileirão Série A (formato liga) o resultado é sempre determinado
+// pelo placar: não há prorrogação nem pênaltis na fase de classificação.
+// Derivar o resultado pelo placar evita erros pontuais na coluna RESULTADO.
+function resultadoPorPlacar(placar) {
+  const parts = (placar || '0x0').split('x');
   const pro = parseInt(parts[0]) || 0;
   const con = parseInt(parts[1]) || 0;
+  const r = pro > con ? 'VITORIA' : pro < con ? 'DERROTA' : 'EMPATE';
   return { r, pro, con };
+}
+function parseJogo(j) {
+  return resultadoPorPlacar(j.p);
 }
 
 // ── Cálculo por ano ───────────────────────────────────────
@@ -912,7 +918,7 @@ function abrirPainel(adv) {
     `Aprovt: ${ag.aproveitamento.toFixed(1)}%`;
 
   document.getElementById('painel-lista').innerHTML = jogosAdv.map(j => {
-    const r = rNorm(j.r);
+    const { r } = resultadoPorPlacar(j.p);
     const cl = r === 'VITORIA' ? 'vitoria' : r === 'EMPATE' ? 'empate' : 'derrota';
     const mandoNorm = rNorm(j.m);
     const isCasa = mandoNorm.includes('CASA') || mandoNorm === 'MANDANTE';
