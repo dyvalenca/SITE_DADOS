@@ -398,7 +398,7 @@
       .chart-container { height: 240px; }
       .era-stats-grid { grid-template-columns: repeat(3, 1fr); }
       .h2h-grid { grid-template-columns: 1fr; }
-      .header-nav .btn-nav:not(:last-child) { display: none; }
+      .header-nav .btn-nav:not(:last-child):not(#btn-atualizar) { display: none; }
       .painel { width: 100vw; border-left: none; }
       .timeline-item { grid-template-columns: 68px 1fr 24px 44px; }
       .tl-mando-icon { width: 24px; }
@@ -413,6 +413,7 @@
   <div class="header-nav">
     <a href="jogos.html" class="btn-nav">Jogos por Ano</a>
     <a href="dashboard.html" class="btn-nav">Dashboard</a>
+    <button id="btn-atualizar" class="btn-nav" style="background:none;cursor:pointer;font-family:'Inter',sans-serif;" onclick="atualizarDados()">↻ Atualizar</button>
     <a href="index.html" class="btn-nav">← Início</a>
   </div>
 </header>
@@ -1039,6 +1040,28 @@ async function iniciar() {
     document.getElementById('loading').innerHTML = 'Erro ao carregar dados.';
     console.error(err);
   }
+}
+
+// ── Atualizar dados ───────────────────────────────────────
+async function atualizarDados() {
+  const btn = document.getElementById('btn-atualizar');
+  if (btn) { btn.textContent = 'Atualizando...'; btn.disabled = true; }
+
+  try { sessionStorage.removeItem('nf_dados_cache'); } catch(e) {}
+  dadosTodos = [];
+  dadosBrasileirao = [];
+  h2hDados = [];
+  if (grafico) { grafico.destroy(); grafico = null; }
+
+  // Reseta UI e mostra loading
+  const loadEl = document.getElementById('loading');
+  loadEl.innerHTML = '<div class="spinner"></div>Atualizando dados...';
+  loadEl.style.display = '';
+  document.getElementById('conteudo').style.display = 'none';
+
+  await iniciar();
+
+  if (btn) { btn.textContent = '↻ Atualizar'; btn.disabled = false; }
 }
 
 iniciar();

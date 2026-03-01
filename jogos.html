@@ -265,6 +265,7 @@
   <div class="logo">Números Fieis <span>- Corinthians</span></div>
   <div class="header-nav">
     <a href="brasileirao.html" class="btn-nav">Brasileirão</a>
+    <button id="btn-atualizar" class="btn-nav" style="background:none;cursor:pointer;font-family:'Inter',sans-serif;" onclick="atualizarDados()">↻ Atualizar</button>
     <a href="index.html" class="btn-nav">← Início</a>
   </div>
 </header>
@@ -637,6 +638,29 @@ function renderizar(jogos) {
     const tecOrdenados = Object.entries(tecnicos).sort((a,b) => b[1].total - a[1].total);
     document.getElementById('tecnicos-grid').innerHTML = tecOrdenados.map(([n,s]) => cardGrupo(n,s)).join('');
   }
+}
+
+// ── Atualizar dados ───────────────────────────────────────
+async function atualizarDados() {
+  const btn = document.getElementById('btn-atualizar');
+  if (btn) { btn.textContent = 'Atualizando...'; btn.disabled = true; }
+
+  try { sessionStorage.removeItem('nf_dados_cache'); } catch(e) {}
+  dadosTodos = [];
+
+  // Limpa o select para evitar opções duplicadas
+  document.getElementById('anoSel').innerHTML = '';
+
+  // Reseta seções e mostra loading
+  const loadEl = document.getElementById('loading');
+  loadEl.innerHTML = '<div class="spinner"></div>Atualizando dados...';
+  loadEl.style.display = '';
+  ['sec-eficiencia','sec-gols','sec-timeline','sec-comps','sec-mando','sec-tecnicos']
+    .forEach(id => { document.getElementById(id).style.display = 'none'; });
+
+  await iniciar();
+
+  if (btn) { btn.textContent = '↻ Atualizar'; btn.disabled = false; }
 }
 
 iniciar();
