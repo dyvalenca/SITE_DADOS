@@ -154,6 +154,55 @@
     .h2h-sort-btn:hover { color: #18181b; border-color: #a1a1aa; }
     .h2h-sort-btn.ativo { background: #18181b; border-color: #18181b; color: #fff; }
 
+    /* ── RESUMO H2H ──────────────────────────────────────── */
+    .h2h-resumo {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px; margin-bottom: 14px;
+    }
+    .h2h-resumo-card {
+      border-radius: 12px; padding: 14px 16px;
+      display: flex; align-items: center; gap: 14px;
+      border: 1px solid transparent;
+    }
+    .h2h-resumo-card.rc-vence     { background: #bfdbfe; border-color: #93c5fd; }
+    .h2h-resumo-card.rc-equilibrado { background: #fde68a; border-color: #fcd34d; }
+    .h2h-resumo-card.rc-perde     { background: #fecaca; border-color: #fca5a5; }
+    .h2h-resumo-num {
+      font-size: 2rem; font-weight: 900; letter-spacing: -2px; line-height: 1;
+    }
+    .rc-vence      .h2h-resumo-num { color: #1e40af; }
+    .rc-equilibrado .h2h-resumo-num { color: #92400e; }
+    .rc-perde      .h2h-resumo-num { color: #991b1b; }
+    .h2h-resumo-txt {}
+    .h2h-resumo-label {
+      font-size: 0.72rem; font-weight: 700; line-height: 1.3;
+    }
+    .rc-vence      .h2h-resumo-label { color: #1e40af; }
+    .rc-equilibrado .h2h-resumo-label { color: #92400e; }
+    .rc-perde      .h2h-resumo-label { color: #991b1b; }
+    .h2h-resumo-sub {
+      font-size: 0.62rem; font-weight: 500; margin-top: 2px;
+    }
+    .rc-vence      .h2h-resumo-sub { color: #3b82f6; }
+    .rc-equilibrado .h2h-resumo-sub { color: #b45309; }
+    .rc-perde      .h2h-resumo-sub { color: #ef4444; }
+
+    /* barra proporcional de confrontos */
+    .h2h-resumo-barra-wrap { margin-bottom: 14px; }
+    .h2h-resumo-barra {
+      height: 6px; border-radius: 4px; display: flex; overflow: hidden; gap: 2px;
+    }
+    .hrb-v { background: #2563eb; border-radius: 3px; }
+    .hrb-e { background: #fcd34d; border-radius: 3px; }
+    .hrb-d { background: #dc2626; border-radius: 3px; }
+
+    @media (max-width: 480px) {
+      .h2h-resumo { grid-template-columns: 1fr; }
+      .h2h-resumo-card { padding: 12px 14px; }
+      .h2h-resumo-num { font-size: 1.6rem; }
+    }
+
     .h2h-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
@@ -448,6 +497,7 @@
           <button class="h2h-sort-btn" data-sort="vitorias" onclick="reordenarH2H(this)">Por Vitórias</button>
         </div>
       </div>
+      <div id="h2h-resumo-container"></div>
       <div class="h2h-grid" id="h2h-grid"></div>
     </section>
 
@@ -880,7 +930,54 @@ function atualizar() {
 
   h2hDados = calcularH2H(jogos);
   document.getElementById('h2h-busca').value = '';
+  renderizarResumoH2H(h2hDados);
   filtrarH2H();
+}
+
+// ── Resumo de confrontos ──────────────────────────────────
+function renderizarResumoH2H(lista) {
+  const total = lista.length;
+  if (total === 0) { document.getElementById('h2h-resumo-container').innerHTML = ''; return; }
+
+  const vence = lista.filter(s => s.v > s.d).length;
+  const equil = lista.filter(s => s.v === s.d).length;
+  const perde = lista.filter(s => s.v < s.d).length;
+
+  const pctV = (vence / total * 100).toFixed(1);
+  const pctE = (equil / total * 100).toFixed(1);
+  const pctD = (perde / total * 100).toFixed(1);
+
+  document.getElementById('h2h-resumo-container').innerHTML = `
+    <div class="h2h-resumo">
+      <div class="h2h-resumo-card rc-vence">
+        <div class="h2h-resumo-num">${vence}</div>
+        <div class="h2h-resumo-txt">
+          <div class="h2h-resumo-label">Vantagem<br>(V &gt; D)</div>
+          <div class="h2h-resumo-sub">${pctV}% dos rivais</div>
+        </div>
+      </div>
+      <div class="h2h-resumo-card rc-equilibrado">
+        <div class="h2h-resumo-num">${equil}</div>
+        <div class="h2h-resumo-txt">
+          <div class="h2h-resumo-label">Equilíbrio<br>(V = D)</div>
+          <div class="h2h-resumo-sub">${pctE}% dos rivais</div>
+        </div>
+      </div>
+      <div class="h2h-resumo-card rc-perde">
+        <div class="h2h-resumo-num">${perde}</div>
+        <div class="h2h-resumo-txt">
+          <div class="h2h-resumo-label">Desvantagem<br>(V &lt; D)</div>
+          <div class="h2h-resumo-sub">${pctD}% dos rivais</div>
+        </div>
+      </div>
+    </div>
+    <div class="h2h-resumo-barra-wrap">
+      <div class="h2h-resumo-barra">
+        <div class="hrb-v" style="width:${pctV}%"></div>
+        <div class="hrb-e" style="width:${pctE}%"></div>
+        <div class="hrb-d" style="width:${pctD}%"></div>
+      </div>
+    </div>`;
 }
 
 // ── Event handlers ────────────────────────────────────────
