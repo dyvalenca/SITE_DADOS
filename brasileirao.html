@@ -391,6 +391,28 @@
     }
     .tl-mando-icon { font-size: 1rem; line-height: 1; text-align: center; width: 28px; }
 
+    /* ── FILTRO PERSONALIZADO ────────────────────────────── */
+    .filtro-custom-wrap {
+      display: none; align-items: center; gap: 10px;
+      margin-top: 12px; flex-wrap: wrap;
+    }
+    .filtro-custom-wrap.visivel { display: flex; }
+    .filtro-custom-label {
+      font-size: 0.65rem; font-weight: 700;
+      letter-spacing: 2px; text-transform: uppercase; color: #a1a1aa;
+    }
+    .filtro-custom-sel {
+      background: #fff; color: #18181b; border: 1px solid #d4d4d8;
+      border-radius: 10px; padding: 7px 13px; font-size: 0.88rem;
+      cursor: pointer; font-family: 'Inter', sans-serif; outline: none;
+      font-weight: 700; letter-spacing: -0.3px;
+    }
+    .filtro-custom-sel:hover { border-color: #a1a1aa; }
+    .filtro-custom-sel:focus { border-color: #7c3aed; }
+    .filtro-custom-sep {
+      font-size: 0.75rem; color: #a1a1aa; font-weight: 600;
+    }
+
     /* ── RESPONSIVO ──────────────────────────────────────── */
     @media (max-width: 640px) {
       main { padding-left: 14px; padding-right: 14px; }
@@ -448,6 +470,14 @@
         <button class="toggle-btn ativo" data-periodo="era" onclick="alterarPeriodo(this)">Toda a Era</button>
         <button class="toggle-btn titulo-ativo" data-periodo="titulos" onclick="alterarPeriodo(this)">Anos de Título ⭐</button>
         <button class="toggle-btn" data-periodo="ultimos5" onclick="alterarPeriodo(this)">Últimos 5 Anos</button>
+        <button class="toggle-btn" data-periodo="custom" onclick="alterarPeriodo(this)">Personalizado</button>
+      </div>
+      <div class="filtro-custom-wrap" id="filtro-custom">
+        <span class="filtro-custom-label">De</span>
+        <select id="ano-de" class="filtro-custom-sel" onchange="atualizar()"></select>
+        <span class="filtro-custom-sep">—</span>
+        <span class="filtro-custom-label">até</span>
+        <select id="ano-ate" class="filtro-custom-sel" onchange="atualizar()"></select>
       </div>
     </section>
 
@@ -629,6 +659,11 @@ function getAnosFiltro() {
   if (periodoAtivo === 'ultimos5') {
     const ultimo = anosDisponiveis[anosDisponiveis.length - 1];
     return anosDisponiveis.filter(a => a >= ultimo - 4);
+  }
+  if (periodoAtivo === 'custom') {
+    const de  = parseInt(document.getElementById('ano-de').value)  || anosDisponiveis[0];
+    const ate = parseInt(document.getElementById('ano-ate').value) || anosDisponiveis[anosDisponiveis.length - 1];
+    return anosDisponiveis.filter(a => a >= Math.min(de, ate) && a <= Math.max(de, ate));
   }
   return anosDisponiveis;
 }
@@ -860,11 +895,13 @@ function abrirPainel(adv) {
 
   const ag = calcularAgregado(jogosAdv);
 
+  const anosAdv = getAnosFiltro();
   const periodoMeta = {
     era:      'Brasileirão · Toda a Era',
     titulos:  'Brasileirão · Anos de Título',
     ultimos5: 'Brasileirão · Últimos 5 Anos',
-  }[periodoAtivo];
+    custom:   `Brasileirão · ${Math.min(...anosAdv)}–${Math.max(...anosAdv)}`,
+  }[periodoAtivo] || 'Brasileirão';
 
   document.getElementById('painel-adv-nome').textContent = adv;
   document.getElementById('painel-adv-meta').innerHTML =
@@ -916,15 +953,17 @@ function atualizar() {
     era:      `Brasileirão Série A · Era Pontos Corridos (${ANO_MIN}–${Math.max(...anos)})`,
     titulos:  'Brasileirão · Anos de Título — 2005, 2011, 2015, 2017',
     ultimos5: `Brasileirão · Últimos 5 Anos (${Math.min(...anos)}–${Math.max(...anos)})`,
+    custom:   `Brasileirão · Período Personalizado (${Math.min(...anos)}–${Math.max(...anos)})`,
   };
-  document.getElementById('chart-periodo-label').textContent = periodoLabels[periodoAtivo];
+  document.getElementById('chart-periodo-label').textContent = periodoLabels[periodoAtivo] || periodoLabels.era;
 
   const resumoLabels = {
     era:      'Resumo da Era (2003–' + Math.max(...anos) + ')',
     titulos:  'Resumo dos Anos de Título',
     ultimos5: 'Resumo dos Últimos 5 Anos',
+    custom:   `Resumo do Período (${Math.min(...anos)}–${Math.max(...anos)})`,
   };
-  document.getElementById('resumo-titulo').textContent = resumoLabels[periodoAtivo];
+  document.getElementById('resumo-titulo').textContent = resumoLabels[periodoAtivo] || resumoLabels.era;
 
   renderizarGrafico(calcularPorAno(jogos));
   renderizarResumo(jogos);
@@ -988,6 +1027,8 @@ function alterarPeriodo(btn) {
   const novo = btn.dataset.periodo;
   btn.classList.add(novo === 'titulos' ? 'titulo-ativo' : 'ativo');
   periodoAtivo = novo;
+  // Mostra/esconde seletor de anos personalizado
+  document.getElementById('filtro-custom').classList.toggle('visivel', novo === 'custom');
   atualizar();
 }
 
@@ -1032,6 +1073,20 @@ async function iniciar() {
       return;
     }
 
+    // Popula selects do período personalizado
+    const anosDisp = [...new Set(dadosBrasileirao.map(j => parseInt(j.a)))].filter(Boolean).sort((a,b)=>a-b);
+    const selDe  = document.getElementById('ano-de');
+    const selAte = document.getElementById('ano-ate');
+    // Só repopula se vazio (evita duplicar ao atualizar)
+    if (selDe.options.length === 0) {
+      anosDisp.forEach(a => {
+        selDe.add(new Option(a, a));
+        selAte.add(new Option(a, a));
+      });
+      selDe.value  = anosDisp[0];
+      selAte.value = anosDisp[anosDisp.length - 1];
+    }
+
     document.getElementById('loading').style.display = 'none';
     document.getElementById('conteudo').style.display = '';
     atualizar();
@@ -1052,6 +1107,9 @@ async function atualizarDados() {
   dadosBrasileirao = [];
   h2hDados = [];
   if (grafico) { grafico.destroy(); grafico = null; }
+  // Limpa selects para que sejam re-populados com dados frescos
+  document.getElementById('ano-de').innerHTML = '';
+  document.getElementById('ano-ate').innerHTML = '';
 
   // Reseta UI e mostra loading
   const loadEl = document.getElementById('loading');
