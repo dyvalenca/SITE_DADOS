@@ -176,7 +176,7 @@
     }
     .timeline-item {
       display: grid;
-      grid-template-columns: 88px 1fr 28px 52px 26px;
+      grid-template-columns: 88px 1fr 28px 52px;
       gap: 12px; align-items: center;
       padding: 10px 16px;
       border-bottom: 1px solid rgba(0,0,0,0.05);
@@ -222,15 +222,15 @@
     }
     .tl-placar { font-weight: 900; font-size: 1rem; letter-spacing: -0.5px; color: #18181b; white-space: nowrap; text-align: right; width: 52px; }
     .tl-mando-icon { font-size: 1rem; line-height: 1; text-align: center; width: 28px; }
+    .tl-date-col { display: flex; flex-direction: column; align-items: flex-start; gap: 5px; }
     .tl-btn-yt {
       background: #dc2626; color: #fff; border: none; border-radius: 50%;
-      width: 24px; height: 24px; padding: 0;
-      cursor: pointer; font-size: 0.58rem; line-height: 1;
+      width: 22px; height: 22px; padding: 0;
+      cursor: pointer; font-size: 0.55rem; line-height: 1;
       display: inline-flex; align-items: center; justify-content: center;
       transition: background 0.15s, transform 0.1s;
     }
     .tl-btn-yt:hover { background: #b91c1c; transform: scale(1.12); }
-    .tl-btn-yt-vazio { display: inline-block; width: 24px; height: 24px; }
 
     /* ── COMPETIÇÕES ─────────────────────────────────────── */
     .comp-grid {
@@ -262,10 +262,9 @@
       .grupo-card { padding: 14px 10px; }
       .grupo-valor { font-size: 2rem; margin-bottom: 8px; }
       .grupo-met { font-size: 0.65rem; }
-      .timeline-item { grid-template-columns: 68px 1fr 24px 44px 24px; }
+      .timeline-item { grid-template-columns: 68px 1fr 24px 44px; }
       .tl-mando-icon { width: 24px; }
       .tl-placar { width: 44px; font-size: 0.9rem; }
-      .tl-btn-yt { width: 22px; height: 22px; font-size: 0.52rem; }
       main { padding-left: 14px; padding-right: 14px; }
     }
 
@@ -622,9 +621,12 @@ function renderizar(jogos) {
     const esc = v => (v || '').toString().replace(/&/g,'&amp;').replace(/"/g,'&quot;');
     const ytBtn = j.lnk
       ? `<button class="tl-btn-yt" data-link="${esc(j.lnk)}" title="Assistir jogo">▶</button>`
-      : `<span class="tl-btn-yt-vazio"></span>`;
+      : '';
     return `<div class="timeline-item ${cl}">
-      <span class="tl-data">${j.d}</span>
+      <div class="tl-date-col">
+        <span class="tl-data">${j.d}</span>
+        ${ytBtn}
+      </div>
       <div class="tl-info">
         <div class="tl-comp">${j.c || '—'}</div>
         <div class="tl-est">${j.e || '—'}</div>
@@ -632,7 +634,6 @@ function renderizar(jogos) {
       </div>
       <span class="tl-mando-icon" title="${j.m || ''}">${mandoIcone}</span>
       <span class="tl-placar">${j.p}</span>
-      ${ytBtn}
     </div>`;
   }).join('');
 
