@@ -176,7 +176,7 @@
     }
     .timeline-item {
       display: grid;
-      grid-template-columns: 88px 1fr 28px 52px;
+      grid-template-columns: 88px 1fr 52px;
       gap: 12px; align-items: center;
       padding: 10px 16px;
       border-bottom: 1px solid rgba(0,0,0,0.05);
@@ -221,8 +221,9 @@
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
     .tl-placar { font-weight: 900; font-size: 1rem; letter-spacing: -0.5px; color: #18181b; white-space: nowrap; text-align: right; width: 52px; }
-    .tl-mando-icon { font-size: 1rem; line-height: 1; text-align: center; width: 28px; }
-    .tl-date-col { display: flex; flex-direction: column; align-items: flex-start; gap: 5px; }
+    .tl-date-col { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+    .tl-sub-row  { display: flex; align-items: center; gap: 4px; }
+    .tl-mando-icon { font-size: 0.95rem; line-height: 1; }
     .tl-btn-yt {
       background: #dc2626; color: #fff; border: none; border-radius: 50%;
       width: 22px; height: 22px; padding: 0;
@@ -262,8 +263,7 @@
       .grupo-card { padding: 14px 10px; }
       .grupo-valor { font-size: 2rem; margin-bottom: 8px; }
       .grupo-met { font-size: 0.65rem; }
-      .timeline-item { grid-template-columns: 68px 1fr 24px 44px; }
-      .tl-mando-icon { width: 24px; }
+      .timeline-item { grid-template-columns: 68px 1fr 44px; }
       .tl-placar { width: 44px; font-size: 0.9rem; }
       main { padding-left: 14px; padding-right: 14px; }
     }
@@ -625,14 +625,16 @@ function renderizar(jogos) {
     return `<div class="timeline-item ${cl}">
       <div class="tl-date-col">
         <span class="tl-data">${j.d}</span>
-        ${ytBtn}
+        <div class="tl-sub-row">
+          <span class="tl-mando-icon" title="${j.m || ''}">${mandoIcone}</span>
+          ${ytBtn}
+        </div>
       </div>
       <div class="tl-info">
         <div class="tl-comp">${j.c || '—'}</div>
         <div class="tl-est">${j.e || '—'}</div>
         <div class="tl-adv">${j.adv || '—'}</div>
       </div>
-      <span class="tl-mando-icon" title="${j.m || ''}">${mandoIcone}</span>
       <span class="tl-placar">${j.p}</span>
     </div>`;
   }).join('');
