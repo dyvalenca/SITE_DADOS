@@ -283,8 +283,9 @@
     <span class="footer-sep">|</span>
     <a href="termos.html">Termos de Uso</a>
   </nav>
-  <p class="footer-copy">© 2025 Números Fieis · Site não oficial · Sport Club Corinthians Paulista</p>
+  <p class="footer-copy">© <span class="footer-year"></span> Números Fieis</p>
 </footer>
+<script>document.querySelector('.footer-year').textContent = new Date().getFullYear();</script>
 
 </body>
 </html>
