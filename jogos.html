@@ -183,7 +183,7 @@
       font-size: 0.82rem;
       transition: filter 0.1s;
     }
-    .timeline-item:last-child { border-bottom: none; }
+    .tl-row-wrap:last-child .timeline-item { border-bottom: none; }
     .timeline-item:hover { filter: brightness(0.93); }
     .timeline-item.vitoria { background: #bfdbfe; }
     .timeline-item.empate  { background: #fde68a; }
@@ -232,6 +232,39 @@
       transition: background 0.15s, transform 0.1s;
     }
     .tl-btn-yt:hover { background: #b91c1c; transform: scale(1.12); }
+    .timeline-item.tl-tem-gols { cursor: pointer; }
+    .timeline-item.tl-expandido { filter: brightness(0.88) !important; }
+
+    /* ── PAINEL DE GOLS ──────────────────────────────────── */
+    .tl-gols-panel {
+      padding: 8px 16px 14px;
+      background: rgba(0,0,0,0.035);
+      border-bottom: 1px solid rgba(0,0,0,0.05);
+    }
+    .tl-row-wrap:last-child .tl-gols-panel { border-bottom: none; }
+    .tl-gol-entry { padding: 4px 0; }
+    .tl-gol-entry + .tl-gol-entry {
+      border-top: 1px solid rgba(0,0,0,0.07);
+      margin-top: 4px; padding-top: 8px;
+    }
+    .tl-gol-row {
+      display: flex; align-items: center; gap: 7px;
+      font-size: 0.8rem; color: #18181b; line-height: 1.4;
+    }
+    .tl-assist-row {
+      display: flex; align-items: center; gap: 7px;
+      font-size: 0.74rem; color: #52525b; padding-left: 4px; margin-top: 2px;
+    }
+    .tl-gol-icon { font-size: 0.85rem; flex-shrink: 0; line-height: 1; }
+    .tl-gol-name { font-weight: 600; }
+    .tl-gol-camisa { color: #71717a; font-weight: 400; }
+    .tl-gol-tag {
+      font-size: 0.6rem; font-weight: 700; letter-spacing: 0.5px;
+      text-transform: uppercase; border-radius: 4px; padding: 1px 5px;
+      color: #7c3aed; background: #ede9fe;
+    }
+    .tl-gol-tag.banco { color: #2563eb; background: #dbeafe; }
+    .tl-no-gol-data { color: #a1a1aa; font-size: 0.74rem; font-style: italic; }
 
     /* ── COMPETIÇÕES ─────────────────────────────────────── */
     .comp-grid {
@@ -452,6 +485,7 @@
 document.querySelector('.footer-year').textContent = new Date().getFullYear();
 const API_URL = "/api/dados";
 let dadosTodos = [];
+let golsByDate = {};
 
 // ── Helpers ──────────────────────────────────────────────
 function rNorm(v) {
@@ -494,12 +528,28 @@ function normalizar(data) {
   }));
 }
 
+function normalizarGols(data) {
+  const byDate = {};
+  data.forEach(row => {
+    const d = formatarData(row["DATA"]);
+    if (!d) return;
+    if (!byDate[d]) byDate[d] = [];
+    byDate[d].push({
+      gol:    limpar(row["JOGADOR GOL"]),
+      camisa: limpar(row["CAMISA GOL"]),
+      pen:    limpar(row["PENALTI"]),
+      banco:  limpar(row["BANCO"]),
+      assist: limpar(row["JOGADOR ASSISTÊNCIA"]),
+    });
+  });
+  return byDate;
+}
+
 // ── Inicialização ─────────────────────────────────────────
 async function iniciar(forceRefresh = false) {
   try {
+    // ── Cache JOGOS
     let rawData = null;
-
-    // Tenta usar cache do sessionStorage (pode falhar em Safari privado, WebView, etc.)
     if (!forceRefresh) {
       try {
         const cached = sessionStorage.getItem('nf_dados_cache');
@@ -507,18 +557,48 @@ async function iniciar(forceRefresh = false) {
       } catch(e) { rawData = null; }
     }
 
-    // Se não há cache válido (ou refresh forçado), busca da API ignorando cache HTTP
-    if (!rawData) {
-      const fetchUrl  = forceRefresh ? `${API_URL}?_t=${Date.now()}` : API_URL;
-      const fetchOpts = forceRefresh ? { cache: 'no-store' } : {};
-      const resp = await fetch(fetchUrl, fetchOpts);
-      const json = await resp.json();
-      if (!json.data) throw new Error('Sem dados');
-      rawData = json.data;
-      try { sessionStorage.setItem('nf_dados_cache', JSON.stringify(rawData)); } catch(e) {}
+    // ── Cache GOL
+    let rawGols = null;
+    if (!forceRefresh) {
+      try {
+        const cachedG = sessionStorage.getItem('nf_gols_cache');
+        if (cachedG) rawGols = JSON.parse(cachedG);
+      } catch(e) { rawGols = null; }
     }
 
+    // ── Fetch em paralelo o que estiver faltando
+    const ts = Date.now();
+    const promises = [];
+
+    if (!rawData) {
+      const url  = forceRefresh ? `${API_URL}?limit=9999&_t=${ts}` : `${API_URL}?limit=9999`;
+      const opts = forceRefresh ? { cache: 'no-store' } : {};
+      promises.push(
+        fetch(url, opts).then(r => r.json()).then(json => {
+          if (!json.data) throw new Error('Sem dados');
+          rawData = json.data;
+          try { sessionStorage.setItem('nf_dados_cache', JSON.stringify(rawData)); } catch(e) {}
+        })
+      );
+    }
+
+    if (!rawGols) {
+      const url  = forceRefresh ? `${API_URL}?aba=GOL&limit=9999&_t=${ts}` : `${API_URL}?aba=GOL&limit=9999`;
+      const opts = forceRefresh ? { cache: 'no-store' } : {};
+      promises.push(
+        fetch(url, opts).then(r => r.json()).then(json => {
+          if (json.data) {
+            rawGols = json.data;
+            try { sessionStorage.setItem('nf_gols_cache', JSON.stringify(rawGols)); } catch(e) {}
+          }
+        }).catch(() => {}) // falha no GOL não impede o carregamento
+      );
+    }
+
+    await Promise.all(promises);
+
     dadosTodos = normalizar(rawData);
+    golsByDate = normalizarGols(rawGols || []);
 
     const anos = [...new Set(dadosTodos.map(j => parseInt(j.a)))]
       .filter(Boolean).sort((a,b) => b-a);
@@ -622,20 +702,27 @@ function renderizar(jogos) {
     const ytBtn = j.lnk
       ? `<button class="tl-btn-yt" data-link="${esc(j.lnk)}" title="Assistir jogo">▶</button>`
       : '';
-    return `<div class="timeline-item ${cl}">
-      <div class="tl-date-col">
-        <span class="tl-data">${j.d}</span>
-        <div class="tl-sub-row">
-          <span class="tl-mando-icon" title="${j.m || ''}">${mandoIcone}</span>
-          ${ytBtn}
+    const hasGols = (golsByDate[j.d] || []).length > 0;
+    const golPanel = hasGols
+      ? `<div class="tl-gols-panel" style="display:none">${renderGolsPanel(j.d)}</div>`
+      : '';
+    return `<div class="tl-row-wrap">
+      <div class="timeline-item ${cl}${hasGols ? ' tl-tem-gols' : ''}" data-date="${esc(j.d)}">
+        <div class="tl-date-col">
+          <span class="tl-data">${j.d}</span>
+          <div class="tl-sub-row">
+            <span class="tl-mando-icon" title="${j.m || ''}">${mandoIcone}</span>
+            ${ytBtn}
+          </div>
         </div>
+        <div class="tl-info">
+          <div class="tl-comp">${j.c || '—'}</div>
+          <div class="tl-est">${j.e || '—'}</div>
+          <div class="tl-adv">${j.adv || '—'}</div>
+        </div>
+        <span class="tl-placar">${j.p}</span>
       </div>
-      <div class="tl-info">
-        <div class="tl-comp">${j.c || '—'}</div>
-        <div class="tl-est">${j.e || '—'}</div>
-        <div class="tl-adv">${j.adv || '—'}</div>
-      </div>
-      <span class="tl-placar">${j.p}</span>
+      ${golPanel}
     </div>`;
   }).join('');
 
@@ -704,7 +791,9 @@ async function atualizarDados() {
   if (btn) { btn.textContent = 'Atualizando...'; btn.disabled = true; }
 
   try { sessionStorage.removeItem('nf_dados_cache'); } catch(e) {}
+  try { sessionStorage.removeItem('nf_gols_cache'); } catch(e) {}
   dadosTodos = [];
+  golsByDate = {};
 
   // Limpa o select para evitar opções duplicadas
   document.getElementById('anoSel').innerHTML = '';
@@ -723,10 +812,53 @@ async function atualizarDados() {
 
 iniciar();
 
+// ── Painel de gols ────────────────────────────────────────
+function renderGolsPanel(date) {
+  const gols = golsByDate[date] || [];
+  if (gols.length === 0) {
+    return '<div class="tl-no-gol-data">Dados de gols não disponíveis para esta partida.</div>';
+  }
+  return gols.map(g => {
+    const camisa = g.camisa ? `<span class="tl-gol-camisa">#${g.camisa}</span> ` : '';
+    const norm = v => (v || '').toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim();
+    const isPen   = norm(g.pen)   !== '' && norm(g.pen)   !== 'NAO' && norm(g.pen)   !== 'N';
+    const isBanco = norm(g.banco) !== '' && norm(g.banco) !== 'NAO' && norm(g.banco) !== 'N';
+    const tags = [
+      isPen   ? '<span class="tl-gol-tag">pen.</span>'         : '',
+      isBanco ? '<span class="tl-gol-tag banco">banco</span>'  : '',
+    ].filter(Boolean).join(' ');
+    const assistHtml = g.assist
+      ? `<div class="tl-assist-row">
+           <span class="tl-gol-icon">👟</span>
+           <span class="tl-gol-name">${g.assist}</span>
+         </div>`
+      : '';
+    return `<div class="tl-gol-entry">
+      <div class="tl-gol-row">
+        <span class="tl-gol-icon">⚽</span>
+        ${camisa}<span class="tl-gol-name">${g.gol || '—'}</span>${tags ? ' ' + tags : ''}
+      </div>
+      ${assistHtml}
+    </div>`;
+  }).join('');
+}
+
 // ── Vídeo modal ───────────────────────────────────────────
 document.getElementById('timeline-lista').addEventListener('click', function(e) {
-  const btn = e.target.closest('.tl-btn-yt[data-link]');
-  if (btn) abrirVideo(btn.dataset.link);
+  // Botão YouTube tem prioridade
+  const ytBtn = e.target.closest('.tl-btn-yt[data-link]');
+  if (ytBtn) { abrirVideo(ytBtn.dataset.link); return; }
+
+  // Clique na linha → expande/recolhe painel de gols
+  const item = e.target.closest('.timeline-item.tl-tem-gols');
+  if (!item) return;
+  const wrap = item.closest('.tl-row-wrap');
+  if (!wrap) return;
+  const panel = wrap.querySelector('.tl-gols-panel');
+  if (!panel) return;
+  const isOpen = panel.style.display !== 'none';
+  panel.style.display = isOpen ? 'none' : '';
+  item.classList.toggle('tl-expandido', !isOpen);
 });
 
 function abrirVideo(url) {
