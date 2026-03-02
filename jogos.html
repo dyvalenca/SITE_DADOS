@@ -531,11 +531,13 @@ function normalizar(data) {
 function normalizarGols(data) {
   const byDate = {};
   data.forEach(row => {
-    const d = formatarData(row["DATA"]);
+    const d = formatarData(limpar(row["DATA"]));
     if (!d) return;
+    const gol = limpar(row["JOGADOR GOL"]);
+    if (!gol) return; // ignora linhas sem jogador gol (evita falsos positivos)
     if (!byDate[d]) byDate[d] = [];
     byDate[d].push({
-      gol:    limpar(row["JOGADOR GOL"]),
+      gol,
       camisa: limpar(row["CAMISA GOL"]),
       pen:    limpar(row["PENALTI"]),
       banco:  limpar(row["BANCO"]),
@@ -589,9 +591,13 @@ async function iniciar(forceRefresh = false) {
         fetch(url, opts).then(r => r.json()).then(json => {
           if (json.data) {
             rawGols = json.data;
+            console.log('[GOL] registros recebidos:', rawGols.length,
+              '| 1º registro:', JSON.stringify(rawGols[0]));
             try { sessionStorage.setItem('nf_gols_cache', JSON.stringify(rawGols)); } catch(e) {}
+          } else {
+            console.warn('[GOL] resposta sem campo data:', JSON.stringify(json));
           }
-        }).catch(() => {}) // falha no GOL não impede o carregamento
+        }).catch(err => console.error('[GOL] falha no fetch:', err))
       );
     }
 
