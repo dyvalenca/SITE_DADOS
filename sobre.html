@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sobre Nós — Números Fieis - Corinthians</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #f1f1f3;
+      color: #18181b;
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── HEADER ──────────────────────────────────────────── */
+    header {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      background: #fff; border-bottom: 1px solid #e4e4e7;
+      padding: 0 28px; height: 58px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .logo { font-size: 1.05rem; font-weight: 900; letter-spacing: -0.5px; color: #18181b; }
+    .logo span { color: #52525b; font-weight: 600; }
+    .btn-nav {
+      color: #71717a; font-size: 0.8rem; text-decoration: none;
+      border: 1px solid #d4d4d8; border-radius: 8px; padding: 6px 14px;
+      transition: all 0.15s; white-space: nowrap;
+    }
+    .btn-nav:hover { color: #18181b; border-color: #a1a1aa; }
+
+    /* ── MAIN ────────────────────────────────────────────── */
+    main {
+      flex: 1;
+      max-width: 720px; margin: 0 auto; width: 100%;
+      padding: 94px 20px 56px;
+    }
+
+    .page-label {
+      font-size: 0.65rem; font-weight: 700; letter-spacing: 2.5px;
+      text-transform: uppercase; color: #a1a1aa; margin-bottom: 10px;
+    }
+    .page-title {
+      font-size: 1.6rem; font-weight: 900; letter-spacing: -0.5px;
+      color: #18181b; margin-bottom: 32px;
+    }
+
+    .content-card {
+      background: #fff;
+      border: 1px solid #e4e4e7;
+      border-radius: 18px;
+      padding: 36px 40px;
+    }
+    .content-card p {
+      font-size: 0.92rem;
+      line-height: 1.85;
+      color: #3f3f46;
+      margin-bottom: 20px;
+    }
+    .content-card p:last-child { margin-bottom: 0; }
+
+    .highlight-bar {
+      border-left: 3px solid #7c3aed;
+      padding-left: 18px;
+      margin-bottom: 20px;
+    }
+    .highlight-bar p {
+      font-size: 1rem;
+      font-style: italic;
+      color: #3f3f46;
+      line-height: 1.85;
+      margin-bottom: 0;
+    }
+
+    @media (max-width: 480px) {
+      .content-card { padding: 24px 20px; }
+      .page-title { font-size: 1.3rem; }
+    }
+
+    /* ── FOOTER ──────────────────────────────────────────── */
+    .site-footer {
+      background: #fff;
+      border-top: 1px solid #e4e4e7;
+      padding: 20px 28px;
+      text-align: center;
+    }
+    .footer-links {
+      display: flex; justify-content: center; align-items: center;
+      flex-wrap: wrap; gap: 0;
+    }
+    .footer-links a {
+      font-size: 0.75rem; color: #71717a; text-decoration: none;
+      padding: 8px 10px; border-radius: 6px; transition: color 0.15s;
+    }
+    .footer-links a:hover { color: #18181b; }
+    .footer-sep { color: #d4d4d8; font-size: 0.75rem; line-height: 2.8; }
+    .footer-copy { margin-top: 8px; font-size: 0.68rem; color: #a1a1aa; }
+    @media (max-width: 480px) { .footer-sep { display: none; } }
+  </style>
+</head>
+<body>
+
+<header>
+  <a href="index.html" class="logo">Números Fieis <span>- Corinthians</span></a>
+  <a href="index.html" class="btn-nav">← Início</a>
+</header>
+
+<main>
+  <div class="page-label">Institucional</div>
+  <h1 class="page-title">Sobre Nós</h1>
+
+  <div class="content-card">
+    <div class="highlight-bar">
+      <p>Este site nasceu da união de três paixões: tecnologia, o Corinthians e a análise de dados.</p>
+    </div>
+    <p>
+      Como profissional da área de TI e apaixonado por números, desenvolvi este espaço para explorar
+      as estatísticas do Timão de forma detalhada, transformando dados históricos em visualizações
+      claras para outros torcedores que, como eu, gostam de entender o jogo além do campo.
+    </p>
+    <p>
+      O <strong>Números Fieis</strong> é um projeto independente e sem fins lucrativos. Todas as
+      informações apresentadas são compiladas de fontes públicas e têm caráter estritamente
+      informativo e recreativo. Este site não possui qualquer vínculo oficial com o Sport Club
+      Corinthians Paulista.
+    </p>
+    <p>
+      Se você tem sugestões, encontrou algum dado incorreto ou quer entrar em contato, acesse
+      a página de <a href="contato.html" style="color:#7c3aed;text-decoration:none;font-weight:600;">Contato</a>.
+    </p>
+  </div>
+</main>
+
+<footer class="site-footer">
+  <nav class="footer-links">
+    <a href="sobre.html">Sobre Nós</a>
+    <span class="footer-sep">|</span>
+    <a href="contato.html">Contato</a>
+    <span class="footer-sep">|</span>
+    <a href="privacidade.html">Política de Privacidade</a>
+    <span class="footer-sep">|</span>
+    <a href="termos.html">Termos de Uso</a>
+  </nav>
+  <p class="footer-copy">© 2025 Números Fieis · Site não oficial · Sport Club Corinthians Paulista</p>
+</footer>
+
+</body>
+</html>
