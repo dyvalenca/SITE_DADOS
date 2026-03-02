@@ -483,7 +483,7 @@
 
 <script>
 document.querySelector('.footer-year').textContent = new Date().getFullYear();
-const API_URL = "/api/dados";
+const API_URL = "https://script.google.com/macros/s/AKfycbzrkyGBdn7WGN7yH-Y1IswgW6B5heRD8khBkCNjEGTHiDUR6lDcTCGr3fDaNurXyMkB/exec";
 let dadosTodos = [];
 let golsByDate = {};
 
@@ -571,7 +571,7 @@ async function iniciar(forceRefresh = false) {
     const promises = [];
 
     if (!rawData) {
-      const url  = forceRefresh ? `${API_URL}?limit=9999&_t=${ts}` : `${API_URL}?limit=9999`;
+      const url  = forceRefresh ? `${API_URL}?aba=jogo&limit=9999&_t=${ts}` : `${API_URL}?aba=jogo&limit=9999`;
       const opts = forceRefresh ? { cache: 'no-store' } : {};
       promises.push(
         fetch(url, opts).then(r => r.json()).then(json => {
@@ -583,19 +583,15 @@ async function iniciar(forceRefresh = false) {
     }
 
     if (!rawGols) {
-      const url  = forceRefresh ? `${API_URL}?aba=GOL&limit=9999&_t=${ts}` : `${API_URL}?aba=GOL&limit=9999`;
+      const url  = forceRefresh ? `${API_URL}?aba=gol&limit=9999&_t=${ts}` : `${API_URL}?aba=gol&limit=9999`;
       const opts = forceRefresh ? { cache: 'no-store' } : {};
       promises.push(
         fetch(url, opts).then(r => r.json()).then(json => {
           if (json.data) {
             rawGols = json.data;
-            console.log('[GOL] registros recebidos:', rawGols.length,
-              '| 1º registro:', JSON.stringify(rawGols[0]));
             try { sessionStorage.setItem('nf_gols_cache', JSON.stringify(rawGols)); } catch(e) {}
-          } else {
-            console.warn('[GOL] resposta sem campo data:', JSON.stringify(json));
           }
-        }).catch(err => console.error('[GOL] falha no fetch:', err))
+        }).catch(() => {})
       );
     }
 
@@ -603,16 +599,6 @@ async function iniciar(forceRefresh = false) {
 
     dadosTodos = normalizar(rawData);
     golsByDate = normalizarGols(rawGols || []);
-
-    // ── Diagnóstico GOL (remover após resolver) ────────────
-    if (rawGols && rawGols.length > 0) {
-      console.log('[GOL] colunas recebidas:', Object.keys(rawGols[0]).join(' | '));
-      console.log('[GOL] 1º registro:', JSON.stringify(rawGols[0]));
-    } else {
-      console.warn('[GOL] sem dados (rawGols vazio ou nulo)');
-    }
-    console.log('[GOL] datas indexadas em golsByDate:', Object.keys(golsByDate).length);
-    // ────────────────────────────────────────────────────────
 
     const anos = [...new Set(dadosTodos.map(j => parseInt(j.a)))]
       .filter(Boolean).sort((a,b) => b-a);
@@ -631,7 +617,7 @@ async function iniciar(forceRefresh = false) {
 function carregarAno(ano) {
   const jogos = dadosTodos.filter(j => parseInt(j.a) === parseInt(ano));
   if (jogos.length > 0) { renderizar(jogos); return; }
-  fetch(`${API_URL}?ano=${ano}`)
+  fetch(`${API_URL}?aba=jogo&ano=${ano}`)
     .then(r => r.json())
     .then(json => { if (json.data) renderizar(normalizar(json.data)); })
     .catch(console.error);
