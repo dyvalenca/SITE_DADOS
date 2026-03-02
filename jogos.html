@@ -533,11 +533,9 @@ function normalizarGols(data) {
   data.forEach(row => {
     const d = formatarData(limpar(row["DATA"]));
     if (!d) return;
-    const gol = limpar(row["JOGADOR GOL"]);
-    if (!gol) return; // ignora linhas sem jogador gol (evita falsos positivos)
     if (!byDate[d]) byDate[d] = [];
     byDate[d].push({
-      gol,
+      gol:    limpar(row["JOGADOR GOL"]),
       camisa: limpar(row["CAMISA GOL"]),
       pen:    limpar(row["PENALTI"]),
       banco:  limpar(row["BANCO"]),
@@ -605,6 +603,16 @@ async function iniciar(forceRefresh = false) {
 
     dadosTodos = normalizar(rawData);
     golsByDate = normalizarGols(rawGols || []);
+
+    // ── Diagnóstico GOL (remover após resolver) ────────────
+    if (rawGols && rawGols.length > 0) {
+      console.log('[GOL] colunas recebidas:', Object.keys(rawGols[0]).join(' | '));
+      console.log('[GOL] 1º registro:', JSON.stringify(rawGols[0]));
+    } else {
+      console.warn('[GOL] sem dados (rawGols vazio ou nulo)');
+    }
+    console.log('[GOL] datas indexadas em golsByDate:', Object.keys(golsByDate).length);
+    // ────────────────────────────────────────────────────────
 
     const anos = [...new Set(dadosTodos.map(j => parseInt(j.a)))]
       .filter(Boolean).sort((a,b) => b-a);
