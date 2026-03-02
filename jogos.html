@@ -485,19 +485,23 @@ function normalizar(data) {
 }
 
 // ── Inicialização ─────────────────────────────────────────
-async function iniciar() {
+async function iniciar(forceRefresh = false) {
   try {
     let rawData = null;
 
     // Tenta usar cache do sessionStorage (pode falhar em Safari privado, WebView, etc.)
-    try {
-      const cached = sessionStorage.getItem('nf_dados_cache');
-      if (cached) rawData = JSON.parse(cached);
-    } catch(e) { rawData = null; }
+    if (!forceRefresh) {
+      try {
+        const cached = sessionStorage.getItem('nf_dados_cache');
+        if (cached) rawData = JSON.parse(cached);
+      } catch(e) { rawData = null; }
+    }
 
-    // Se não há cache válido, busca da API
+    // Se não há cache válido (ou refresh forçado), busca da API ignorando cache HTTP
     if (!rawData) {
-      const resp = await fetch(API_URL);
+      const fetchUrl  = forceRefresh ? `${API_URL}?_t=${Date.now()}` : API_URL;
+      const fetchOpts = forceRefresh ? { cache: 'no-store' } : {};
+      const resp = await fetch(fetchUrl, fetchOpts);
       const json = await resp.json();
       if (!json.data) throw new Error('Sem dados');
       rawData = json.data;
@@ -693,7 +697,7 @@ async function atualizarDados() {
   ['sec-eficiencia','sec-gols','sec-timeline','sec-comps','sec-mando','sec-tecnicos']
     .forEach(id => { document.getElementById(id).style.display = 'none'; });
 
-  await iniciar();
+  await iniciar(true);
 
   if (btn) { btn.textContent = '↻ Atualizar'; btn.disabled = false; }
 }
