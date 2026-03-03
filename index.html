@@ -156,7 +156,7 @@
 // Pré-carrega dados de jogos em background para acelerar jogos.html
 (function() {
   try {
-    fetch('https://script.google.com/macros/s/AKfycbzrkyGBdn7WGN7yH-Y1IswgW6B5heRD8khBkCNjEGTHiDUR6lDcTCGr3fDaNurXyMkB/exec?aba=jogo&limit=9999')
+    fetch('/api/dados?aba=jogo')
       .then(r => r.json())
       .then(json => {
         if (json && json.data) {

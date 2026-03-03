@@ -1,7 +1,7 @@
 // =====================================================================
 // CONFIGURAÇÃO — troque pela URL da sua API do Google Apps Script
 // =====================================================================
-const API_URL = "https://script.google.com/macros/s/AKfycbzrkyGBdn7WGN7yH-Y1IswgW6B5heRD8khBkCNjEGTHiDUR6lDcTCGr3fDaNurXyMkB/exec";
+const API_URL = "/api/dados";
 
 // =====================================================================
 // ESTADO GLOBAL
