@@ -2,296 +2,664 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Dashboard Histórico Corinthians</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Histórico — Números Fieis - Corinthians</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
-  <link rel="stylesheet" href="style.css">
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-0090007344741060" crossorigin="anonymous"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #f1f1f3;
+      color: #18181b;
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+    }
+
+    /* ── LOADING ─────────────────────────────────────────── */
+    #loading-overlay {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(255,255,255,0.92); backdrop-filter: blur(5px);
+      display: flex; justify-content: center; align-items: center;
+      z-index: 9999; transition: opacity 0.5s ease;
+    }
+    .loading-box {
+      text-align: center; background: #fff; padding: 40px 32px;
+      border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+      max-width: 380px;
+    }
+    .loading-box h4 { font-size: 1rem; font-weight: 700; margin-bottom: 8px; }
+    .loading-box p  { font-size: 0.8rem; color: #a1a1aa; margin-bottom: 20px; }
+    /* spinner-border kept for Bootstrap compat (JS uses class, not styles) */
+    .spinner-border {
+      display: inline-block; width: 2.5rem; height: 2.5rem;
+      border: 3px solid #e4e4e7; border-top-color: #18181b;
+      border-radius: 50%; animation: spin 0.8s linear infinite;
+      margin-bottom: 20px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .progress { height: 5px; background: #e4e4e7; border-radius: 5px; overflow: hidden; }
+    .progress-bar { height: 100%; width: 100%; background: #18181b; }
+    .bg-dark { background: #18181b !important; }
+    .progress-bar-striped {
+      background-image: linear-gradient(45deg,rgba(255,255,255,.15) 25%,transparent 25%,transparent 50%,rgba(255,255,255,.15) 50%,rgba(255,255,255,.15) 75%,transparent 75%,transparent);
+      background-size: 1rem 1rem;
+    }
+    .progress-bar-animated { animation: pb-stripes 1s linear infinite; }
+    @keyframes pb-stripes { 0%{background-position:1rem 0} 100%{background-position:0 0} }
+
+    /* ── HEADER ──────────────────────────────────────────── */
+    header {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      background: #fff; border-bottom: 1px solid #e4e4e7;
+      padding: 0 28px; height: 58px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .logo { font-size: 1.05rem; font-weight: 900; letter-spacing: -0.5px; color: #18181b; }
+    .logo span { color: #52525b; font-weight: 600; }
+    .header-right { display: flex; align-items: center; gap: 14px; }
+    #msg-status { font-size: 0.72rem; color: #a1a1aa; }
+    .btn-nav {
+      color: #71717a; font-size: 0.8rem; text-decoration: none;
+      border: 1px solid #d4d4d8; border-radius: 8px; padding: 6px 14px;
+      transition: all 0.15s; white-space: nowrap;
+    }
+    .btn-nav:hover { color: #18181b; border-color: #a1a1aa; }
+
+    /* ── LAYOUT ──────────────────────────────────────────── */
+    main {
+      padding-top: 90px; padding-bottom: 80px;
+      max-width: 1280px; margin: 0 auto;
+      padding-left: 20px; padding-right: 20px;
+    }
+    section { margin-bottom: 28px; }
+
+    .section-title {
+      font-size: 0.65rem; font-weight: 700;
+      letter-spacing: 2.5px; text-transform: uppercase;
+      color: #a1a1aa; margin-bottom: 16px;
+      padding-bottom: 10px; border-bottom: 1px solid #e4e4e7;
+    }
+    .section-header {
+      display: flex; justify-content: space-between; align-items: center;
+      flex-wrap: wrap; gap: 10px; margin-bottom: 16px;
+    }
+    .section-header .section-title { margin-bottom: 0; border-bottom: none; padding-bottom: 0; }
+
+    /* ── CARD ────────────────────────────────────────────── */
+    .card-section {
+      background: #fff; border: 1px solid #e4e4e7;
+      border-radius: 14px; padding: 20px 22px;
+    }
+
+    /* ── FILTER SECTION ──────────────────────────────────── */
+    .filter-header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 16px;
+    }
+    .filter-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      gap: 16px; margin-bottom: 14px;
+    }
+    .filter-label {
+      display: block; font-size: 0.6rem; font-weight: 700;
+      letter-spacing: 1.5px; text-transform: uppercase;
+      color: #a1a1aa; margin-bottom: 6px;
+    }
+    .filter-row { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+    .filter-sep { font-size: 0.65rem; color: #a1a1aa; white-space: nowrap; }
+
+    /* selects & date inputs */
+    .filter-grid select, .filter-grid input[type="date"],
+    #fMando {
+      width: 100%; background: #fff; color: #18181b;
+      border: 1px solid #d4d4d8; border-radius: 8px;
+      padding: 6px 10px; font-size: 0.8rem;
+      font-family: 'Inter', sans-serif; outline: none; cursor: pointer;
+    }
+    .filter-grid select:hover, .filter-grid input[type="date"]:hover,
+    #fMando:hover { border-color: #a1a1aa; }
+    .filter-row select, .filter-row input[type="date"] {
+      flex: 1; background: #fff; color: #18181b;
+      border: 1px solid #d4d4d8; border-radius: 8px;
+      padding: 6px 10px; font-size: 0.79rem;
+      font-family: 'Inter', sans-serif; outline: none;
+    }
+
+    /* toggle switch */
+    .form-check { display: flex; align-items: center; gap: 7px; margin-top: 6px; }
+    .form-check.form-switch .form-check-input {
+      appearance: none; width: 32px; height: 18px;
+      background: #e4e4e7; border-radius: 999px; flex-shrink: 0;
+      cursor: pointer; transition: background 0.2s; position: relative; border: none;
+    }
+    .form-check.form-switch .form-check-input::after {
+      content: ''; position: absolute; width: 14px; height: 14px;
+      border-radius: 50%; background: #fff; top: 2px; left: 2px;
+      transition: left 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    }
+    .form-check.form-switch .form-check-input:checked { background: #7c3aed; }
+    .form-check.form-switch .form-check-input:checked::after { left: 16px; }
+    .form-check-label {
+      font-size: 0.6rem; font-weight: 700;
+      letter-spacing: 0.8px; text-transform: uppercase; color: #71717a; cursor: pointer;
+    }
+    .exceto-label { color: #dc2626 !important; }
+
+    /* dropdown multiselect */
+    .dropdown-check-list { position: relative; margin-bottom: 2px; }
+    .dropdown-check-list .anchor {
+      display: block; cursor: pointer;
+      padding: 6px 24px 6px 10px;
+      border: 1px solid #d4d4d8; border-radius: 8px;
+      background: #fff; font-size: 0.8rem; font-family: 'Inter', sans-serif;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      position: relative; color: #18181b;
+    }
+    .dropdown-check-list .anchor:after {
+      content: ''; position: absolute;
+      border-left: 4px solid transparent; border-right: 4px solid transparent;
+      border-top: 4px solid #71717a; right: 10px; top: 50%; transform: translateY(-25%);
+    }
+    .dropdown-check-list .items {
+      display: none; position: absolute;
+      background: #fff; border: 1px solid #e4e4e7; border-radius: 10px;
+      width: 100%; z-index: 1000; max-height: 200px; overflow-y: auto;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.08); padding: 4px; margin-top: 4px;
+    }
+    .dropdown-check-list.visible .items { display: block; }
+    .dropdown-check-list .items label {
+      display: block; font-size: 0.78rem; cursor: pointer;
+      padding: 5px 8px; border-radius: 6px; font-family: 'Inter', sans-serif; color: #3f3f46;
+    }
+    .dropdown-check-list .items label:hover { background: #f4f4f5; }
+
+    /* clear filters button */
+    .btn-limpar {
+      font-size: 0.7rem; font-weight: 700; letter-spacing: 0.5px;
+      color: #dc2626; background: none;
+      border: 1px solid #fecaca; border-radius: 8px;
+      padding: 6px 14px; cursor: pointer; font-family: 'Inter', sans-serif;
+      transition: all 0.15s;
+    }
+    .btn-limpar:hover { background: #fef2f2; border-color: #dc2626; }
+
+    /* ── MÉTRICAS ─────────────────────────────────────────── */
+    .resumo-container {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 8px;
+    }
+    .card-resumo {
+      background: #fff; border: 1px solid #e4e4e7; border-radius: 12px;
+      padding: 12px 10px; text-align: center;
+    }
+    .card-resumo h6 {
+      font-size: 0.57rem; font-weight: 700; letter-spacing: 1.5px;
+      text-transform: uppercase; color: #a1a1aa; margin-bottom: 6px;
+    }
+    .card-resumo h2 {
+      font-size: 1.05rem; font-weight: 900; letter-spacing: -0.5px;
+      line-height: 1; color: #18181b;
+    }
+    .card-resumo h2.text-primary { color: #2563eb; }
+    .card-resumo h2.text-success { color: #7c3aed; }
+
+    /* ── TABLE (games list) ──────────────────────────────── */
+    .table-responsive {
+      background: #fff; border: 1px solid #e4e4e7;
+      border-radius: 14px; overflow: hidden;
+      max-height: 70vh; overflow-y: auto; min-height: 300px;
+    }
+    table {
+      width: 100%; border-collapse: collapse; font-size: 0.8rem;
+    }
+    table thead {
+      position: sticky; top: 0; z-index: 10;
+      background: #18181b; color: #fff;
+    }
+    table thead th {
+      padding: 10px 12px; font-size: 0.62rem; font-weight: 700;
+      letter-spacing: 1px; text-transform: uppercase; white-space: nowrap;
+    }
+    table tbody td {
+      padding: 9px 12px; border-bottom: 1px solid rgba(0,0,0,0.05);
+      vertical-align: middle;
+    }
+    table tbody tr:last-child td { border-bottom: none; }
+    table tbody tr.vitoria td { background: #bfdbfe; }
+    table tbody tr.empate  td { background: #fde68a; }
+    table tbody tr.derrota td { background: #fecaca; }
+    table tbody tr:hover td { filter: brightness(0.93); }
+
+    /* classes usadas pelo JS no render() da tabela */
+    .text-center { text-align: center; }
+    .small { font-size: 0.8rem; }
+    .filtro-celula { cursor: pointer; }
+    .filtro-celula:hover { text-decoration: underline; text-underline-offset: 2px; }
+    .placar {
+      font-weight: 900; letter-spacing: -0.5px;
+      background: rgba(255,255,255,0.7); padding: 2px 8px;
+      border-radius: 6px; border: 1px solid rgba(0,0,0,0.08);
+    }
+    .btn-play {
+      background: #dc2626; color: #fff; border: none; border-radius: 50%;
+      width: 24px; height: 24px; padding: 0; cursor: pointer; font-size: 0.55rem;
+      display: inline-flex; align-items: center; justify-content: center; transition: all 0.15s;
+    }
+    .btn-play:hover { background: #b91c1c; transform: scale(1.1); }
+    .btn-stats {
+      background: #7c3aed; color: #fff; border: none; border-radius: 50%;
+      width: 24px; height: 24px; padding: 0; cursor: pointer; font-size: 0.7rem;
+      display: inline-flex; align-items: center; justify-content: center; transition: all 0.15s;
+    }
+    .btn-stats:hover { background: #6d28d9; transform: scale(1.1); }
+
+    /* ── PAGINAÇÃO ────────────────────────────────────────── */
+    .paginacao-footer {
+      display: flex; justify-content: space-between; align-items: center; margin-top: 12px;
+    }
+    .paginacao-footer .info { font-size: 0.75rem; color: #a1a1aa; }
+    .paginacao-footer .btn-group { display: flex; gap: 8px; }
+    .paginacao-footer .btn-group button {
+      font-size: 0.75rem; font-weight: 600; padding: 6px 14px;
+      border-radius: 8px; cursor: pointer; font-family: 'Inter', sans-serif;
+      background: #fff; color: #18181b; border: 1px solid #d4d4d8; transition: all 0.15s;
+    }
+    .paginacao-footer .btn-group button:hover:not(:disabled) { border-color: #a1a1aa; }
+    .paginacao-footer .btn-group button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* ── BOTÕES GENÉRICOS (Bootstrap-compat, usado pelo JS) ─ */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      font-family: 'Inter', sans-serif; cursor: pointer;
+      border: 1px solid transparent; font-weight: 600;
+      transition: all 0.15s; line-height: 1; text-decoration: none;
+    }
+    .btn-sm { font-size: 0.68rem; padding: 5px 12px; letter-spacing: 0.5px; text-transform: uppercase; border-radius: 8px; }
+    .btn-dark { background: #18181b; color: #fff; border-color: #18181b; }
+    .btn-dark:hover { background: #3f3f46; border-color: #3f3f46; }
+    .btn-outline-dark { background: #fff; color: #18181b; border-color: #d4d4d8; }
+    .btn-outline-dark:hover { background: #f4f4f5; }
+
+    /* btn-group (agrupamento) */
+    .btn-group-seg { display: flex; }
+    .btn-group-seg .btn { border-radius: 0; }
+    .btn-group-seg .btn:first-child { border-radius: 8px 0 0 8px; }
+    .btn-group-seg .btn:last-child  { border-radius: 0 8px 8px 0; }
+    .btn-group-seg .btn + .btn { margin-left: -1px; }
+
+    /* ── STATS TABLE (técnicos / comp / ano / adv) ────────── */
+    .stats-table-wrap {
+      overflow-x: auto; max-height: 400px; overflow-y: auto;
+      border: 1px solid #e4e4e7; border-radius: 10px;
+    }
+    .stats-table-wrap table { font-size: 0.72rem; }
+    .stats-table-wrap table td, .stats-table-wrap table th {
+      white-space: nowrap; font-size: 0.72rem; padding: 3px 5px;
+    }
+    /* table-hover e table-bordered usados em linha no JS */
+    .table-hover tbody tr:hover td { filter: brightness(0.93); }
+    .table-bordered td, .table-bordered th { border: 1px solid #e4e4e7; }
+
+    /* ── GRÁFICO (métrica buttons) ───────────────────────── */
+    .btn-metrica-wrap { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 18px; }
+    /* .btn-metrica herda .btn + .btn-sm, animações via JS com btn-dark/btn-outline-dark */
+    .btn-metrica { /* base extra */ letter-spacing: 0.3px; }
+
+    canvas { max-width: 100%; }
+
+    /* ── VIDEO MODAL ──────────────────────────────────────── */
+    #video-modal {
+      display: none; position: fixed; top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.88); z-index: 9998;
+      justify-content: center; align-items: center;
+    }
+    .video-modal-box {
+      position: relative; width: 92%; max-width: 1000px;
+      background: #000; border-radius: 10px; overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+    }
+    .btn-fechar-video {
+      position: absolute; top: 10px; right: 14px;
+      background: rgba(255,255,255,0.15); border: none; color: #fff;
+      font-size: 1.2rem; cursor: pointer; z-index: 1;
+      width: 32px; height: 32px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center; transition: background 0.15s;
+    }
+    .btn-fechar-video:hover { background: rgba(255,255,255,0.3); }
+
+    /* ── STATS MODAL ──────────────────────────────────────── */
+    #stats-modal {
+      display: none; position: fixed; top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.88); z-index: 9999; overflow-y: auto;
+    }
+    .stats-modal-box {
+      background: #1a1a1a; color: #fff; border-radius: 12px;
+      width: 92%; max-width: 600px; margin: 40px auto 60px;
+      overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+    }
+    .stats-modal-header {
+      background: #000; padding: 14px 16px;
+      display: flex; justify-content: space-between; align-items: center; gap: 12px;
+    }
+    .stats-modal-header #stats-titulo { font-size: 0.8rem; font-weight: 700; }
+    .btn-fechar-stats {
+      background: rgba(255,255,255,0.15); border: none; color: #fff;
+      font-size: 1rem; cursor: pointer; width: 28px; height: 28px;
+      border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; transition: background 0.15s;
+    }
+    .btn-fechar-stats:hover { background: rgba(255,255,255,0.3); }
+    .stat-card { padding: 16px; border-bottom: 1px solid #2e2e2e; }
+    .stat-card:last-child { border-bottom: none; }
+    .stat-card-inativo { opacity: 0.65; }
+    .stat-texto { font-size: 0.87rem; line-height: 1.6; margin-bottom: 10px; color: #ddd; }
+    .btn-share-x {
+      background: #000; color: #fff; border: 1px solid #555;
+      border-radius: 20px; padding: 4px 14px; font-size: 0.78rem;
+      text-decoration: none; display: inline-flex; align-items: center; gap: 5px; transition: background 0.15s;
+    }
+    .btn-share-x:hover { background: #222; color: #fff; }
+
+    /* ── FOOTER ──────────────────────────────────────────── */
+    .site-footer {
+      background: #fff; border-top: 1px solid #e4e4e7;
+      padding: 20px 28px; text-align: center;
+    }
+    .footer-links {
+      display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 0;
+    }
+    .footer-links a {
+      font-size: 0.75rem; color: #71717a; text-decoration: none;
+      padding: 8px 10px; border-radius: 6px; transition: color 0.15s;
+    }
+    .footer-links a:hover { color: #18181b; }
+    .footer-sep { color: #d4d4d8; font-size: 0.75rem; line-height: 2.8; }
+    .footer-copy { margin-top: 8px; font-size: 0.68rem; color: #a1a1aa; }
+
+    /* ── RESPONSIVO ──────────────────────────────────────── */
+    @media (max-width: 900px) {
+      .filter-grid { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 560px) {
+      .filter-grid { grid-template-columns: 1fr; }
+      .resumo-container { grid-template-columns: repeat(3, 1fr); }
+      main { padding-left: 14px; padding-right: 14px; }
+    }
+    @media (max-width: 480px) { .footer-sep { display: none; } }
+  </style>
 </head>
 <body onclick="fecharDropdowns(event)">
 
+<!-- ── LOADING ───────────────────────────────────────────── -->
 <div id="loading-overlay">
   <div class="loading-box">
     <div class="spinner-border spinner-corinthians" role="status"></div>
-    <h4 class="fw-bold">Preparando Dashboard</h4>
-    <p class="text-muted small">Processando histórico e organizando layout.</p>
-    <div class="progress" style="height: 5px;">
-      <div class="progress-bar bg-dark progress-bar-striped progress-bar-animated" style="width: 100%"></div>
+    <h4>Preparando Dashboard</h4>
+    <p>Processando histórico e organizando layout.</p>
+    <div class="progress">
+      <div class="progress-bar bg-dark progress-bar-striped progress-bar-animated"></div>
     </div>
   </div>
 </div>
 
-<div class="container-fluid">
-  <div class="header-painel d-flex justify-content-between align-items-center">
-    <div>
-      <h2 class="mb-0">Dashboard Histórico Corinthians</h2>
-      <p class="text-muted mb-0">Status: <span id="msg-status">Conectando...</span></p>
-    </div>
-    <a href="index.html" style="color:#aaa;font-size:0.82rem;text-decoration:none;border:1px solid #444;border-radius:6px;padding:6px 14px;white-space:nowrap;">← Início</a>
+<!-- ── HEADER ────────────────────────────────────────────── -->
+<header>
+  <div class="logo">Números Fieis <span>- Corinthians</span></div>
+  <div class="header-right">
+    <span id="msg-status">Conectando...</span>
+    <a href="index.html" class="btn-nav">← Início</a>
   </div>
+</header>
 
-  <div class="secao-filtros">
-    <div class="d-flex justify-content-between align-items-center mb-2">
-      <p class="small fw-bold text-uppercase text-muted mb-0" style="letter-spacing: 0.05em;">Filtros</p>
-      <button class="btn btn-outline-danger btn-sm" onclick="limparFiltros()">Limpar Filtros</button>
+<main>
+
+  <!-- ── FILTROS ────────────────────────────────────────── -->
+  <section>
+    <div class="card-section">
+      <div class="filter-header">
+        <div class="section-title" style="margin-bottom:0;border-bottom:none;padding-bottom:0;">Filtros</div>
+        <button class="btn-limpar" onclick="limparFiltros()">Limpar Filtros</button>
+      </div>
+
+      <div class="filter-grid">
+        <!-- Período -->
+        <div class="filter-group">
+          <span class="filter-label">Período (Ano)</span>
+          <div class="filter-row">
+            <select id="fAnoDe" onchange="aoMudarFiltroPrincipal()"></select>
+            <span class="filter-sep">até</span>
+            <select id="fAnoAte" onchange="aoMudarFiltroPrincipal()"></select>
+          </div>
+          <span class="filter-label">Data Exata</span>
+          <div class="filter-row">
+            <input type="date" id="fDataDe" onchange="aoMudarFiltroPrincipal()">
+            <span class="filter-sep">até</span>
+            <input type="date" id="fDataAte" onchange="aoMudarFiltroPrincipal()">
+          </div>
+        </div>
+
+        <!-- Mando + Competição -->
+        <div class="filter-group">
+          <span class="filter-label">Mando</span>
+          <select id="fMando" onchange="aoMudarFiltroPrincipal()" style="margin-bottom:10px;">
+            <option value="">Todos</option>
+            <option value="MANDANTE">MANDANTE</option>
+            <option value="VISITANTE">VISITANTE</option>
+            <option value="NEUTRO">NEUTRO</option>
+          </select>
+          <span class="filter-label">Competição</span>
+          <div id="fComp" class="dropdown-check-list">
+            <span class="anchor" onclick="toggleDropdown('fComp')">Todas</span>
+            <div class="items"></div>
+          </div>
+          <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" id="excComp" onchange="resetPaginacao()">
+            <label class="form-check-label exceto-label" for="excComp">EXCETO SELECIONADOS</label>
+          </div>
+        </div>
+
+        <!-- Adversário -->
+        <div class="filter-group">
+          <span class="filter-label">Adversário</span>
+          <div id="fAdv" class="dropdown-check-list" style="margin-bottom:6px;">
+            <span class="anchor" onclick="toggleDropdown('fAdv')">Todos</span>
+            <div class="items"></div>
+          </div>
+          <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" id="fClassicos" onchange="aoMudarFiltroPrincipal()">
+            <label class="form-check-label" for="fClassicos">APENAS CLÁSSICOS</label>
+          </div>
+          <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" id="excAdv" onchange="resetPaginacao()">
+            <label class="form-check-label exceto-label" for="excAdv">EXCETO SELECIONADOS</label>
+          </div>
+        </div>
+
+        <!-- Estádio -->
+        <div class="filter-group">
+          <span class="filter-label">Estádio</span>
+          <div id="fEst" class="dropdown-check-list" style="margin-bottom:6px;">
+            <span class="anchor" onclick="toggleDropdown('fEst')">Todos</span>
+            <div class="items"></div>
+          </div>
+          <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" id="fNQA" onchange="aoMudarFiltroPrincipal()">
+            <label class="form-check-label" for="fNQA">APENAS NQA</label>
+          </div>
+          <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" id="excEst" onchange="resetPaginacao()">
+            <label class="form-check-label exceto-label" for="excEst">EXCETO SELECIONADOS</label>
+          </div>
+        </div>
+      </div>
+
+      <div class="filter-grid" style="margin-bottom:0;">
+        <div class="filter-group">
+          <span class="filter-label">Gols do Corinthians</span>
+          <div id="fGolsPro" class="dropdown-check-list">
+            <span class="anchor" onclick="toggleDropdown('fGolsPro')">Todos</span>
+            <div class="items"></div>
+          </div>
+        </div>
+        <div class="filter-group">
+          <span class="filter-label">Gols Contra</span>
+          <div id="fGolsCon" class="dropdown-check-list">
+            <span class="anchor" onclick="toggleDropdown('fGolsCon')">Todos</span>
+            <div class="items"></div>
+          </div>
+        </div>
+        <div class="filter-group">
+          <span class="filter-label">Saldo de Gols</span>
+          <div id="fSaldo" class="dropdown-check-list">
+            <span class="anchor" onclick="toggleDropdown('fSaldo')">Todos</span>
+            <div class="items"></div>
+          </div>
+        </div>
+        <div class="filter-group">
+          <span class="filter-label">Técnico</span>
+          <div id="fTec" class="dropdown-check-list">
+            <span class="anchor" onclick="toggleDropdown('fTec')">Todos</span>
+            <div class="items"></div>
+          </div>
+        </div>
+      </div>
     </div>
-    <div class="row g-3">
-      <div class="col-md-3">
-        <label class="small fw-bold text-uppercase">Período (Ano)</label>
-        <div class="d-flex align-items-center gap-1 mb-2">
-          <select id="fAnoDe" class="form-select form-select-sm" onchange="aoMudarFiltroPrincipal()"></select>
-          <span class="label-ano">até</span>
-          <select id="fAnoAte" class="form-select form-select-sm" onchange="aoMudarFiltroPrincipal()"></select>
-        </div>
-        <label class="small fw-bold text-uppercase">Data Exata</label>
-        <div class="d-flex align-items-center gap-1">
-          <input type="date" id="fDataDe" class="form-control form-control-sm" onchange="aoMudarFiltroPrincipal()">
-          <span class="label-ano">até</span>
-          <input type="date" id="fDataAte" class="form-control form-control-sm" onchange="aoMudarFiltroPrincipal()">
-        </div>
-      </div>
+  </section>
 
-      <div class="col-md-2">
-        <label class="small fw-bold text-uppercase">Mando</label>
-        <select id="fMando" class="form-select form-select-sm mb-2" onchange="aoMudarFiltroPrincipal()">
-          <option value="">Todos</option>
-          <option value="MANDANTE">MANDANTE</option>
-          <option value="VISITANTE">VISITANTE</option>
-          <option value="NEUTRO">NEUTRO</option>
-        </select>
-        <label class="small fw-bold text-uppercase">Competição</label>
-        <div id="fComp" class="dropdown-check-list">
-          <span class="anchor" onclick="toggleDropdown('fComp')">Todas</span>
-          <div class="items"></div>
-        </div>
-        <div class="form-check form-switch mt-1">
-          <input class="form-check-input" type="checkbox" id="excComp" onchange="resetPaginacao()">
-          <label class="exceto-label" for="excComp">EXCETO SELECIONADOS</label>
-        </div>
-      </div>
-
-      <div class="col-md-3">
-        <label class="small fw-bold text-uppercase">Adversário</label>
-        <div id="fAdv" class="dropdown-check-list mb-1">
-          <span class="anchor" onclick="toggleDropdown('fAdv')">Todos</span>
-          <div class="items"></div>
-        </div>
-        <div class="form-check form-switch">
-          <input class="form-check-input" type="checkbox" id="fClassicos" onchange="aoMudarFiltroPrincipal()">
-          <label class="form-check-label" for="fClassicos">APENAS CLÁSSICOS</label>
-        </div>
-        <div class="form-check form-switch">
-          <input class="form-check-input" type="checkbox" id="excAdv" onchange="resetPaginacao()">
-          <label class="exceto-label" for="excAdv">EXCETO SELECIONADOS</label>
-        </div>
-      </div>
-
-      <div class="col-md-3">
-        <label class="small fw-bold text-uppercase">Estádio</label>
-        <div id="fEst" class="dropdown-check-list mb-1">
-          <span class="anchor" onclick="toggleDropdown('fEst')">Todos</span>
-          <div class="items"></div>
-        </div>
-        <div class="form-check form-switch">
-          <input class="form-check-input" type="checkbox" id="fNQA" onchange="aoMudarFiltroPrincipal()">
-          <label class="form-check-label" for="fNQA">APENAS NQA</label>
-        </div>
-        <div class="form-check form-switch">
-          <input class="form-check-input" type="checkbox" id="excEst" onchange="resetPaginacao()">
-          <label class="exceto-label" for="excEst">EXCETO SELECIONADOS</label>
-        </div>
-      </div>
-    </div>
-
-    <div class="row g-3 mt-1">
-      <div class="col-md-3">
-        <label class="small fw-bold text-uppercase">Gols do Corinthians</label>
-        <div id="fGolsPro" class="dropdown-check-list">
-          <span class="anchor" onclick="toggleDropdown('fGolsPro')">Todos</span>
-          <div class="items"></div>
-        </div>
-      </div>
-      <div class="col-md-3">
-        <label class="small fw-bold text-uppercase">Gols Contra</label>
-        <div id="fGolsCon" class="dropdown-check-list">
-          <span class="anchor" onclick="toggleDropdown('fGolsCon')">Todos</span>
-          <div class="items"></div>
-        </div>
-      </div>
-      <div class="col-md-3">
-        <label class="small fw-bold text-uppercase">Saldo de Gols</label>
-        <div id="fSaldo" class="dropdown-check-list">
-          <span class="anchor" onclick="toggleDropdown('fSaldo')">Todos</span>
-          <div class="items"></div>
-        </div>
-      </div>
-      <div class="col-md-3">
-        <label class="small fw-bold text-uppercase">Técnico</label>
-        <div id="fTec" class="dropdown-check-list">
-          <span class="anchor" onclick="toggleDropdown('fTec')">Todos</span>
-          <div class="items"></div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="secao-filtros">
-    <p class="small fw-bold text-uppercase text-muted mb-2" style="letter-spacing: 0.05em;">Métricas</p>
-    <div class="resumo-container" style="margin-bottom: 0;">
+  <!-- ── MÉTRICAS ───────────────────────────────────────── -->
+  <section>
+    <div class="section-title">Métricas</div>
+    <div class="resumo-container">
       <div class="card-resumo"><h6>Jogos</h6><h2 id="res-jogos">0</h2></div>
       <div class="card-resumo"><h6>Vitórias</h6><h2 id="res-vits">0</h2></div>
       <div class="card-resumo"><h6>% Vitórias</h6><h2 id="res-vits-perc">0%</h2></div>
-      <div class="card-resumo"><h6>Vitória 1x0</h6><h2 id="res-vits1x0" class="text-primary">0</h2></div>
+      <div class="card-resumo"><h6>Vitória 1×0</h6><h2 id="res-vits1x0" class="text-primary">0</h2></div>
       <div class="card-resumo"><h6>Vitórias +3</h6><h2 id="res-vits3">0</h2></div>
       <div class="card-resumo"><h6>Empates</h6><h2 id="res-emps">0</h2></div>
       <div class="card-resumo"><h6>% Empates</h6><h2 id="res-emps-perc">0%</h2></div>
       <div class="card-resumo"><h6>Derrotas</h6><h2 id="res-ders">0</h2></div>
       <div class="card-resumo"><h6>% Derrotas</h6><h2 id="res-ders-perc">0%</h2></div>
-      <div class="card-resumo"><h6>Derrotas -3</h6><h2 id="res-ders3">0</h2></div>
+      <div class="card-resumo"><h6>Derrotas −3</h6><h2 id="res-ders3">0</h2></div>
       <div class="card-resumo"><h6>Gols Pró</h6><h2 id="res-gp">0</h2></div>
-      <div class="card-resumo"><h6>Média Gols</h6><h2 id="res-gp-media">0.0</h2></div>
-      <div class="card-resumo"><h6>Jogos S/ Marcar</h6><h2 id="res-zero-pro">0</h2></div>
+      <div class="card-resumo"><h6>Média GP</h6><h2 id="res-gp-media">0.0</h2></div>
+      <div class="card-resumo"><h6>S/ Marcar</h6><h2 id="res-zero-pro">0</h2></div>
       <div class="card-resumo"><h6>% S/ Marcar</h6><h2 id="res-zero-pro-perc">0%</h2></div>
       <div class="card-resumo"><h6>Gols Contra</h6><h2 id="res-gc">0</h2></div>
-      <div class="card-resumo"><h6>Média Gols C.</h6><h2 id="res-gc-media">0.0</h2></div>
-      <div class="card-resumo"><h6>Jogos S/ Sofrer</h6><h2 id="res-zero-con">0</h2></div>
+      <div class="card-resumo"><h6>Média GC</h6><h2 id="res-gc-media">0.0</h2></div>
+      <div class="card-resumo"><h6>S/ Sofrer</h6><h2 id="res-zero-con">0</h2></div>
       <div class="card-resumo"><h6>% S/ Sofrer</h6><h2 id="res-zero-con-perc">0%</h2></div>
       <div class="card-resumo"><h6>Saldo</h6><h2 id="res-sg">0</h2></div>
       <div class="card-resumo"><h6>Pontos</h6><h2 id="res-pontos" class="text-success">0</h2></div>
       <div class="card-resumo"><h6>Aproveitamento</h6><h2 id="res-aprov">0%</h2></div>
     </div>
-  </div>
+  </section>
 
-  <div class="table-responsive">
-    <table class="table table-hover border mb-0">
-      <thead>
-        <tr>
-          <th>Data</th>
-          <th>Competição</th>
-          <th class="text-center">Placar</th>
-          <th>Adversário</th>
-          <th>Mando</th>
-          <th>Estádio</th>
-          <th>Técnico</th>
-          <th class="text-center">Vídeo</th>
-          <th class="text-center">Stats</th>
-        </tr>
-      </thead>
-      <tbody id="tabelaCorpo" class="small">
-        <tr><td colspan="9" class="text-center">Aguardando dados...</td></tr>
-      </tbody>
-    </table>
-  </div>
-
-  <div class="paginacao-footer">
-    <div class="small text-muted">Exibindo página <span id="pAtual">1</span> de <span id="pTotal">1</span></div>
-    <div class="btn-group">
-      <button class="btn btn-outline-dark btn-sm" id="btnAnt" onclick="mudarPagina(-1)">Anterior</button>
-      <button class="btn btn-outline-dark btn-sm" id="btnProx" onclick="mudarPagina(1)">Próximo</button>
-    </div>
-  </div>
-
-  <div class="grafico-container">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-      <h5 class="fw-bold mb-0" id="tituloTabTec">Estatísticas por Técnico</h5>
-      <div class="btn-group btn-group-sm">
-        <button id="btnGrpTec"  class="btn btn-dark"         onclick="mudarAgrupamento('tec')">Técnico</button>
-        <button id="btnGrpComp" class="btn btn-outline-dark" onclick="mudarAgrupamento('comp')">Competição</button>
-        <button id="btnGrpAno"  class="btn btn-outline-dark" onclick="mudarAgrupamento('ano')">Ano</button>
-        <button id="btnGrpAdv"  class="btn btn-outline-dark" onclick="mudarAgrupamento('adv')">Adversário</button>
-      </div>
-    </div>
-    <div style="overflow-x:auto; max-height:400px; overflow-y:auto; border:1px solid #dee2e6; border-radius:6px;">
-      <table class="table table-hover table-bordered mb-0 small" style="min-width:1050px;">
-        <thead id="tabelaTecnicosCabecalho" style="position:sticky;top:0;z-index:5;background:#000;color:#fff;"></thead>
-        <tbody id="tabelaTecnicosCorpo"></tbody>
+  <!-- ── TABELA DE JOGOS ────────────────────────────────── -->
+  <section>
+    <div class="section-title">Lista de Jogos</div>
+    <div class="table-responsive">
+      <table>
+        <thead>
+          <tr>
+            <th>Data</th>
+            <th>Competição</th>
+            <th class="text-center">Placar</th>
+            <th>Adversário</th>
+            <th>Mando</th>
+            <th>Estádio</th>
+            <th>Técnico</th>
+            <th class="text-center">Vídeo</th>
+            <th class="text-center">Stats</th>
+          </tr>
+        </thead>
+        <tbody id="tabelaCorpo" class="small">
+          <tr><td colspan="9" class="text-center" style="padding:32px;color:#a1a1aa;">Aguardando dados...</td></tr>
+        </tbody>
       </table>
     </div>
-  </div>
-
-  <div class="grafico-container">
-    <div class="text-center mb-3">
-      <h5 id="titulo-grafico" class="fw-bold">Evolução de Atributos por Ano</h5>
-      <div class="d-flex flex-wrap justify-content-center gap-1 mt-2">
-        <button class="btn btn-sm btn-dark btn-metrica" data-metrica="aproveitamento" onclick="trocarMetrica(this)">Aproveitamento</button>
-        <button class="btn btn-sm btn-outline-dark btn-metrica" data-metrica="jogos" onclick="trocarMetrica(this)">Jogos</button>
-        <button class="btn btn-sm btn-outline-dark btn-metrica" data-metrica="vitorias" onclick="trocarMetrica(this)">Vitórias</button>
-        <button class="btn btn-sm btn-outline-dark btn-metrica" data-metrica="perc_vitorias" onclick="trocarMetrica(this)">% Vitórias</button>
-        <button class="btn btn-sm btn-outline-dark btn-metrica" data-metrica="vits1x0" onclick="trocarMetrica(this)">Vitória 1x0</button>
-        <button class="btn btn-sm btn-outline-dark btn-metrica" data-metrica="vits3" onclick="trocarMetrica(this)">Vitórias +3</button>
-        <button class="btn btn-sm btn-outline-dark btn-metrica" data-metrica="empates" onclick="trocarMetrica(this)">Empates</button>
-        <button class="btn btn-sm btn-outline-dark btn-metrica" data-metrica="perc_empates" onclick="trocarMetrica(this)">% Empates</button>
-        <button class="btn btn-sm btn-outline-dark btn-metrica" data-metrica="derrotas" onclick="trocarMetrica(this)">Derrotas</button>
-        <button class="btn btn-sm btn-outline-dark btn-metrica" data-metrica="perc_derrotas" onclick="trocarMetrica(this)">% Derrotas</button>
-        <button class="btn btn-sm btn-outline-dark btn-metrica" data-metrica="ders3" onclick="trocarMetrica(this)">Derrotas -3</button>
-        <button class="btn btn-sm btn-outline-dark btn-metrica" data-metrica="gols_pro" onclick="trocarMetrica(this)">Gols Pró</button>
-        <button class="btn btn-sm btn-outline-dark btn-metrica" data-metrica="media_gols" onclick="trocarMetrica(this)">Média Gols</button>
-        <button class="btn btn-sm btn-outline-dark btn-metrica" data-metrica="s_marcar" onclick="trocarMetrica(this)">S/ Marcar</button>
-        <button class="btn btn-sm btn-outline-dark btn-metrica" data-metrica="perc_s_marcar" onclick="trocarMetrica(this)">% S/ Marcar</button>
-        <button class="btn btn-sm btn-outline-dark btn-metrica" data-metrica="gols_contra" onclick="trocarMetrica(this)">Gols Contra</button>
-        <button class="btn btn-sm btn-outline-dark btn-metrica" data-metrica="media_gols_c" onclick="trocarMetrica(this)">Média Gols C.</button>
-        <button class="btn btn-sm btn-outline-dark btn-metrica" data-metrica="s_sofrer" onclick="trocarMetrica(this)">S/ Sofrer</button>
-        <button class="btn btn-sm btn-outline-dark btn-metrica" data-metrica="perc_s_sofrer" onclick="trocarMetrica(this)">% S/ Sofrer</button>
-        <button class="btn btn-sm btn-outline-dark btn-metrica" data-metrica="saldo" onclick="trocarMetrica(this)">Saldo</button>
-        <button class="btn btn-sm btn-outline-dark btn-metrica" data-metrica="pontos" onclick="trocarMetrica(this)">Pontos</button>
+    <div class="paginacao-footer">
+      <div class="info">Página <span id="pAtual">1</span> de <span id="pTotal">1</span></div>
+      <div class="btn-group">
+        <button id="btnAnt" onclick="mudarPagina(-1)">Anterior</button>
+        <button id="btnProx" onclick="mudarPagina(1)">Próximo</button>
       </div>
     </div>
-    <canvas id="graficoEvolucao" height="100"></canvas>
-  </div>
+  </section>
 
-  <div id="video-modal" onclick="if(event.target===this)fecharVideo()">
-    <div class="video-modal-box">
-      <button class="btn-fechar-video" onclick="fecharVideo()" title="Fechar">✕</button>
-      <iframe id="video-frame" src="" style="width:100%;height:540px;border:none;" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
-    </div>
-  </div>
-
-  <div class="grafico-container">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-      <h5 class="fw-bold mb-0">Comparativo de Resultados (V/E/D) - Últimos 30 Anos</h5>
-      <div class="form-check form-switch border rounded p-2 bg-light shadow-sm">
-        <input class="form-check-input ms-0 me-2" type="checkbox" id="fAcumulado" onchange="renderizarGraficoComparativo(dadosFiltrados)">
-        <label class="form-check-label fw-bold small text-dark" for="fAcumulado">CONSIDERAR VALORES ACUMULADOS</label>
+  <!-- ── TABELA AGRUPADA (tec/comp/ano/adv) ────────────── -->
+  <section>
+    <div class="card-section">
+      <div class="section-header">
+        <div class="section-title" id="tituloTabTec" style="margin-bottom:0;border-bottom:none;padding-bottom:0;">Estatísticas por Técnico</div>
+        <div class="btn-group-seg">
+          <button id="btnGrpTec"  class="btn btn-sm btn-dark"         onclick="mudarAgrupamento('tec')">Técnico</button>
+          <button id="btnGrpComp" class="btn btn-sm btn-outline-dark" onclick="mudarAgrupamento('comp')">Competição</button>
+          <button id="btnGrpAno"  class="btn btn-sm btn-outline-dark" onclick="mudarAgrupamento('ano')">Ano</button>
+          <button id="btnGrpAdv"  class="btn btn-sm btn-outline-dark" onclick="mudarAgrupamento('adv')">Adversário</button>
+        </div>
+      </div>
+      <div class="stats-table-wrap">
+        <table class="table-hover table-bordered" style="min-width:1050px;">
+          <thead id="tabelaTecnicosCabecalho" style="position:sticky;top:0;z-index:5;background:#000;color:#fff;"></thead>
+          <tbody id="tabelaTecnicosCorpo"></tbody>
+        </table>
       </div>
     </div>
-    <canvas id="graficoComparativo" height="100"></canvas>
-  </div>
-</div>
+  </section>
 
-<div id="stats-modal" onclick="if(event.target===this)fecharStats()" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.88); z-index:9999; overflow-y:auto;">
-  <div class="stats-modal-box">
-    <div class="stats-modal-header">
-      <h6 id="stats-titulo" class="mb-0 small fw-bold"></h6>
-      <button class="btn-fechar-stats" onclick="fecharStats()" title="Fechar">✕</button>
+  <!-- ── GRÁFICO EVOLUÇÃO ───────────────────────────────── -->
+  <section>
+    <div class="card-section">
+      <div class="section-title" id="titulo-grafico">Evolução de Aproveitamento por Ano</div>
+      <div class="btn-metrica-wrap">
+        <button class="btn btn-sm btn-dark    btn-metrica" data-metrica="aproveitamento" onclick="trocarMetrica(this)">Aproveitamento</button>
+        <button class="btn btn-sm btn-outline-dark btn-metrica" data-metrica="jogos"          onclick="trocarMetrica(this)">Jogos</button>
+        <button class="btn btn-sm btn-outline-dark btn-metrica" data-metrica="vitorias"       onclick="trocarMetrica(this)">Vitórias</button>
+        <button class="btn btn-sm btn-outline-dark btn-metrica" data-metrica="perc_vitorias"  onclick="trocarMetrica(this)">% Vitórias</button>
+        <button class="btn btn-sm btn-outline-dark btn-metrica" data-metrica="vits1x0"        onclick="trocarMetrica(this)">Vitória 1×0</button>
+        <button class="btn btn-sm btn-outline-dark btn-metrica" data-metrica="vits3"          onclick="trocarMetrica(this)">Vitórias +3</button>
+        <button class="btn btn-sm btn-outline-dark btn-metrica" data-metrica="empates"        onclick="trocarMetrica(this)">Empates</button>
+        <button class="btn btn-sm btn-outline-dark btn-metrica" data-metrica="perc_empates"   onclick="trocarMetrica(this)">% Empates</button>
+        <button class="btn btn-sm btn-outline-dark btn-metrica" data-metrica="derrotas"       onclick="trocarMetrica(this)">Derrotas</button>
+        <button class="btn btn-sm btn-outline-dark btn-metrica" data-metrica="perc_derrotas"  onclick="trocarMetrica(this)">% Derrotas</button>
+        <button class="btn btn-sm btn-outline-dark btn-metrica" data-metrica="ders3"          onclick="trocarMetrica(this)">Derrotas −3</button>
+        <button class="btn btn-sm btn-outline-dark btn-metrica" data-metrica="gols_pro"       onclick="trocarMetrica(this)">Gols Pró</button>
+        <button class="btn btn-sm btn-outline-dark btn-metrica" data-metrica="media_gols"     onclick="trocarMetrica(this)">Média Gols</button>
+        <button class="btn btn-sm btn-outline-dark btn-metrica" data-metrica="s_marcar"       onclick="trocarMetrica(this)">S/ Marcar</button>
+        <button class="btn btn-sm btn-outline-dark btn-metrica" data-metrica="perc_s_marcar"  onclick="trocarMetrica(this)">% S/ Marcar</button>
+        <button class="btn btn-sm btn-outline-dark btn-metrica" data-metrica="gols_contra"    onclick="trocarMetrica(this)">Gols Contra</button>
+        <button class="btn btn-sm btn-outline-dark btn-metrica" data-metrica="media_gols_c"   onclick="trocarMetrica(this)">Média Gols C.</button>
+        <button class="btn btn-sm btn-outline-dark btn-metrica" data-metrica="s_sofrer"       onclick="trocarMetrica(this)">S/ Sofrer</button>
+        <button class="btn btn-sm btn-outline-dark btn-metrica" data-metrica="perc_s_sofrer"  onclick="trocarMetrica(this)">% S/ Sofrer</button>
+        <button class="btn btn-sm btn-outline-dark btn-metrica" data-metrica="saldo"          onclick="trocarMetrica(this)">Saldo</button>
+        <button class="btn btn-sm btn-outline-dark btn-metrica" data-metrica="pontos"         onclick="trocarMetrica(this)">Pontos</button>
+      </div>
+      <canvas id="graficoEvolucao" height="100"></canvas>
     </div>
-    <div id="stats-lista"></div>
-  </div>
-</div>
+  </section>
 
-<style>
-  .site-footer {
-    background: #fff;
-    border-top: 1px solid #dee2e6;
-    padding: 20px 28px;
-    text-align: center;
-    margin-top: 32px;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  }
-  .footer-links {
-    display: flex; justify-content: center; align-items: center;
-    flex-wrap: wrap; gap: 0;
-  }
-  .footer-links a {
-    font-size: 0.75rem; color: #6c757d; text-decoration: none;
-    padding: 8px 10px; border-radius: 6px; transition: color 0.15s;
-  }
-  .footer-links a:hover { color: #212529; }
-  .footer-sep { color: #ced4da; font-size: 0.75rem; line-height: 2.8; }
-  .footer-copy { margin-top: 8px; font-size: 0.68rem; color: #adb5bd; }
-  @media (max-width: 480px) { .footer-sep { display: none; } }
-</style>
+  <!-- ── GRÁFICO COMPARATIVO ───────────────────────────── -->
+  <section>
+    <div class="card-section">
+      <div class="section-header">
+        <div class="section-title" style="margin-bottom:0;border-bottom:none;padding-bottom:0;">Comparativo de Resultados (V/E/D) — Últimos 30 Anos</div>
+        <div class="form-check form-switch" style="margin-top:0;">
+          <input class="form-check-input" type="checkbox" id="fAcumulado" onchange="renderizarGraficoComparativo(dadosFiltrados)">
+          <label class="form-check-label" for="fAcumulado" style="color:#3f3f46;">VALORES ACUMULADOS</label>
+        </div>
+      </div>
+      <canvas id="graficoComparativo" height="100"></canvas>
+    </div>
+  </section>
+
+</main>
+
+<!-- ── FOOTER ────────────────────────────────────────────── -->
 <footer class="site-footer">
   <nav class="footer-links">
     <a href="sobre.html">Sobre Nós</a>
@@ -305,6 +673,29 @@
   <p class="footer-copy">© <span class="footer-year"></span> Números Fieis</p>
 </footer>
 <script>document.querySelector('.footer-year').textContent = new Date().getFullYear();</script>
+
+<!-- ── VIDEO MODAL ───────────────────────────────────────── -->
+<div id="video-modal" onclick="if(event.target===this)fecharVideo()">
+  <div class="video-modal-box">
+    <button class="btn-fechar-video" onclick="fecharVideo()" title="Fechar">✕</button>
+    <iframe id="video-frame" src=""
+            style="width:100%;height:520px;border:none;"
+            allowfullscreen
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture">
+    </iframe>
+  </div>
+</div>
+
+<!-- ── STATS MODAL ───────────────────────────────────────── -->
+<div id="stats-modal" onclick="if(event.target===this)fecharStats()">
+  <div class="stats-modal-box">
+    <div class="stats-modal-header">
+      <span id="stats-titulo"></span>
+      <button class="btn-fechar-stats" onclick="fecharStats()" title="Fechar">✕</button>
+    </div>
+    <div id="stats-lista"></div>
+  </div>
+</div>
 
 <script src="app.js"></script>
 </body>
