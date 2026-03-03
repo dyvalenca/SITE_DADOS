@@ -611,41 +611,19 @@ function parseDataBR(str) {
   const p = str.split('/');
   return p.length === 3 ? new Date(p[2], p[1]-1, p[0]) : new Date(str);
 }
-// Normaliza uma chave: minúsculas, sem acentos, sem espaços/underscores/hífens.
-function normKey(s) {
-  return String(s).toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[\s_-]/g, '');
-}
-// Cria mapa de chaves normalizadas para busca robusta de colunas do Supabase.
-function normRow(rawRow) {
-  const out = {};
-  for (const [k, v] of Object.entries(rawRow)) out[normKey(k)] = v;
-  return out;
-}
-// Retorna o valor de uma coluna pelo nome canônico.
-function c(nrow, key) {
-  const v = nrow[normKey(key)];
-  return (v !== undefined && v !== null) ? v : '';
-}
 function normalizar(data) {
-  return data.map(rawRow => {
-    const row = normRow(rawRow);
-    const golCor = c(row, 'GOL CORINTHIANS');
-    const golAdv = c(row, 'GOL ADVERSARIO');
-    return {
-      d:   formatarData(c(row, 'DATA')),
-      a:   c(row, 'ANO COMPETICAO'),
-      m:   limpar(c(row, 'MANDO')),
-      p:   (golCor || '0') + 'x' + (golAdv || '0'),
-      r:   limpar(c(row, 'RESULTADO')),
-      adv: limpar(c(row, 'TIME ADVERSARIO')),
-      c:   limpar(c(row, 'COMPETIÇÃO')),
-      e:   limpar(c(row, 'ESTADIO')),
-      t:   limpar(c(row, 'TECNICO CORINTHIANS')),
-    };
-  });
+  return data.map(row => ({
+    d:   formatarData(row["DATA"]),
+    a:   row["ANO COMPETICAO"],
+    m:   limpar(row["MANDO"]),
+    p:   (row["GOL CORINTHIANS"] === "" ? "0" : row["GOL CORINTHIANS"]) + "x" +
+         (row["GOL ADVERSARIO"] === "" ? "0" : row["GOL ADVERSARIO"]),
+    r:   limpar(row["RESULTADO"]),
+    adv: limpar(row["TIME ADVERSARIO"]),
+    c:   limpar(row["COMPETIÇÃO"]),
+    e:   limpar(row["ESTADIO"]),
+    t:   limpar(row["TECNICO CORINTHIANS"]),
+  }));
 }
 
 // ── Parsing ───────────────────────────────────────────────

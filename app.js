@@ -57,72 +57,40 @@ function diagnosticarCampo(raw, campo, data) {
   return limpo;
 }
 
-// Normaliza uma chave de coluna: minúsculas, sem acentos, sem espaços/underscores/hífens.
-// Garante que "COMPETIÇÃO", "competicao", "competição", "COMPETICAO", "competicao_"
-// sejam tratadas como a mesma coluna independente da convenção usada pelo Supabase.
-function normKey(s) {
-  return String(s).toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[\s_-]/g, '');
-}
-
-// Cria um mapa com chaves normalizadas para busca robusta de colunas do Supabase.
-function normRow(rawRow) {
-  const out = {};
-  for (const [k, v] of Object.entries(rawRow)) out[normKey(k)] = v;
-  return out;
-}
-
-// Retorna o valor de uma coluna pelo nome canônico.
-function campo(nrow, key) {
-  const v = nrow[normKey(key)];
-  return (v !== undefined && v !== null) ? v : '';
-}
-
 function normalizarGols(data) {
   const byDate = {};
-  data.forEach(rawRow => {
-    const row = normRow(rawRow);
-    const d = formatarData(limparTexto(campo(row, 'DATA')));
+  data.forEach(row => {
+    const d = formatarData(limparTexto(row["DATA"]));
     if (!d) return;
     if (!byDate[d]) byDate[d] = [];
     byDate[d].push({
-      gol:    limparTexto(campo(row, 'JOGADOR GOL')),
-      camisa: limparTexto(campo(row, 'CAMISA GOL')),
-      pos:    limparTexto(campo(row, 'POSIÇÃO')),
-      pais:   limparTexto(campo(row, 'PAIS')),
-      pen:    limparTexto(campo(row, 'PENALTI')),
-      banco:  limparTexto(campo(row, 'BANCO')),
-      assist: limparTexto(campo(row, 'JOGADOR ASSISTÊNCIA')),
-      posA:   limparTexto(campo(row, 'POSICAO ASSISTENCIA')),
-      paisA:  limparTexto(campo(row, 'PAIS ASSISTENCIA')),
+      gol:    limparTexto(row["JOGADOR GOL"]),
+      camisa: limparTexto(row["CAMISA GOL"]),
+      pos:    limparTexto(row["POSIÇÃO"]),
+      pais:   limparTexto(row["PAIS"]),
+      pen:    limparTexto(row["PENALTI"]),
+      banco:  limparTexto(row["BANCO"]),
+      assist: limparTexto(row["JOGADOR ASSISTÊNCIA"]),
+      posA:   limparTexto(row["POSICAO ASSISTENCIA"]),
+      paisA:  limparTexto(row["PAIS ASSISTENCIA"]),
     });
   });
   return byDate;
 }
 
 function normalizarJogos(data) {
-  if (data.length > 0) {
-    console.log('[NF] Colunas do Supabase (JOGO):', Object.keys(data[0]));
-  }
-  return data.map(rawRow => {
-    const row = normRow(rawRow);
-    const golCor = campo(row, 'GOL CORINTHIANS');
-    const golAdv = campo(row, 'GOL ADVERSARIO');
-    return {
-      d:   formatarData(campo(row, 'DATA')),
-      a:   campo(row, 'ANO COMPETICAO'),
-      m:   limparTexto(campo(row, 'MANDO')),
-      p:   (golCor || '0') + 'x' + (golAdv || '0'),
-      r:   limparTexto(campo(row, 'RESULTADO')),
-      adv: limparTexto(campo(row, 'TIME ADVERSARIO')),
-      c:   diagnosticarCampo(campo(row, 'COMPETIÇÃO'), 'COMPETIÇÃO', campo(row, 'DATA')),
-      e:   limparTexto(campo(row, 'ESTADIO')),
-      t:   limparTexto(campo(row, 'TECNICO CORINTHIANS')),
-      lnk: limparTexto(campo(row, 'LINK')),
-    };
-  });
+  return data.map(row => ({
+    d: formatarData(row["DATA"]),
+    a: row["ANO COMPETICAO"],
+    m: limparTexto(row["MANDO"]),
+    p: (row["GOL CORINTHIANS"] === "" ? "0" : row["GOL CORINTHIANS"]) + "x" + (row["GOL ADVERSARIO"] === "" ? "0" : row["GOL ADVERSARIO"]),
+    r: limparTexto(row["RESULTADO"]),
+    adv: limparTexto(row["TIME ADVERSARIO"]),
+    c: diagnosticarCampo(row["COMPETIÇÃO"], "COMPETIÇÃO", row["DATA"]),
+    e: limparTexto(row["ESTADIO"]),
+    t: limparTexto(row["TECNICO CORINTHIANS"]),
+    lnk: limparTexto(row["LINK"])
+  }));
 }
 
 async function carregarDados() {
