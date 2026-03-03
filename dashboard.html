@@ -381,38 +381,37 @@
     .footer-sep { color: #d4d4d8; font-size: 0.75rem; line-height: 2.8; }
     .footer-copy { margin-top: 8px; font-size: 0.68rem; color: #a1a1aa; }
 
-    /* ── BALANÇO DE GOLS ─────────────────────────────────── */
-    .gols-bar-card {
+    /* ── ARTILHEIROS ─────────────────────────────────────── */
+    .art-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+    }
+    .art-card {
       background: #fff; border: 1px solid #e4e4e7;
-      border-radius: 14px; padding: 20px 22px; margin-bottom: 12px;
+      border-radius: 14px; overflow: hidden;
     }
-    .gols-bar-labels {
-      display: flex; justify-content: space-between;
-      font-size: 0.78rem; font-weight: 600; margin-bottom: 10px;
+    .art-card-title {
+      font-size: 0.6rem; font-weight: 700; letter-spacing: 2px;
+      text-transform: uppercase; color: #a1a1aa;
+      padding: 14px 16px 10px; border-bottom: 1px solid #f4f4f5;
     }
-    .gols-bar-labels .gp { color: #7c3aed; }
-    .gols-bar-labels .gc { color: #dc2626; }
-    .gols-bar {
-      height: 10px; background: #f0f0f2;
-      border-radius: 5px; overflow: hidden; display: flex;
+    .art-row {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 16px; border-bottom: 1px solid #f4f4f5;
     }
-    .bar-gp { background: #7c3aed; transition: width 0.5s ease; }
-    .bar-gc { background: #dc2626; transition: width 0.5s ease; }
-    .gols-metricas { display: flex; gap: 10px; flex-wrap: wrap; }
-    .gol-metrica {
-      background: #fff; border: 1px solid #e4e4e7;
-      border-radius: 12px; padding: 14px 18px; flex: 1; min-width: 130px;
+    .art-row:last-child { border-bottom: none; }
+    .art-count {
+      font-size: 1.05rem; font-weight: 900; letter-spacing: -0.5px;
+      color: #18181b; min-width: 22px; text-align: center; flex-shrink: 0;
     }
-    .gol-metrica-valor { font-size: 1.7rem; font-weight: 900; letter-spacing: -0.5px; line-height: 1; color: #18181b; }
-    .gol-metrica-label {
-      font-size: 0.62rem; font-weight: 700; letter-spacing: 1.5px;
-      text-transform: uppercase; color: #a1a1aa; margin-top: 5px;
+    .art-flag { line-height: 1; flex-shrink: 0; }
+    .art-info { flex: 1; min-width: 0; }
+    .art-nome { font-size: 0.82rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .art-pos {
+      font-size: 0.58rem; font-weight: 700; letter-spacing: 1px;
+      text-transform: uppercase; color: #a1a1aa; margin-top: 2px;
     }
-    .gol-metrica.media-gp .gol-metrica-valor { color: #7c3aed; }
-    .gol-metrica.media-gc .gol-metrica-valor { color: #dc2626; }
-    .gol-metrica.gol-smar .gol-metrica-valor { color: #9333ea; }
-    .gol-metrica.gol-ssof .gol-metrica-valor { color: #2563eb; }
-    .gol-metrica-pct { font-size: 0.7rem; color: #9ca3af; margin-top: 2px; }
+    .art-vazio { color: #a1a1aa; font-size: 0.78rem; font-style: italic; padding: 16px; }
+    @media (max-width: 640px) { .art-grid { grid-template-columns: 1fr; } }
 
     /* ── RESPONSIVO ──────────────────────────────────────── */
     @media (max-width: 900px) {
@@ -690,41 +689,21 @@
     </div>
   </section>
 
-  <!-- ── BALANÇO DE GOLS ────────────────────────────────── -->
-  <section>
-    <div class="section-title">Balanço de Gols</div>
-    <div class="gols-bar-card">
-      <div class="gols-bar-labels">
-        <span class="gp">Gols Pró — <strong id="db-gp-val">0</strong></span>
-        <span class="gc">Gols Contra — <strong id="db-gc-val">0</strong></span>
+  <!-- ── ARTILHEIROS ───────────────────────────────────── -->
+  <section id="sec-artilheiros-dash" style="display:none">
+    <div class="section-title">Artilheiros do Período Filtrado</div>
+    <div class="art-grid">
+      <div class="art-card">
+        <div class="art-card-title">⚽ Gols</div>
+        <div id="dash-art-gols-lista"></div>
       </div>
-      <div class="gols-bar">
-        <div class="bar-gp" id="db-bar-gp" style="width:50%"></div>
-        <div class="bar-gc" id="db-bar-gc" style="width:50%"></div>
+      <div class="art-card">
+        <div class="art-card-title">👟 Assistências</div>
+        <div id="dash-art-assists-lista"></div>
       </div>
-    </div>
-    <div class="gols-metricas">
-      <div class="gol-metrica">
-        <div class="gol-metrica-valor" id="db-saldo-val">+0</div>
-        <div class="gol-metrica-label">Saldo de Gols</div>
-      </div>
-      <div class="gol-metrica media-gp">
-        <div class="gol-metrica-valor" id="db-media-gp-val">0.00</div>
-        <div class="gol-metrica-label">Méd. Gols Pró / Jogo</div>
-      </div>
-      <div class="gol-metrica media-gc">
-        <div class="gol-metrica-valor" id="db-media-gc-val">0.00</div>
-        <div class="gol-metrica-label">Méd. Gols Contra / Jogo</div>
-      </div>
-      <div class="gol-metrica gol-smar">
-        <div class="gol-metrica-valor" id="db-smar-val">0</div>
-        <div class="gol-metrica-label">Jogos S/ Marcar</div>
-        <div class="gol-metrica-pct" id="db-smar-pct">—</div>
-      </div>
-      <div class="gol-metrica gol-ssof">
-        <div class="gol-metrica-valor" id="db-ssof-val">0</div>
-        <div class="gol-metrica-label">Jogos S/ Sofrer</div>
-        <div class="gol-metrica-pct" id="db-ssof-pct">—</div>
+      <div class="art-card">
+        <div class="art-card-title">⚡ Participações</div>
+        <div id="dash-art-total-lista"></div>
       </div>
     </div>
   </section>

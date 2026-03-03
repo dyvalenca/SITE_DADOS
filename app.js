@@ -8,6 +8,7 @@ const API_URL = "https://script.google.com/macros/s/AKfycbzrkyGBdn7WGN7yH-Y1Iswg
 // =====================================================================
 let dadosGlobais = [];
 let dadosFiltrados = [];
+let golsByDate = {};
 let paginaAtual = 1;
 let chartInstance = null;
 let chartCompInstance = null;
@@ -56,6 +57,27 @@ function diagnosticarCampo(raw, campo, data) {
   return limpo;
 }
 
+function normalizarGols(data) {
+  const byDate = {};
+  data.forEach(row => {
+    const d = formatarData(limparTexto(row["DATA"]));
+    if (!d) return;
+    if (!byDate[d]) byDate[d] = [];
+    byDate[d].push({
+      gol:    limparTexto(row["JOGADOR GOL"]),
+      camisa: limparTexto(row["CAMISA GOL"]),
+      pos:    limparTexto(row["POSIÇÃO"]),
+      pais:   limparTexto(row["PAIS"]),
+      pen:    limparTexto(row["PENALTI"]),
+      banco:  limparTexto(row["BANCO"]),
+      assist: limparTexto(row["JOGADOR ASSISTÊNCIA"]),
+      posA:   limparTexto(row["POSICAO ASSISTENCIA"]),
+      paisA:  limparTexto(row["PAIS ASSISTENCIA"]),
+    });
+  });
+  return byDate;
+}
+
 function normalizarJogos(data) {
   return data.map(row => ({
     d: formatarData(row["DATA"]),
@@ -74,13 +96,19 @@ function normalizarJogos(data) {
 async function carregarDados() {
   // Tenta usar cache do sessionStorage (compartilhado com jogos.html e index.html)
   let rawData = null;
+  let rawGols = null;
   try {
     const cached = sessionStorage.getItem('nf_dados_cache');
     if (cached) rawData = JSON.parse(cached);
   } catch(e) {}
+  try {
+    const cachedG = sessionStorage.getItem('nf_gols_cache');
+    if (cachedG) rawGols = JSON.parse(cachedG);
+  } catch(e) {}
 
   if (rawData) {
     dadosGlobais = normalizarJogos(rawData);
+    golsByDate = normalizarGols(rawGols || []);
     document.getElementById('msg-status').innerText = `${dadosGlobais.length.toLocaleString('pt-BR')} jogos carregados!`;
     popularAnos();
     popularListasDinamicas(dadosGlobais);
@@ -88,19 +116,45 @@ async function carregarDados() {
     const overlay = document.getElementById('loading-overlay');
     overlay.style.opacity = '0';
     setTimeout(() => overlay.style.display = 'none', 500);
+
+    // Se gols não estavam em cache, busca em background e re-renderiza artilheiros
+    if (!rawGols) {
+      fetch(`${API_URL}?aba=gol&limit=9999`)
+        .then(r => r.json())
+        .then(json => {
+          if (json.data) {
+            try { sessionStorage.setItem('nf_gols_cache', JSON.stringify(json.data)); } catch(e) {}
+            golsByDate = normalizarGols(json.data);
+            renderArtilheiros(dadosFiltrados);
+          }
+        }).catch(() => {});
+    }
     return;
   }
 
-  // Sem cache: busca direto da API
+  // Sem cache: busca jogo + gol em paralelo
   try {
-    const resp = await fetch(`${API_URL}?aba=jogo&limit=9999`);
-    const json = await resp.json();
+    const [respJogo, respGol] = await Promise.all([
+      fetch(`${API_URL}?aba=jogo&limit=9999`),
+      fetch(`${API_URL}?aba=gol&limit=9999`).catch(() => null)
+    ]);
+
+    const json = await respJogo.json();
     if (!json.data) throw new Error(json.erro || 'Resposta inesperada: ' + JSON.stringify(json).slice(0, 300));
 
     rawData = json.data;
     try { sessionStorage.setItem('nf_dados_cache', JSON.stringify(rawData)); } catch(e) {}
 
+    if (respGol) {
+      const jsonGol = await respGol.json().catch(() => ({}));
+      if (jsonGol.data) {
+        rawGols = jsonGol.data;
+        try { sessionStorage.setItem('nf_gols_cache', JSON.stringify(rawGols)); } catch(e) {}
+      }
+    }
+
     dadosGlobais = normalizarJogos(rawData);
+    golsByDate = normalizarGols(rawGols || []);
     document.getElementById('msg-status').innerText = `${dadosGlobais.length.toLocaleString('pt-BR')} jogos carregados!`;
     popularAnos();
     popularListasDinamicas(dadosGlobais);
@@ -374,6 +428,7 @@ function aplicarFiltros() {
   renderizarGrafico(dadosFiltrados);
   renderizarGraficoComparativo(dadosFiltrados);
   renderizarTabelaTecnicos(dadosFiltrados);
+  renderArtilheiros(dadosFiltrados);
 }
 
 // =====================================================================
@@ -538,23 +593,6 @@ function atualizarEstatisticas(lista) {
   document.getElementById('res-sg').innerText = gp - gc;
   document.getElementById('res-pontos').innerText = pontos;
   document.getElementById('res-aprov').innerText = (lista.length > 0 ? aprov : 0) + '%';
-
-  // Balanço de gols (seção no final do dashboard)
-  const totalG = gp + gc || 1;
-  document.getElementById('db-gp-val').textContent = gp;
-  document.getElementById('db-gc-val').textContent = gc;
-  document.getElementById('db-bar-gp').style.width = ((gp / totalG) * 100).toFixed(1) + '%';
-  document.getElementById('db-bar-gc').style.width = ((gc / totalG) * 100).toFixed(1) + '%';
-  const dbSaldo = gp - gc;
-  const dbSaldoEl = document.getElementById('db-saldo-val');
-  dbSaldoEl.textContent = (dbSaldo >= 0 ? '+' : '') + dbSaldo;
-  dbSaldoEl.style.color = dbSaldo > 0 ? '#2563eb' : dbSaldo < 0 ? '#dc2626' : '#9ca3af';
-  document.getElementById('db-media-gp-val').textContent = (gp / total).toFixed(2);
-  document.getElementById('db-media-gc-val').textContent = (gc / total).toFixed(2);
-  document.getElementById('db-smar-val').textContent = sMarcar;
-  document.getElementById('db-smar-pct').textContent = (sMarcar / total * 100).toFixed(0) + '% dos jogos';
-  document.getElementById('db-ssof-val').textContent = sSofrer;
-  document.getElementById('db-ssof-pct').textContent = (sSofrer / total * 100).toFixed(0) + '% dos jogos';
 }
 
 // =====================================================================
@@ -819,4 +857,98 @@ function render() {
   document.getElementById('btnAnt').disabled = (paginaAtual <= 1);
   document.getElementById('btnProx').disabled = (paginaAtual >= totalPaginas);
   document.querySelector('.table-responsive').scrollTop = 0;
+}
+
+// =====================================================================
+// BANDEIRAS
+// =====================================================================
+function paisBandeira(pais) {
+  if (!pais) return '';
+  const n = pais.toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim();
+  const MAP = {
+    'BRASIL':'br','ARGENTINA':'ar','URUGUAI':'uy','PARAGUAI':'py',
+    'COLOMBIA':'co','CHILE':'cl','EQUADOR':'ec','PERU':'pe',
+    'VENEZUELA':'ve','BOLIVIA':'bo','MEXICO':'mx','CUBA':'cu',
+    'ESPANHA':'es','PORTUGAL':'pt','FRANCA':'fr','ITALIA':'it',
+    'ALEMANHA':'de','HOLANDA':'nl','BELGICA':'be','SUECIA':'se',
+    'SUICA':'ch','CROACIA':'hr','SERVIA':'rs','UCRANIA':'ua',
+    'POLONIA':'pl','AUSTRIA':'at','DINAMARCA':'dk','NORUEGA':'no',
+    'REP CHECA':'cz','REPUBLICA CHECA':'cz','ESCOCIA':'gb-sct',
+    'INGLATERRA':'gb-eng','GALES':'gb-wls','RUSSIA':'ru','TURQUIA':'tr',
+    'ANGOLA':'ao','SENEGAL':'sn','NIGERIA':'ng','MARROCOS':'ma',
+    'COSTA DO MARFIM':'ci','CAMEROES':'cm','GHANA':'gh','MALI':'ml',
+    'GUINEE':'gn','GUINE':'gn','EUA':'us','ESTADOS UNIDOS':'us',
+    'COSTA RICA':'cr','JAPAO':'jp','COREIA DO SUL':'kr',
+  };
+  const code = MAP[n];
+  if (!code) return '';
+  return `<img src="https://flagcdn.com/20x15/${code}.png" width="20" height="15" alt="${pais}" style="vertical-align:middle;border-radius:2px;">`;
+}
+
+// =====================================================================
+// ARTILHEIROS (usa dadosFiltrados × golsByDate)
+// =====================================================================
+function renderArtilheiros(jogos) {
+  const sec = document.getElementById('sec-artilheiros-dash');
+  if (!sec) return;
+
+  const datasJogos = new Set(jogos.map(j => j.d));
+  const players = {};
+
+  datasJogos.forEach(data => {
+    (golsByDate[data] || []).forEach(g => {
+      if (g.gol) {
+        if (!players[g.gol]) players[g.gol] = { nome: g.gol, pos: '', pais: '', gols: 0, assists: 0 };
+        players[g.gol].gols++;
+        if (!players[g.gol].pos  && g.pos)  players[g.gol].pos  = g.pos;
+        if (!players[g.gol].pais && g.pais) players[g.gol].pais = g.pais;
+      }
+      if (g.assist) {
+        if (!players[g.assist]) players[g.assist] = { nome: g.assist, pos: '', pais: '', gols: 0, assists: 0 };
+        players[g.assist].assists++;
+        if (!players[g.assist].pos  && g.posA)  players[g.assist].pos  = g.posA;
+        if (!players[g.assist].pais && g.paisA) players[g.assist].pais = g.paisA;
+      }
+    });
+  });
+
+  const lista = Object.values(players);
+
+  if (lista.length === 0) { sec.style.display = 'none'; return; }
+  sec.style.display = '';
+
+  function artRow(p, stat) {
+    const flag = paisBandeira(p.pais);
+    return `<div class="art-row">
+      <span class="art-count">${stat}</span>
+      ${flag ? `<span class="art-flag">${flag}</span>` : ''}
+      <div class="art-info">
+        <div class="art-nome">${p.nome}</div>
+        ${p.pos ? `<div class="art-pos">${p.pos}</div>` : ''}
+      </div>
+    </div>`;
+  }
+
+  function fillLista(id, sorted) {
+    const el = document.getElementById(id);
+    el.innerHTML = sorted.length
+      ? sorted.map(p => artRow(p, p._stat)).join('')
+      : '<div class="art-vazio">Sem dados</div>';
+  }
+
+  fillLista('dash-art-gols-lista',
+    lista.filter(p => p.gols > 0)
+      .sort((a,b) => b.gols - a.gols || b.assists - a.assists)
+      .map(p => ({ ...p, _stat: p.gols }))
+  );
+  fillLista('dash-art-assists-lista',
+    lista.filter(p => p.assists > 0)
+      .sort((a,b) => b.assists - a.assists || b.gols - a.gols)
+      .map(p => ({ ...p, _stat: p.assists }))
+  );
+  fillLista('dash-art-total-lista',
+    lista.filter(p => p.gols + p.assists > 0)
+      .sort((a,b) => (b.gols + b.assists) - (a.gols + a.assists))
+      .map(p => ({ ...p, _stat: p.gols + p.assists }))
+  );
 }
