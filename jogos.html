@@ -924,7 +924,6 @@ function renderArtilheiros(jogos) {
   if (lista.length === 0) { sec.style.display = 'none'; return; }
   sec.style.display = '';
 
-  const TOP = 10;
   function artRow(p, stat) {
     const flag = paisBandeira(p.pais);
     return `<div class="art-row">
@@ -940,7 +939,7 @@ function renderArtilheiros(jogos) {
   function fillLista(id, sorted) {
     const el = document.getElementById(id);
     el.innerHTML = sorted.length
-      ? sorted.slice(0, TOP).map(p => artRow(p, p._stat)).join('')
+      ? sorted.map(p => artRow(p, p._stat)).join('')
       : '<div class="art-vazio">Sem dados</div>';
   }
 
