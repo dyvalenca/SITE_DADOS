@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Administrativo — Números Fieis</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #f1f1f3;
+      color: #18181b;
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+    }
+
+    /* HEADER */
+    header {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      background: #fff; border-bottom: 1px solid #e4e4e7;
+      padding: 0 28px; height: 58px;
+      display: flex; align-items: center; gap: 12px;
+    }
+    .logo { font-size: 1.05rem; font-weight: 900; letter-spacing: -0.5px; color: #18181b; text-decoration: none; }
+    .logo span { color: #52525b; font-weight: 600; }
+    .back-link {
+      margin-left: auto;
+      font-size: 0.75rem; color: #71717a; text-decoration: none;
+      padding: 6px 12px; border: 1px solid #e4e4e7; border-radius: 8px;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .back-link:hover { color: #18181b; border-color: #a1a1aa; }
+
+    /* MAIN */
+    main { padding: 78px 20px 60px; max-width: 980px; margin: 0 auto; }
+
+    /* PASSWORD SCREEN */
+    .pwd-screen {
+      min-height: calc(100vh - 120px);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .pwd-card {
+      background: #fff; border: 1px solid #e4e4e7; border-radius: 18px;
+      padding: 44px 36px; width: 100%; max-width: 380px; text-align: center;
+    }
+    .pwd-icon { font-size: 2.8rem; margin-bottom: 18px; }
+    .pwd-title { font-size: 1.1rem; font-weight: 900; letter-spacing: -0.4px; margin-bottom: 6px; }
+    .pwd-sub { font-size: 0.78rem; color: #71717a; margin-bottom: 26px; line-height: 1.5; }
+    .pwd-input {
+      width: 100%; padding: 11px 14px; border: 1px solid #e4e4e7; border-radius: 10px;
+      font-family: inherit; font-size: 0.9rem; margin-bottom: 10px;
+      outline: none; transition: border-color 0.15s; letter-spacing: 2px;
+    }
+    .pwd-input:focus { border-color: #a1a1aa; }
+    .pwd-error { font-size: 0.72rem; color: #dc2626; margin-bottom: 12px; min-height: 18px; }
+
+    /* CARDS */
+    .card {
+      background: #fff; border: 1px solid #e4e4e7;
+      border-radius: 16px; padding: 26px 28px; margin-bottom: 14px;
+    }
+    .card-label {
+      font-size: 0.6rem; font-weight: 700; letter-spacing: 2px;
+      text-transform: uppercase; color: #a1a1aa; margin-bottom: 18px;
+    }
+
+    /* PAGE HEADER */
+    .page-header {
+      display: flex; align-items: center; gap: 14px;
+      margin-bottom: 18px; flex-wrap: wrap;
+    }
+    .page-title { font-size: 1.35rem; font-weight: 900; letter-spacing: -0.5px; }
+    .mode-badge {
+      display: inline-flex; align-items: center; padding: 4px 12px;
+      border-radius: 20px; font-size: 0.62rem; font-weight: 700;
+      letter-spacing: 1px; text-transform: uppercase;
+    }
+    .badge-new  { background: #dbeafe; color: #1d4ed8; }
+    .badge-edit { background: #fef9c3; color: #a16207; }
+
+    /* FORM */
+    .form-row { display: grid; gap: 14px; margin-bottom: 14px; }
+    .form-row:last-child { margin-bottom: 0; }
+    .cols-2 { grid-template-columns: 1fr 1fr; }
+    .cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+    .cols-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+
+    .form-group { display: flex; flex-direction: column; gap: 5px; }
+    .form-label {
+      font-size: 0.65rem; font-weight: 700; letter-spacing: 0.5px;
+      text-transform: uppercase; color: #71717a;
+    }
+    .form-control {
+      padding: 8px 12px; border: 1px solid #e4e4e7; border-radius: 8px;
+      font-family: inherit; font-size: 0.82rem; color: #18181b;
+      background: #fff; outline: none; transition: border-color 0.15s;
+      width: 100%;
+    }
+    .form-control:focus { border-color: #a1a1aa; }
+    .form-control:disabled { background: #f4f4f5; color: #71717a; cursor: default; }
+    select.form-control { cursor: pointer; }
+
+    /* SEARCH */
+    .search-row { display: flex; gap: 10px; align-items: flex-end; }
+    .search-row .form-group { flex: 1; }
+    .search-status { font-size: 0.72rem; margin-top: 10px; min-height: 16px; }
+    .st-ok   { color: #16a34a; }
+    .st-err  { color: #dc2626; }
+    .st-info { color: #71717a; }
+
+    /* GOL TABLE */
+    .gol-header {
+      display: flex; align-items: center;
+      justify-content: space-between; margin-bottom: 14px;
+    }
+    .table-wrap { overflow-x: auto; }
+    table.gol-table {
+      width: 100%; border-collapse: collapse;
+      font-size: 0.73rem; min-width: 920px;
+    }
+    .gol-table th {
+      background: #18181b; color: #fff;
+      padding: 8px 8px; font-size: 0.58rem;
+      font-weight: 700; letter-spacing: 1px;
+      text-transform: uppercase; white-space: nowrap;
+      text-align: center;
+    }
+    .gol-table th:first-child { text-align: center; width: 32px; }
+    .gol-table td { padding: 5px 4px; border-bottom: 1px solid #f4f4f5; vertical-align: middle; }
+    .gol-table .form-control { padding: 5px 8px; font-size: 0.75rem; }
+    .gol-table td.center { text-align: center; }
+    .gol-empty {
+      text-align: center; color: #a1a1aa;
+      font-size: 0.78rem; font-style: italic; padding: 22px;
+    }
+    .btn-remove {
+      background: none; border: none; color: #dc2626;
+      cursor: pointer; font-size: 1.1rem; padding: 2px 7px;
+      border-radius: 6px; line-height: 1;
+    }
+    .btn-remove:hover { background: #fef2f2; }
+    .row-num { font-size: 0.65rem; color: #a1a1aa; text-align: center; padding: 0 8px; }
+
+    /* BUTTONS */
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 9px 18px; border-radius: 10px; border: none;
+      font-family: inherit; font-size: 0.78rem; font-weight: 700;
+      cursor: pointer; transition: opacity 0.15s, background 0.15s;
+      white-space: nowrap;
+    }
+    .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+    .btn-primary { background: #18181b; color: #fff; }
+    .btn-primary:not(:disabled):hover { opacity: 0.82; }
+    .btn-secondary {
+      background: #f4f4f5; color: #18181b;
+      border: 1px solid #e4e4e7;
+    }
+    .btn-secondary:not(:disabled):hover { background: #e9e9eb; }
+    .btn-sm { padding: 6px 13px; font-size: 0.72rem; }
+    .btn-danger { background: #dc2626; color: #fff; }
+    .btn-danger:not(:disabled):hover { opacity: 0.85; }
+
+    /* ACTIONS */
+    .actions-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .save-status { font-size: 0.75rem; min-height: 20px; font-weight: 600; }
+
+    /* FOOTER */
+    .site-footer {
+      background: #fff; border-top: 1px solid #e4e4e7;
+      padding: 20px 28px; text-align: center;
+    }
+    .footer-copy { font-size: 0.68rem; color: #a1a1aa; }
+
+    @media (max-width: 640px) {
+      .cols-2, .cols-3, .cols-4 { grid-template-columns: 1fr; }
+      .search-row { flex-direction: column; align-items: stretch; }
+      .actions-row { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <a href="index.html" class="logo">Números Fieis <span>- Corinthians</span></a>
+  <a href="index.html" class="back-link">← Menu</a>
+</header>
+
+<main>
+
+  <!-- ── TELA DE SENHA ── -->
+  <div id="pwd-screen" class="pwd-screen">
+    <div class="pwd-card">
+      <div class="pwd-icon">🔐</div>
+      <div class="pwd-title">Área Administrativa</div>
+      <div class="pwd-sub">Acesso restrito. Digite a senha para continuar.</div>
+      <input id="pwd-input" type="password" class="pwd-input" placeholder="••••••" autocomplete="off">
+      <div id="pwd-error" class="pwd-error"></div>
+      <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="verificarSenha()">Entrar</button>
+    </div>
+  </div>
+
+  <!-- ── TELA ADMIN ── -->
+  <div id="admin-screen" style="display:none">
+
+    <div class="page-header">
+      <div class="page-title">Administrativo</div>
+      <span id="mode-badge" class="mode-badge badge-new">Novo Registro</span>
+    </div>
+
+    <!-- BUSCA -->
+    <div class="card">
+      <div class="card-label">Buscar / Carregar Registro Existente</div>
+      <div class="search-row">
+        <div class="form-group">
+          <label class="form-label">Data do Jogo</label>
+          <input type="date" id="busca-data" class="form-control">
+        </div>
+        <button class="btn btn-secondary" onclick="buscarJogo()">Buscar</button>
+        <button class="btn btn-secondary" onclick="novoRegistro()">Limpar / Novo</button>
+      </div>
+      <div id="busca-status" class="search-status st-info"></div>
+    </div>
+
+    <!-- JOGO (Master) -->
+    <div class="card">
+      <div class="card-label">Dados do Jogo — JOGO</div>
+
+      <div class="form-row cols-4">
+        <div class="form-group" style="grid-column: span 2">
+          <label class="form-label">Data</label>
+          <input type="date" id="j-data" class="form-control" oninput="onDataChange()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Ano Competição</label>
+          <input type="text" id="j-ano" class="form-control" disabled placeholder="Auto">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Mando</label>
+          <select id="j-mando" class="form-control">
+            <option value="">—</option>
+            <option>CASA</option>
+            <option>FORA</option>
+            <option>NEUTRO</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row cols-4">
+        <div class="form-group" style="grid-column: span 2">
+          <label class="form-label">Time Adversário</label>
+          <input type="text" id="j-adversario" class="form-control" placeholder="Ex: PALMEIRAS">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Gols Corinthians</label>
+          <input type="number" id="j-gol-cor" class="form-control" min="0" placeholder="0" oninput="calcResultado()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Gols Adversário</label>
+          <input type="number" id="j-gol-adv" class="form-control" min="0" placeholder="0" oninput="calcResultado()">
+        </div>
+      </div>
+
+      <div class="form-row cols-4">
+        <div class="form-group">
+          <label class="form-label">Resultado</label>
+          <input type="text" id="j-resultado" class="form-control" disabled placeholder="Auto">
+        </div>
+        <div class="form-group" style="grid-column: span 3">
+          <label class="form-label">Competição</label>
+          <input type="text" id="j-comp" class="form-control" placeholder="Ex: BRASILEIRO">
+        </div>
+      </div>
+
+      <div class="form-row cols-2">
+        <div class="form-group">
+          <label class="form-label">Estádio</label>
+          <input type="text" id="j-estadio" class="form-control" placeholder="Ex: NEO QUIMICA ARENA">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Técnico Corinthians</label>
+          <input type="text" id="j-tecnico" class="form-control" placeholder="Ex: RAMÓN DÍAZ">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Link (YouTube / Highlight)</label>
+          <input type="url" id="j-link" class="form-control" placeholder="https://...">
+        </div>
+      </div>
+    </div>
+
+    <!-- GOL (Detail) -->
+    <div class="card">
+      <div class="gol-header">
+        <div class="card-label" style="margin-bottom:0">Gols do Jogo — GOL</div>
+        <button class="btn btn-secondary btn-sm" onclick="adicionarLinha()">+ Adicionar Gol</button>
+      </div>
+      <div class="table-wrap">
+        <table class="gol-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Jogador Gol</th>
+              <th>Camisa</th>
+              <th>Posição</th>
+              <th>País</th>
+              <th>Pênalti</th>
+              <th>Banco</th>
+              <th>Jogador Assist.</th>
+              <th>Pos. Assist.</th>
+              <th>País Assist.</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="gol-tbody">
+            <tr><td colspan="11" class="gol-empty">Nenhum gol adicionado. Clique em "+ Adicionar Gol".</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- AÇÕES -->
+    <div class="card">
+      <div class="actions-row">
+        <button id="btn-salvar" class="btn btn-primary" onclick="salvar()">💾 Salvar Jogo</button>
+        <button class="btn btn-secondary" onclick="novoRegistro()">Limpar Formulário</button>
+        <div id="save-status" class="save-status st-info"></div>
+      </div>
+    </div>
+
+  </div><!-- /admin-screen -->
+</main>
+
+<footer class="site-footer">
+  <p class="footer-copy">© <span id="footer-year"></span> Números Fieis — Módulo Administrativo</p>
+</footer>
+
+<script>
+// ============================================================
+// SUPABASE
+// ============================================================
+const SUPABASE_URL = 'https://xtdavfobpodxeawaygtn.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_B9X6t6kanjvTmGa8zEAF6w_MqxxcZh4';
+const { createClient } = window.supabase;
+const db = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+document.getElementById('footer-year').textContent = new Date().getFullYear();
+
+// ============================================================
+// SENHA
+// ============================================================
+const SENHA = '144436';
+
+function verificarSenha() {
+  const v = document.getElementById('pwd-input').value;
+  if (v === SENHA) {
+    document.getElementById('pwd-screen').style.display = 'none';
+    document.getElementById('admin-screen').style.display = '';
+  } else {
+    document.getElementById('pwd-error').textContent = 'Senha incorreta. Tente novamente.';
+    document.getElementById('pwd-input').value = '';
+    document.getElementById('pwd-input').focus();
+  }
+}
+
+document.getElementById('pwd-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') verificarSenha();
+});
+
+// ============================================================
+// ESTADO
+// ============================================================
+let isEditMode = false;
+let dataOriginal = null;   // valor exato de data como está no DB (para UPDATE/DELETE)
+let golRowCount  = 0;
+
+// ============================================================
+// UTILITÁRIOS DE FORMULÁRIO
+// ============================================================
+function onDataChange() {
+  const v = document.getElementById('j-data').value;
+  // extrai o ano sem conversão de fuso (YYYY-MM-DD → split)
+  document.getElementById('j-ano').value = v ? v.split('-')[0] : '';
+  calcResultado();
+}
+
+function calcResultado() {
+  const cor = document.getElementById('j-gol-cor').value;
+  const adv = document.getElementById('j-gol-adv').value;
+  if (cor === '' || adv === '') { document.getElementById('j-resultado').value = ''; return; }
+  const c = parseInt(cor), a = parseInt(adv);
+  document.getElementById('j-resultado').value =
+    c > a ? 'VITORIA' : c === a ? 'EMPATE' : 'DERROTA';
+}
+
+function setSearchStatus(msg, tipo) {
+  const el = document.getElementById('busca-status');
+  el.textContent = msg;
+  el.className = 'search-status ' + tipo;
+}
+
+function setSaveStatus(msg, tipo) {
+  const el = document.getElementById('save-status');
+  el.textContent = msg;
+  el.className = 'save-status ' + tipo;
+}
+
+// converte YYYY-MM-DD → string ISO para query Supabase
+// e monta também o formato BR DD/MM/YYYY para fallback em colunas TEXT
+function parseInputDate(iso) {
+  const [y, m, d] = iso.split('-');
+  return { iso, br: `${d}/${m}/${y}` };
+}
+
+// tenta buscar primeiro por ISO, depois por BR (para suportar ambos os formatos no DB)
+async function queryByData(table, dataISO, dataBR) {
+  let { data, error } = await db.from(table).select('*').eq('data', dataISO);
+  if (error) throw error;
+  if (!data || data.length === 0) {
+    const res2 = await db.from(table).select('*').eq('data', dataBR);
+    if (res2.error) throw res2.error;
+    data = res2.data;
+  }
+  return data || [];
+}
+
+// ============================================================
+// LINHAS GOL (Detail)
+// ============================================================
+function adicionarLinha(dados = {}) {
+  golRowCount++;
+  const tbody = document.getElementById('gol-tbody');
+
+  // remove linha "Nenhum gol" se existir
+  const emptyRow = tbody.querySelector('tr:has(.gol-empty)');
+  if (emptyRow) emptyRow.remove();
+
+  const n = golRowCount;
+  const tr = document.createElement('tr');
+  tr.dataset.row = n;
+
+  const inp = (id, val = '', type = 'text', w = '') =>
+    `<input type="${type}" class="form-control" id="g-${id}-${n}" value="${String(val).replace(/"/g, '&quot;')}"${w ? ` style="width:${w}"` : ''}>`;
+
+  const chk = (id, val = '') =>
+    `<input type="checkbox" id="g-${id}-${n}" ${val === 'SIM' ? 'checked' : ''} style="width:18px;height:18px;cursor:pointer">`;
+
+  tr.innerHTML = `
+    <td class="row-num">${n}</td>
+    <td>${inp('jogador',    dados.jogador_gol           || '', 'text', '148px')}</td>
+    <td>${inp('camisa',     dados.camisa_gol            || '', 'text', '52px')}</td>
+    <td>${inp('posicao',    dados.posicao               || '', 'text', '76px')}</td>
+    <td>${inp('pais',       dados.pais                  || '', 'text', '88px')}</td>
+    <td class="center">${chk('penalti',  dados.penalti  || '')}</td>
+    <td class="center">${chk('banco',    dados.banco    || '')}</td>
+    <td>${inp('assistencia',   dados.jogador_assistencia   || '', 'text', '148px')}</td>
+    <td>${inp('pos-assist',    dados.posicao_assistencia   || '', 'text', '76px')}</td>
+    <td>${inp('pais-assist',   dados.pais_assistencia      || '', 'text', '88px')}</td>
+    <td class="center"><button class="btn-remove" onclick="removerLinha(this)" title="Remover">×</button></td>
+  `;
+  tbody.appendChild(tr);
+}
+
+function removerLinha(btn) {
+  btn.closest('tr').remove();
+  const tbody = document.getElementById('gol-tbody');
+  if (!tbody.querySelector('tr[data-row]')) {
+    tbody.innerHTML = '<tr><td colspan="11" class="gol-empty">Nenhum gol adicionado. Clique em "+ Adicionar Gol".</td></tr>';
+  }
+}
+
+function coletarGols(data) {
+  const rows = document.querySelectorAll('#gol-tbody tr[data-row]');
+  return Array.from(rows).map(tr => {
+    const n = tr.dataset.row;
+    const g = id => document.getElementById(`g-${id}-${n}`);
+    const val = id => g(id)?.value.trim() || null;
+    return {
+      data,
+      jogador_gol:         val('jogador'),
+      camisa_gol:          val('camisa'),
+      posicao:             val('posicao'),
+      pais:                val('pais'),
+      penalti:             g('penalti')?.checked  ? 'SIM' : 'NAO',
+      banco:               g('banco')?.checked    ? 'SIM' : 'NAO',
+      jogador_assistencia: val('assistencia'),
+      posicao_assistencia: val('pos-assist'),
+      pais_assistencia:    val('pais-assist'),
+    };
+  }).filter(r => r.jogador_gol);  // ignora linhas sem jogador
+}
+
+// ============================================================
+// BUSCAR JOGO
+// ============================================================
+async function buscarJogo() {
+  const inputVal = document.getElementById('busca-data').value;
+  if (!inputVal) { setSearchStatus('Informe uma data para buscar.', 'st-err'); return; }
+
+  setSearchStatus('Buscando…', 'st-info');
+
+  try {
+    const { iso, br } = parseInputDate(inputVal);
+
+    const jogoRows = await queryByData('jogo', iso, br);
+    if (!jogoRows.length) {
+      setSearchStatus(`Nenhum jogo encontrado para ${br}.`, 'st-err');
+      return;
+    }
+
+    const j = jogoRows[0];
+    dataOriginal = j.data;  // preserva o formato exato do DB
+
+    // Converte data do DB para YYYY-MM-DD (aceita DATE ISO ou texto DD/MM/YYYY)
+    let dataISO = j.data;
+    if (typeof dataISO === 'string' && dataISO.includes('/')) {
+      const [d, m, y] = dataISO.split('/');
+      dataISO = `${y}-${m}-${d}`;
+    } else if (dataISO && typeof dataISO === 'object') {
+      dataISO = new Date(dataISO).toISOString().slice(0, 10);
+    }
+
+    // Preenche JOGO
+    const v = (a, b) => a ?? b ?? '';
+    document.getElementById('j-data').value        = dataISO || inputVal;
+    document.getElementById('j-mando').value       = v(j.mando,               j['MANDO']);
+    document.getElementById('j-adversario').value  = v(j.time_adversario,     j['TIME ADVERSARIO']);
+    document.getElementById('j-gol-cor').value     = v(j.gol_corinthians,     j['GOL CORINTHIANS']);
+    document.getElementById('j-gol-adv').value     = v(j.gol_adversario,      j['GOL ADVERSARIO']);
+    document.getElementById('j-resultado').value   = v(j.resultado,           j['RESULTADO']);
+    document.getElementById('j-comp').value        = v(j.competicao,          j['COMPETIÇÃO']);
+    document.getElementById('j-estadio').value     = v(j.estadio,             j['ESTADIO']);
+    document.getElementById('j-tecnico').value     = v(j.tecnico_corinthians, j['TECNICO CORINTHIANS']);
+    document.getElementById('j-link').value        = v(j.link,                j['LINK']);
+    document.getElementById('j-ano').value         = v(j.ano_competicao,      j['ANO COMPETICAO']);
+
+    // Busca GOLs
+    const golRows = await queryByData('gol', j.data, br);
+    document.getElementById('gol-tbody').innerHTML =
+      '<tr><td colspan="11" class="gol-empty">Nenhum gol adicionado.</td></tr>';
+    golRowCount = 0;
+    golRows.forEach(g => adicionarLinha(g));
+
+    // Modo edição
+    isEditMode = true;
+    document.getElementById('mode-badge').className = 'mode-badge badge-edit';
+    document.getElementById('mode-badge').textContent = 'Editar Registro';
+
+    setSearchStatus(
+      `✓ Jogo carregado: ${j.time_adversario ?? ''} — ${j.resultado ?? ''} (${golRows.length} gol${golRows.length !== 1 ? 's' : ''})`,
+      'st-ok'
+    );
+  } catch (err) {
+    setSearchStatus('Erro: ' + err.message, 'st-err');
+  }
+}
+
+// ============================================================
+// LIMPAR / NOVO
+// ============================================================
+function novoRegistro() {
+  isEditMode   = false;
+  dataOriginal = null;
+  golRowCount  = 0;
+
+  ['j-data','j-mando','j-adversario','j-gol-cor','j-gol-adv',
+   'j-resultado','j-comp','j-estadio','j-tecnico','j-link','j-ano',
+   'busca-data'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+
+  document.getElementById('gol-tbody').innerHTML =
+    '<tr><td colspan="11" class="gol-empty">Nenhum gol adicionado. Clique em "+ Adicionar Gol".</td></tr>';
+
+  document.getElementById('mode-badge').className = 'mode-badge badge-new';
+  document.getElementById('mode-badge').textContent = 'Novo Registro';
+  setSearchStatus('', 'st-info');
+  setSaveStatus('', 'st-info');
+}
+
+// ============================================================
+// SALVAR
+// ============================================================
+async function salvar() {
+  const dataInput = document.getElementById('j-data').value;
+  if (!dataInput) { setSaveStatus('⚠ Informe a data do jogo.', 'st-err'); return; }
+
+  const golCor = document.getElementById('j-gol-cor').value;
+  const golAdv = document.getElementById('j-gol-adv').value;
+  if (golCor === '' || golAdv === '') {
+    setSaveStatus('⚠ Informe os gols de ambas as equipes.', 'st-err');
+    return;
+  }
+
+  const btn = document.getElementById('btn-salvar');
+  btn.disabled = true;
+  setSaveStatus('Salvando…', 'st-info');
+
+  const jogoData = {
+    data:                dataInput,
+    mando:               document.getElementById('j-mando').value        || null,
+    time_adversario:     document.getElementById('j-adversario').value.trim() || null,
+    gol_corinthians:     Number(golCor),
+    gol_adversario:      Number(golAdv),
+    resultado:           document.getElementById('j-resultado').value    || null,
+    competicao:          document.getElementById('j-comp').value.trim()  || null,
+    estadio:             document.getElementById('j-estadio').value.trim()  || null,
+    tecnico_corinthians: document.getElementById('j-tecnico').value.trim()  || null,
+    link:                document.getElementById('j-link').value.trim()  || null,
+    ano_competicao:      dataInput ? Number(dataInput.split('-')[0])     : null,
+  };
+
+  const golLinhas = coletarGols(dataInput);
+
+  try {
+    if (isEditMode && dataOriginal) {
+      // --- UPDATE ---
+      const { error: eJogo } = await db.from('jogo').update(jogoData).eq('data', dataOriginal);
+      if (eJogo) throw eJogo;
+
+      // Apaga gols antigos (pelo valor original de data no DB)
+      const { error: eDel } = await db.from('gol').delete().eq('data', dataOriginal);
+      if (eDel) throw eDel;
+
+      // Se a data mudou, garante que não fique duplicata
+      if (dataOriginal !== dataInput) {
+        await db.from('gol').delete().eq('data', dataInput);
+      }
+    } else {
+      // --- INSERT ---
+      const { error: eJogo } = await db.from('jogo').insert(jogoData);
+      if (eJogo) throw eJogo;
+    }
+
+    // Insere gols (se houver)
+    if (golLinhas.length > 0) {
+      const { error: eGol } = await db.from('gol').insert(golLinhas);
+      if (eGol) throw eGol;
+    }
+
+    // Invalida cache do site para forçar releitura dos dados
+    try {
+      sessionStorage.removeItem('nf_dados_cache');
+      sessionStorage.removeItem('nf_gols_cache');
+    } catch (_) {}
+
+    setSaveStatus(`✓ Jogo salvo com sucesso! (${golLinhas.length} gol${golLinhas.length !== 1 ? 's' : ''})`, 'st-ok');
+
+    // Transiciona para modo edição
+    dataOriginal = dataInput;
+    isEditMode   = true;
+    document.getElementById('mode-badge').className = 'mode-badge badge-edit';
+    document.getElementById('mode-badge').textContent = 'Editar Registro';
+
+  } catch (err) {
+    setSaveStatus('Erro: ' + err.message, 'st-err');
+  } finally {
+    btn.disabled = false;
+  }
+}
+</script>
+</body>
+</html>
