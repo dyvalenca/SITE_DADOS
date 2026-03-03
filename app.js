@@ -1,7 +1,7 @@
 // =====================================================================
 // CONFIGURAÇÃO — troque pela URL da sua API do Google Apps Script
 // =====================================================================
-const API_URL = "/api/dados";
+const API_URL = "https://script.google.com/macros/s/AKfycbzrkyGBdn7WGN7yH-Y1IswgW6B5heRD8khBkCNjEGTHiDUR6lDcTCGr3fDaNurXyMkB/exec";
 
 // =====================================================================
 // ESTADO GLOBAL
@@ -72,20 +72,39 @@ function normalizarJogos(data) {
 }
 
 async function carregarDados() {
-  const anoAtual = new Date().getFullYear();
-
-  // Fase 1: carrega apenas o ano atual e libera a tela
+  // Tenta usar cache do sessionStorage (compartilhado com jogos.html e index.html)
+  let rawData = null;
   try {
-    const resp = await fetch(`${API_URL}?ano=${anoAtual}`);
-    const json = await resp.json();
-    if (!json.data) throw new Error(json.erro || 'Resposta inesperada: ' + JSON.stringify(json).slice(0, 300));
+    const cached = sessionStorage.getItem('nf_dados_cache');
+    if (cached) rawData = JSON.parse(cached);
+  } catch(e) {}
 
-    dadosGlobais = normalizarJogos(json.data);
-    document.getElementById('msg-status').innerText = `Carregando histórico completo...`;
+  if (rawData) {
+    dadosGlobais = normalizarJogos(rawData);
+    document.getElementById('msg-status').innerText = `${dadosGlobais.length.toLocaleString('pt-BR')} jogos carregados!`;
     popularAnos();
     popularListasDinamicas(dadosGlobais);
     resetPaginacao();
+    const overlay = document.getElementById('loading-overlay');
+    overlay.style.opacity = '0';
+    setTimeout(() => overlay.style.display = 'none', 500);
+    return;
+  }
 
+  // Sem cache: busca direto da API
+  try {
+    const resp = await fetch(`${API_URL}?aba=jogo&limit=9999`);
+    const json = await resp.json();
+    if (!json.data) throw new Error(json.erro || 'Resposta inesperada: ' + JSON.stringify(json).slice(0, 300));
+
+    rawData = json.data;
+    try { sessionStorage.setItem('nf_dados_cache', JSON.stringify(rawData)); } catch(e) {}
+
+    dadosGlobais = normalizarJogos(rawData);
+    document.getElementById('msg-status').innerText = `${dadosGlobais.length.toLocaleString('pt-BR')} jogos carregados!`;
+    popularAnos();
+    popularListasDinamicas(dadosGlobais);
+    resetPaginacao();
     const overlay = document.getElementById('loading-overlay');
     overlay.style.opacity = '0';
     setTimeout(() => overlay.style.display = 'none', 500);
@@ -95,19 +114,6 @@ async function carregarDados() {
     const overlay = document.getElementById('loading-overlay');
     overlay.style.opacity = '0';
     setTimeout(() => overlay.style.display = 'none', 500);
-    return;
-  }
-
-  // Fase 2: carrega o histórico completo em background sem travar a UI
-  try {
-    const resp = await fetch(`${API_URL}`);
-    const json = await resp.json();
-    if (!json.data) return;
-
-    dadosGlobais = normalizarJogos(json.data);
-    document.getElementById('msg-status').innerText = `${dadosGlobais.length.toLocaleString('pt-BR')} jogos carregados!`;
-  } catch (err) {
-    console.error("Erro ao carregar histórico completo:", err);
   }
 }
 
@@ -532,6 +538,23 @@ function atualizarEstatisticas(lista) {
   document.getElementById('res-sg').innerText = gp - gc;
   document.getElementById('res-pontos').innerText = pontos;
   document.getElementById('res-aprov').innerText = (lista.length > 0 ? aprov : 0) + '%';
+
+  // Balanço de gols (seção no final do dashboard)
+  const totalG = gp + gc || 1;
+  document.getElementById('db-gp-val').textContent = gp;
+  document.getElementById('db-gc-val').textContent = gc;
+  document.getElementById('db-bar-gp').style.width = ((gp / totalG) * 100).toFixed(1) + '%';
+  document.getElementById('db-bar-gc').style.width = ((gc / totalG) * 100).toFixed(1) + '%';
+  const dbSaldo = gp - gc;
+  const dbSaldoEl = document.getElementById('db-saldo-val');
+  dbSaldoEl.textContent = (dbSaldo >= 0 ? '+' : '') + dbSaldo;
+  dbSaldoEl.style.color = dbSaldo > 0 ? '#2563eb' : dbSaldo < 0 ? '#dc2626' : '#9ca3af';
+  document.getElementById('db-media-gp-val').textContent = (gp / total).toFixed(2);
+  document.getElementById('db-media-gc-val').textContent = (gc / total).toFixed(2);
+  document.getElementById('db-smar-val').textContent = sMarcar;
+  document.getElementById('db-smar-pct').textContent = (sMarcar / total * 100).toFixed(0) + '% dos jogos';
+  document.getElementById('db-ssof-val').textContent = sSofrer;
+  document.getElementById('db-ssof-pct').textContent = (sSofrer / total * 100).toFixed(0) + '% dos jogos';
 }
 
 // =====================================================================
