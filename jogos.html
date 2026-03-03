@@ -566,38 +566,51 @@ function parseDataBR(str) {
   const p = str.split('/');
   return p.length === 3 ? new Date(p[2], p[1]-1, p[0]) : new Date(str);
 }
+// Resolve um campo tentando múltiplas variantes do nome de coluna
+// (suporta UPPERCASE COM ESPAÇO, lowercase_underscore, e outras convenções)
+function c(row, ...chaves) {
+  for (const k of chaves) {
+    const v = row[k];
+    if (v !== undefined && v !== null && v !== '') return v;
+  }
+  return '';
+}
+
 function normalizar(data) {
-  return data.map(row => ({
-    d:   formatarData(row["DATA"]),
-    a:   row["ANO COMPETICAO"],
-    m:   limpar(row["MANDO"]),
-    p:   (row["GOL CORINTHIANS"] === "" ? "0" : row["GOL CORINTHIANS"]) + "x" +
-         (row["GOL ADVERSARIO"] === "" ? "0" : row["GOL ADVERSARIO"]),
-    r:   limpar(row["RESULTADO"]),
-    adv: limpar(row["TIME ADVERSARIO"]),
-    c:   limpar(row["COMPETIÇÃO"]),
-    e:   limpar(row["ESTADIO"]),
-    t:   limpar(row["TECNICO CORINTHIANS"]),
-    lnk: row["LINK"] || '',
-  }));
+  return data.map(row => {
+    const golCor = c(row, 'GOL CORINTHIANS', 'gol_corinthians', 'gol corinthians');
+    const golAdv = c(row, 'GOL ADVERSARIO',  'gol_adversario',  'gol adversario');
+    return {
+      d:   formatarData(c(row, 'DATA', 'data')),
+      a:   c(row, 'ANO COMPETICAO', 'ano_competicao', 'ANO_COMPETICAO'),
+      m:   limpar(c(row, 'MANDO', 'mando')),
+      p:   (golCor === '' ? '0' : golCor) + 'x' + (golAdv === '' ? '0' : golAdv),
+      r:   limpar(c(row, 'RESULTADO', 'resultado')),
+      adv: limpar(c(row, 'TIME ADVERSARIO', 'time_adversario', 'TIME_ADVERSARIO')),
+      c:   limpar(c(row, 'COMPETIÇÃO', 'competicao', 'COMPETICAO', 'competição')),
+      e:   limpar(c(row, 'ESTADIO', 'estadio', 'ESTÁDIO', 'estádio')),
+      t:   limpar(c(row, 'TECNICO CORINTHIANS', 'tecnico_corinthians', 'TECNICO_CORINTHIANS')),
+      lnk: c(row, 'LINK', 'link'),
+    };
+  });
 }
 
 function normalizarGols(data) {
   const byDate = {};
   data.forEach(row => {
-    const d = formatarData(limpar(row["DATA"]));
+    const d = formatarData(limpar(c(row, 'DATA', 'data')));
     if (!d) return;
     if (!byDate[d]) byDate[d] = [];
     byDate[d].push({
-      gol:    limpar(row["JOGADOR GOL"]),
-      camisa: limpar(row["CAMISA GOL"]),
-      pos:    limpar(row["POSIÇÃO"]),
-      pais:   limpar(row["PAIS"]),
-      pen:    limpar(row["PENALTI"]),
-      banco:  limpar(row["BANCO"]),
-      assist: limpar(row["JOGADOR ASSISTÊNCIA"]),
-      posA:   limpar(row["POSICAO ASSISTENCIA"]),
-      paisA:  limpar(row["PAIS ASSISTENCIA"]),
+      gol:    limpar(c(row, 'JOGADOR GOL',         'jogador_gol',        'jogador gol')),
+      camisa: limpar(c(row, 'CAMISA GOL',          'camisa_gol',         'camisa gol')),
+      pos:    limpar(c(row, 'POSIÇÃO',             'posicao',            'POSICAO',           'posição')),
+      pais:   limpar(c(row, 'PAIS',               'pais')),
+      pen:    limpar(c(row, 'PENALTI',             'penalti')),
+      banco:  limpar(c(row, 'BANCO',              'banco')),
+      assist: limpar(c(row, 'JOGADOR ASSISTÊNCIA', 'jogador_assistencia', 'JOGADOR ASSISTENCIA', 'jogador assistência')),
+      posA:   limpar(c(row, 'POSICAO ASSISTENCIA', 'posicao_assistencia', 'POSIÇÃO ASSISTENCIA')),
+      paisA:  limpar(c(row, 'PAIS ASSISTENCIA',   'pais_assistencia',   'pais assistencia')),
     });
   });
   return byDate;

@@ -611,19 +611,29 @@ function parseDataBR(str) {
   const p = str.split('/');
   return p.length === 3 ? new Date(p[2], p[1]-1, p[0]) : new Date(str);
 }
+function c(row, ...chaves) {
+  for (const k of chaves) {
+    const v = row[k];
+    if (v !== undefined && v !== null && v !== '') return v;
+  }
+  return '';
+}
 function normalizar(data) {
-  return data.map(row => ({
-    d:   formatarData(row["DATA"]),
-    a:   row["ANO COMPETICAO"],
-    m:   limpar(row["MANDO"]),
-    p:   (row["GOL CORINTHIANS"] === "" ? "0" : row["GOL CORINTHIANS"]) + "x" +
-         (row["GOL ADVERSARIO"] === "" ? "0" : row["GOL ADVERSARIO"]),
-    r:   limpar(row["RESULTADO"]),
-    adv: limpar(row["TIME ADVERSARIO"]),
-    c:   limpar(row["COMPETIÇÃO"]),
-    e:   limpar(row["ESTADIO"]),
-    t:   limpar(row["TECNICO CORINTHIANS"]),
-  }));
+  return data.map(row => {
+    const golCor = c(row, 'GOL CORINTHIANS', 'gol_corinthians', 'gol corinthians', 'GOL_CORINTHIANS');
+    const golAdv = c(row, 'GOL ADVERSARIO',  'gol_adversario',  'gol adversario',  'GOL_ADVERSARIO');
+    return {
+      d:   formatarData(c(row, 'DATA', 'data')),
+      a:   c(row, 'ANO COMPETICAO', 'ano_competicao', 'ANO_COMPETICAO', 'ano competicao'),
+      m:   limpar(c(row, 'MANDO', 'mando')),
+      p:   (golCor === '' ? '0' : golCor) + 'x' + (golAdv === '' ? '0' : golAdv),
+      r:   limpar(c(row, 'RESULTADO', 'resultado')),
+      adv: limpar(c(row, 'TIME ADVERSARIO', 'time_adversario', 'TIME_ADVERSARIO', 'time adversario')),
+      c:   limpar(c(row, 'COMPETIÇÃO', 'competicao', 'COMPETICAO', 'competição', 'COMPETICÃO')),
+      e:   limpar(c(row, 'ESTADIO', 'estadio', 'ESTÁDIO', 'estádio')),
+      t:   limpar(c(row, 'TECNICO CORINTHIANS', 'tecnico_corinthians', 'TECNICO_CORINTHIANS')),
+    };
+  });
 }
 
 // ── Parsing ───────────────────────────────────────────────

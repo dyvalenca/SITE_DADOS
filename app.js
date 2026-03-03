@@ -57,40 +57,59 @@ function diagnosticarCampo(raw, campo, data) {
   return limpo;
 }
 
+// Resolve o valor de um campo tentando múltiplas variantes do nome da coluna.
+// Suporta: UPPERCASE COM ESPACO (GSheets original), lowercase_underscore (import padrão),
+// lowercase com espaço, e outras variações comuns.
+function campo(row, ...chaves) {
+  for (const k of chaves) {
+    const v = row[k];
+    if (v !== undefined && v !== null && v !== '') return v;
+  }
+  return '';
+}
+
 function normalizarGols(data) {
   const byDate = {};
   data.forEach(row => {
-    const d = formatarData(limparTexto(row["DATA"]));
+    const d = formatarData(limparTexto(campo(row, 'DATA', 'data')));
     if (!d) return;
     if (!byDate[d]) byDate[d] = [];
     byDate[d].push({
-      gol:    limparTexto(row["JOGADOR GOL"]),
-      camisa: limparTexto(row["CAMISA GOL"]),
-      pos:    limparTexto(row["POSIÇÃO"]),
-      pais:   limparTexto(row["PAIS"]),
-      pen:    limparTexto(row["PENALTI"]),
-      banco:  limparTexto(row["BANCO"]),
-      assist: limparTexto(row["JOGADOR ASSISTÊNCIA"]),
-      posA:   limparTexto(row["POSICAO ASSISTENCIA"]),
-      paisA:  limparTexto(row["PAIS ASSISTENCIA"]),
+      gol:    limparTexto(campo(row, 'JOGADOR GOL',         'jogador_gol',         'jogador gol')),
+      camisa: limparTexto(campo(row, 'CAMISA GOL',          'camisa_gol',          'camisa gol')),
+      pos:    limparTexto(campo(row, 'POSIÇÃO',             'posicao',             'POSICAO',          'posição')),
+      pais:   limparTexto(campo(row, 'PAIS',               'pais')),
+      pen:    limparTexto(campo(row, 'PENALTI',             'penalti')),
+      banco:  limparTexto(campo(row, 'BANCO',              'banco')),
+      assist: limparTexto(campo(row, 'JOGADOR ASSISTÊNCIA', 'jogador_assistencia',  'JOGADOR ASSISTENCIA', 'jogador assistência', 'jogador assistencia')),
+      posA:   limparTexto(campo(row, 'POSICAO ASSISTENCIA', 'posicao_assistencia',  'POSIÇÃO ASSISTENCIA', 'posicao assistencia')),
+      paisA:  limparTexto(campo(row, 'PAIS ASSISTENCIA',   'pais_assistencia',     'pais assistencia')),
     });
   });
   return byDate;
 }
 
 function normalizarJogos(data) {
-  return data.map(row => ({
-    d: formatarData(row["DATA"]),
-    a: row["ANO COMPETICAO"],
-    m: limparTexto(row["MANDO"]),
-    p: (row["GOL CORINTHIANS"] === "" ? "0" : row["GOL CORINTHIANS"]) + "x" + (row["GOL ADVERSARIO"] === "" ? "0" : row["GOL ADVERSARIO"]),
-    r: limparTexto(row["RESULTADO"]),
-    adv: limparTexto(row["TIME ADVERSARIO"]),
-    c: diagnosticarCampo(row["COMPETIÇÃO"], "COMPETIÇÃO", row["DATA"]),
-    e: limparTexto(row["ESTADIO"]),
-    t: limparTexto(row["TECNICO CORINTHIANS"]),
-    lnk: limparTexto(row["LINK"])
-  }));
+  return data.map(row => {
+    const golCor = campo(row, 'GOL CORINTHIANS', 'gol_corinthians', 'gol corinthians', 'GOL_CORINTHIANS');
+    const golAdv = campo(row, 'GOL ADVERSARIO',  'gol_adversario',  'gol adversario',  'GOL_ADVERSARIO');
+    return {
+      d:   formatarData(campo(row, 'DATA', 'data')),
+      a:   campo(row, 'ANO COMPETICAO', 'ano_competicao', 'ANO_COMPETICAO', 'ano competicao'),
+      m:   limparTexto(campo(row, 'MANDO', 'mando')),
+      p:   (golCor === '' ? '0' : golCor) + 'x' + (golAdv === '' ? '0' : golAdv),
+      r:   limparTexto(campo(row, 'RESULTADO', 'resultado')),
+      adv: limparTexto(campo(row, 'TIME ADVERSARIO', 'time_adversario', 'TIME_ADVERSARIO', 'time adversario')),
+      c:   diagnosticarCampo(
+             campo(row, 'COMPETIÇÃO', 'competicao', 'COMPETICAO', 'competição', 'COMPETICÃO'),
+             'COMPETIÇÃO',
+             campo(row, 'DATA', 'data')
+           ),
+      e:   limparTexto(campo(row, 'ESTADIO', 'estadio', 'ESTÁDIO', 'estádio')),
+      t:   limparTexto(campo(row, 'TECNICO CORINTHIANS', 'tecnico_corinthians', 'TECNICO_CORINTHIANS')),
+      lnk: limparTexto(campo(row, 'LINK', 'link')),
+    };
+  });
 }
 
 async function carregarDados() {
