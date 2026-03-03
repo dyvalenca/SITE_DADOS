@@ -566,51 +566,62 @@ function parseDataBR(str) {
   const p = str.split('/');
   return p.length === 3 ? new Date(p[2], p[1]-1, p[0]) : new Date(str);
 }
-// Resolve um campo tentando múltiplas variantes do nome de coluna
-// (suporta UPPERCASE COM ESPAÇO, lowercase_underscore, e outras convenções)
-function c(row, ...chaves) {
-  for (const k of chaves) {
-    const v = row[k];
-    if (v !== undefined && v !== null && v !== '') return v;
-  }
-  return '';
+// Normaliza uma chave: minúsculas, sem acentos, sem espaços/underscores/hífens.
+function normKey(s) {
+  return String(s).toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[\s_-]/g, '');
+}
+// Cria mapa de chaves normalizadas para busca robusta de colunas do Supabase.
+function normRow(rawRow) {
+  const out = {};
+  for (const [k, v] of Object.entries(rawRow)) out[normKey(k)] = v;
+  return out;
+}
+// Retorna o valor de uma coluna pelo nome canônico.
+function c(nrow, key) {
+  const v = nrow[normKey(key)];
+  return (v !== undefined && v !== null) ? v : '';
 }
 
 function normalizar(data) {
-  return data.map(row => {
-    const golCor = c(row, 'GOL CORINTHIANS', 'gol_corinthians', 'gol corinthians');
-    const golAdv = c(row, 'GOL ADVERSARIO',  'gol_adversario',  'gol adversario');
+  return data.map(rawRow => {
+    const row = normRow(rawRow);
+    const golCor = c(row, 'GOL CORINTHIANS');
+    const golAdv = c(row, 'GOL ADVERSARIO');
     return {
-      d:   formatarData(c(row, 'DATA', 'data')),
-      a:   c(row, 'ANO COMPETICAO', 'ano_competicao', 'ANO_COMPETICAO'),
-      m:   limpar(c(row, 'MANDO', 'mando')),
-      p:   (golCor === '' ? '0' : golCor) + 'x' + (golAdv === '' ? '0' : golAdv),
-      r:   limpar(c(row, 'RESULTADO', 'resultado')),
-      adv: limpar(c(row, 'TIME ADVERSARIO', 'time_adversario', 'TIME_ADVERSARIO')),
-      c:   limpar(c(row, 'COMPETIÇÃO', 'competicao', 'COMPETICAO', 'competição')),
-      e:   limpar(c(row, 'ESTADIO', 'estadio', 'ESTÁDIO', 'estádio')),
-      t:   limpar(c(row, 'TECNICO CORINTHIANS', 'tecnico_corinthians', 'TECNICO_CORINTHIANS')),
-      lnk: c(row, 'LINK', 'link'),
+      d:   formatarData(c(row, 'DATA')),
+      a:   c(row, 'ANO COMPETICAO'),
+      m:   limpar(c(row, 'MANDO')),
+      p:   (golCor || '0') + 'x' + (golAdv || '0'),
+      r:   limpar(c(row, 'RESULTADO')),
+      adv: limpar(c(row, 'TIME ADVERSARIO')),
+      c:   limpar(c(row, 'COMPETIÇÃO')),
+      e:   limpar(c(row, 'ESTADIO')),
+      t:   limpar(c(row, 'TECNICO CORINTHIANS')),
+      lnk: c(row, 'LINK'),
     };
   });
 }
 
 function normalizarGols(data) {
   const byDate = {};
-  data.forEach(row => {
-    const d = formatarData(limpar(c(row, 'DATA', 'data')));
+  data.forEach(rawRow => {
+    const row = normRow(rawRow);
+    const d = formatarData(limpar(c(row, 'DATA')));
     if (!d) return;
     if (!byDate[d]) byDate[d] = [];
     byDate[d].push({
-      gol:    limpar(c(row, 'JOGADOR GOL',         'jogador_gol',        'jogador gol')),
-      camisa: limpar(c(row, 'CAMISA GOL',          'camisa_gol',         'camisa gol')),
-      pos:    limpar(c(row, 'POSIÇÃO',             'posicao',            'POSICAO',           'posição')),
-      pais:   limpar(c(row, 'PAIS',               'pais')),
-      pen:    limpar(c(row, 'PENALTI',             'penalti')),
-      banco:  limpar(c(row, 'BANCO',              'banco')),
-      assist: limpar(c(row, 'JOGADOR ASSISTÊNCIA', 'jogador_assistencia', 'JOGADOR ASSISTENCIA', 'jogador assistência')),
-      posA:   limpar(c(row, 'POSICAO ASSISTENCIA', 'posicao_assistencia', 'POSIÇÃO ASSISTENCIA')),
-      paisA:  limpar(c(row, 'PAIS ASSISTENCIA',   'pais_assistencia',   'pais assistencia')),
+      gol:    limpar(c(row, 'JOGADOR GOL')),
+      camisa: limpar(c(row, 'CAMISA GOL')),
+      pos:    limpar(c(row, 'POSIÇÃO')),
+      pais:   limpar(c(row, 'PAIS')),
+      pen:    limpar(c(row, 'PENALTI')),
+      banco:  limpar(c(row, 'BANCO')),
+      assist: limpar(c(row, 'JOGADOR ASSISTÊNCIA')),
+      posA:   limpar(c(row, 'POSICAO ASSISTENCIA')),
+      paisA:  limpar(c(row, 'PAIS ASSISTENCIA')),
     });
   });
   return byDate;

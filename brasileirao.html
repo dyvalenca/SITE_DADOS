@@ -611,27 +611,39 @@ function parseDataBR(str) {
   const p = str.split('/');
   return p.length === 3 ? new Date(p[2], p[1]-1, p[0]) : new Date(str);
 }
-function c(row, ...chaves) {
-  for (const k of chaves) {
-    const v = row[k];
-    if (v !== undefined && v !== null && v !== '') return v;
-  }
-  return '';
+// Normaliza uma chave: minúsculas, sem acentos, sem espaços/underscores/hífens.
+function normKey(s) {
+  return String(s).toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[\s_-]/g, '');
+}
+// Cria mapa de chaves normalizadas para busca robusta de colunas do Supabase.
+function normRow(rawRow) {
+  const out = {};
+  for (const [k, v] of Object.entries(rawRow)) out[normKey(k)] = v;
+  return out;
+}
+// Retorna o valor de uma coluna pelo nome canônico.
+function c(nrow, key) {
+  const v = nrow[normKey(key)];
+  return (v !== undefined && v !== null) ? v : '';
 }
 function normalizar(data) {
-  return data.map(row => {
-    const golCor = c(row, 'GOL CORINTHIANS', 'gol_corinthians', 'gol corinthians', 'GOL_CORINTHIANS');
-    const golAdv = c(row, 'GOL ADVERSARIO',  'gol_adversario',  'gol adversario',  'GOL_ADVERSARIO');
+  return data.map(rawRow => {
+    const row = normRow(rawRow);
+    const golCor = c(row, 'GOL CORINTHIANS');
+    const golAdv = c(row, 'GOL ADVERSARIO');
     return {
-      d:   formatarData(c(row, 'DATA', 'data')),
-      a:   c(row, 'ANO COMPETICAO', 'ano_competicao', 'ANO_COMPETICAO', 'ano competicao'),
-      m:   limpar(c(row, 'MANDO', 'mando')),
-      p:   (golCor === '' ? '0' : golCor) + 'x' + (golAdv === '' ? '0' : golAdv),
-      r:   limpar(c(row, 'RESULTADO', 'resultado')),
-      adv: limpar(c(row, 'TIME ADVERSARIO', 'time_adversario', 'TIME_ADVERSARIO', 'time adversario')),
-      c:   limpar(c(row, 'COMPETIÇÃO', 'competicao', 'COMPETICAO', 'competição', 'COMPETICÃO')),
-      e:   limpar(c(row, 'ESTADIO', 'estadio', 'ESTÁDIO', 'estádio')),
-      t:   limpar(c(row, 'TECNICO CORINTHIANS', 'tecnico_corinthians', 'TECNICO_CORINTHIANS')),
+      d:   formatarData(c(row, 'DATA')),
+      a:   c(row, 'ANO COMPETICAO'),
+      m:   limpar(c(row, 'MANDO')),
+      p:   (golCor || '0') + 'x' + (golAdv || '0'),
+      r:   limpar(c(row, 'RESULTADO')),
+      adv: limpar(c(row, 'TIME ADVERSARIO')),
+      c:   limpar(c(row, 'COMPETIÇÃO')),
+      e:   limpar(c(row, 'ESTADIO')),
+      t:   limpar(c(row, 'TECNICO CORINTHIANS')),
     };
   });
 }
