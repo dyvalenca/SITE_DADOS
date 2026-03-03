@@ -94,10 +94,12 @@ module.exports = async function handler(req, res) {
   }
 
   try {
+    // Nomes reais das tabelas no Supabase (case-sensitive)
+    const TABLE = aba === 'jogo' ? 'JOGO' : 'GOL';
     const filters = {};
-    if (aba === 'jogo' && ano) filters['ano_competicao'] = ano;
+    if (aba === 'jogo' && ano) filters['ANO COMPETICAO'] = ano;
 
-    const rows = await supabaseFetchAll(aba, filters);
+    const rows = await supabaseFetchAll(TABLE, filters);
     const data = aba === 'jogo' ? rows.map(mapJogoRow) : rows.map(mapGolRow);
 
     res.setHeader('Access-Control-Allow-Origin', '*');

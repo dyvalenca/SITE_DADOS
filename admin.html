@@ -417,12 +417,13 @@ function parseInputDate(iso) {
   return { iso, br: `${d}/${m}/${y}` };
 }
 
-// tenta buscar primeiro por ISO, depois por BR (para suportar ambos os formatos no DB)
+// tenta buscar primeiro por ISO (YYYY-MM-DD), depois por BR (DD/MM/YYYY)
+// O nome da coluna no Supabase é 'DATA' (maiúsculo)
 async function queryByData(table, dataISO, dataBR) {
-  let { data, error } = await db.from(table).select('*').eq('data', dataISO);
+  let { data, error } = await db.from(table).select('*').eq('DATA', dataISO);
   if (error) throw error;
   if (!data || data.length === 0) {
-    const res2 = await db.from(table).select('*').eq('data', dataBR);
+    const res2 = await db.from(table).select('*').eq('DATA', dataBR);
     if (res2.error) throw res2.error;
     data = res2.data;
   }
@@ -450,17 +451,19 @@ function adicionarLinha(dados = {}) {
   const chk = (id, val = '') =>
     `<input type="checkbox" id="g-${id}-${n}" ${val === 'SIM' ? 'checked' : ''} style="width:18px;height:18px;cursor:pointer">`;
 
+  // lê tanto nome maiúsculo (Supabase JOGO/GOL) quanto minúsculo (fallback)
+  const dc = k1 => dados[k1] || dados[k1.toLowerCase().replace(/ /g,'_')] || '';
   tr.innerHTML = `
     <td class="row-num">${n}</td>
-    <td>${inp('jogador',    dados.jogador_gol           || '', 'text', '148px')}</td>
-    <td>${inp('camisa',     dados.camisa_gol            || '', 'text', '52px')}</td>
-    <td>${inp('posicao',    dados.posicao               || '', 'text', '76px')}</td>
-    <td>${inp('pais',       dados.pais                  || '', 'text', '88px')}</td>
-    <td class="center">${chk('penalti',  dados.penalti  || '')}</td>
-    <td class="center">${chk('banco',    dados.banco    || '')}</td>
-    <td>${inp('assistencia',   dados.jogador_assistencia   || '', 'text', '148px')}</td>
-    <td>${inp('pos-assist',    dados.posicao_assistencia   || '', 'text', '76px')}</td>
-    <td>${inp('pais-assist',   dados.pais_assistencia      || '', 'text', '88px')}</td>
+    <td>${inp('jogador',     dc('JOGADOR GOL'),         'text', '148px')}</td>
+    <td>${inp('camisa',      dc('CAMISA GOL'),          'text', '52px')}</td>
+    <td>${inp('posicao',     dc('POSIÇÃO'),             'text', '76px')}</td>
+    <td>${inp('pais',        dc('PAIS'),                'text', '88px')}</td>
+    <td class="center">${chk('penalti',  dc('PENALTI'))}</td>
+    <td class="center">${chk('banco',    dc('BANCO'))}</td>
+    <td>${inp('assistencia', dc('JOGADOR ASSISTÊNCIA'), 'text', '148px')}</td>
+    <td>${inp('pos-assist',  dc('POSICAO ASSISTENCIA'), 'text', '76px')}</td>
+    <td>${inp('pais-assist', dc('PAIS ASSISTENCIA'),    'text', '88px')}</td>
     <td class="center"><button class="btn-remove" onclick="removerLinha(this)" title="Remover">×</button></td>
   `;
   tbody.appendChild(tr);
@@ -481,18 +484,18 @@ function coletarGols(data) {
     const g = id => document.getElementById(`g-${id}-${n}`);
     const val = id => g(id)?.value.trim() || null;
     return {
-      data,
-      jogador_gol:         val('jogador'),
-      camisa_gol:          val('camisa'),
-      posicao:             val('posicao'),
-      pais:                val('pais'),
-      penalti:             g('penalti')?.checked  ? 'SIM' : 'NAO',
-      banco:               g('banco')?.checked    ? 'SIM' : 'NAO',
-      jogador_assistencia: val('assistencia'),
-      posicao_assistencia: val('pos-assist'),
-      pais_assistencia:    val('pais-assist'),
+      "DATA":                data,
+      "JOGADOR GOL":         val('jogador'),
+      "CAMISA GOL":          val('camisa'),
+      "POSIÇÃO":             val('posicao'),
+      "PAIS":                val('pais'),
+      "PENALTI":             g('penalti')?.checked ? 'SIM' : 'NAO',
+      "BANCO":               g('banco')?.checked   ? 'SIM' : 'NAO',
+      "JOGADOR ASSISTÊNCIA": val('assistencia'),
+      "POSICAO ASSISTENCIA": val('pos-assist'),
+      "PAIS ASSISTENCIA":    val('pais-assist'),
     };
-  }).filter(r => r.jogador_gol);  // ignora linhas sem jogador
+  }).filter(r => r["JOGADOR GOL"]);  // ignora linhas sem jogador
 }
 
 // ============================================================
@@ -507,17 +510,18 @@ async function buscarJogo() {
   try {
     const { iso, br } = parseInputDate(inputVal);
 
-    const jogoRows = await queryByData('jogo', iso, br);
+    const jogoRows = await queryByData('JOGO', iso, br);
     if (!jogoRows.length) {
       setSearchStatus(`Nenhum jogo encontrado para ${br}.`, 'st-err');
       return;
     }
 
     const j = jogoRows[0];
-    dataOriginal = j.data;  // preserva o formato exato do DB
+    // preserva o valor exato da coluna DATA (maiúsculo) como está no DB
+    dataOriginal = j['DATA'] ?? j.data;
 
     // Converte data do DB para YYYY-MM-DD (aceita DATE ISO ou texto DD/MM/YYYY)
-    let dataISO = j.data;
+    let dataISO = j['DATA'] ?? j.data;
     if (typeof dataISO === 'string' && dataISO.includes('/')) {
       const [d, m, y] = dataISO.split('/');
       dataISO = `${y}-${m}-${d}`;
@@ -525,22 +529,22 @@ async function buscarJogo() {
       dataISO = new Date(dataISO).toISOString().slice(0, 10);
     }
 
-    // Preenche JOGO
-    const v = (a, b) => a ?? b ?? '';
+    // Preenche JOGO (tenta coluna maiúscula primeiro, depois minúscula como fallback)
+    const v = (a, b) => (a !== undefined && a !== null) ? a : (b ?? '');
     document.getElementById('j-data').value        = dataISO || inputVal;
-    document.getElementById('j-mando').value       = v(j.mando,               j['MANDO']);
-    document.getElementById('j-adversario').value  = v(j.time_adversario,     j['TIME ADVERSARIO']);
-    document.getElementById('j-gol-cor').value     = v(j.gol_corinthians,     j['GOL CORINTHIANS']);
-    document.getElementById('j-gol-adv').value     = v(j.gol_adversario,      j['GOL ADVERSARIO']);
-    document.getElementById('j-resultado').value   = v(j.resultado,           j['RESULTADO']);
-    document.getElementById('j-comp').value        = v(j.competicao,          j['COMPETIÇÃO']);
-    document.getElementById('j-estadio').value     = v(j.estadio,             j['ESTADIO']);
-    document.getElementById('j-tecnico').value     = v(j.tecnico_corinthians, j['TECNICO CORINTHIANS']);
-    document.getElementById('j-link').value        = v(j.link,                j['LINK']);
-    document.getElementById('j-ano').value         = v(j.ano_competicao,      j['ANO COMPETICAO']);
+    document.getElementById('j-mando').value       = v(j['MANDO'],               j.mando);
+    document.getElementById('j-adversario').value  = v(j['TIME ADVERSARIO'],     j.time_adversario);
+    document.getElementById('j-gol-cor').value     = v(j['GOL CORINTHIANS'],     j.gol_corinthians);
+    document.getElementById('j-gol-adv').value     = v(j['GOL ADVERSARIO'],      j.gol_adversario);
+    document.getElementById('j-resultado').value   = v(j['RESULTADO'],           j.resultado);
+    document.getElementById('j-comp').value        = v(j['COMPETIÇÃO'],          j.competicao);
+    document.getElementById('j-estadio').value     = v(j['ESTADIO'],             j.estadio);
+    document.getElementById('j-tecnico').value     = v(j['TECNICO CORINTHIANS'], j.tecnico_corinthians);
+    document.getElementById('j-link').value        = v(j['LINK'],                j.link);
+    document.getElementById('j-ano').value         = v(j['ANO COMPETICAO'],      j.ano_competicao);
 
-    // Busca GOLs
-    const golRows = await queryByData('gol', j.data, br);
+    // Busca GOLs pela coluna DATA maiúscula
+    const golRows = await queryByData('GOL', dataOriginal, br);
     document.getElementById('gol-tbody').innerHTML =
       '<tr><td colspan="11" class="gol-empty">Nenhum gol adicionado.</td></tr>';
     golRowCount = 0;
@@ -552,7 +556,7 @@ async function buscarJogo() {
     document.getElementById('mode-badge').textContent = 'Editar Registro';
 
     setSearchStatus(
-      `✓ Jogo carregado: ${j.time_adversario ?? ''} — ${j.resultado ?? ''} (${golRows.length} gol${golRows.length !== 1 ? 's' : ''})`,
+      `✓ Jogo carregado: ${j['TIME ADVERSARIO'] ?? j.time_adversario ?? ''} — ${j['RESULTADO'] ?? j.resultado ?? ''} (${golRows.length} gol${golRows.length !== 1 ? 's' : ''})`,
       'st-ok'
     );
   } catch (err) {
@@ -602,18 +606,19 @@ async function salvar() {
   btn.disabled = true;
   setSaveStatus('Salvando…', 'st-info');
 
+  // Usa os nomes reais das colunas no Supabase (maiúsculas, como no GSheets original)
   const jogoData = {
-    data:                dataInput,
-    mando:               document.getElementById('j-mando').value        || null,
-    time_adversario:     document.getElementById('j-adversario').value.trim() || null,
-    gol_corinthians:     Number(golCor),
-    gol_adversario:      Number(golAdv),
-    resultado:           document.getElementById('j-resultado').value    || null,
-    competicao:          document.getElementById('j-comp').value.trim()  || null,
-    estadio:             document.getElementById('j-estadio').value.trim()  || null,
-    tecnico_corinthians: document.getElementById('j-tecnico').value.trim()  || null,
-    link:                document.getElementById('j-link').value.trim()  || null,
-    ano_competicao:      dataInput ? Number(dataInput.split('-')[0])     : null,
+    "DATA":                dataInput,
+    "MANDO":               document.getElementById('j-mando').value.trim()       || null,
+    "TIME ADVERSARIO":     document.getElementById('j-adversario').value.trim()  || null,
+    "GOL CORINTHIANS":     Number(golCor),
+    "GOL ADVERSARIO":      Number(golAdv),
+    "RESULTADO":           document.getElementById('j-resultado').value          || null,
+    "COMPETIÇÃO":          document.getElementById('j-comp').value.trim()        || null,
+    "ESTADIO":             document.getElementById('j-estadio').value.trim()     || null,
+    "TECNICO CORINTHIANS": document.getElementById('j-tecnico').value.trim()     || null,
+    "LINK":                document.getElementById('j-link').value.trim()        || null,
+    "ANO COMPETICAO":      dataInput ? Number(dataInput.split('-')[0])           : null,
   };
 
   const golLinhas = coletarGols(dataInput);
@@ -621,26 +626,26 @@ async function salvar() {
   try {
     if (isEditMode && dataOriginal) {
       // --- UPDATE ---
-      const { error: eJogo } = await db.from('jogo').update(jogoData).eq('data', dataOriginal);
+      const { error: eJogo } = await db.from('JOGO').update(jogoData).eq('DATA', dataOriginal);
       if (eJogo) throw eJogo;
 
-      // Apaga gols antigos (pelo valor original de data no DB)
-      const { error: eDel } = await db.from('gol').delete().eq('data', dataOriginal);
+      // Apaga gols antigos pelo valor original de DATA no DB
+      const { error: eDel } = await db.from('GOL').delete().eq('DATA', dataOriginal);
       if (eDel) throw eDel;
 
-      // Se a data mudou, garante que não fique duplicata
+      // Se a data mudou, garante que não fique duplicata para a nova data
       if (dataOriginal !== dataInput) {
-        await db.from('gol').delete().eq('data', dataInput);
+        await db.from('GOL').delete().eq('DATA', dataInput);
       }
     } else {
       // --- INSERT ---
-      const { error: eJogo } = await db.from('jogo').insert(jogoData);
+      const { error: eJogo } = await db.from('JOGO').insert(jogoData);
       if (eJogo) throw eJogo;
     }
 
     // Insere gols (se houver)
     if (golLinhas.length > 0) {
-      const { error: eGol } = await db.from('gol').insert(golLinhas);
+      const { error: eGol } = await db.from('GOL').insert(golLinhas);
       if (eGol) throw eGol;
     }
 
