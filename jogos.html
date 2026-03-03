@@ -238,9 +238,12 @@
     /* ── PAINEL DE GOLS ──────────────────────────────────── */
     .tl-gols-panel {
       padding: 8px 16px 14px;
-      background: rgba(0,0,0,0.035);
+      background: #f4f4f5;
       border-bottom: 1px solid rgba(0,0,0,0.05);
     }
+    .tl-gols-panel.vitoria { background: #bfdbfe; }
+    .tl-gols-panel.empate  { background: #fde68a; }
+    .tl-gols-panel.derrota { background: #fecaca; }
     .tl-row-wrap:last-child .tl-gols-panel { border-bottom: none; }
     .tl-gol-entry { padding: 4px 0; }
     .tl-gol-entry + .tl-gol-entry {
@@ -300,6 +303,38 @@
       .tl-placar { width: 44px; font-size: 0.9rem; }
       main { padding-left: 14px; padding-right: 14px; }
     }
+
+    /* ── ARTILHEIROS ─────────────────────────────────────── */
+    .art-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+    }
+    .art-card {
+      background: #fff; border: 1px solid #e4e4e7;
+      border-radius: 14px; overflow: hidden;
+    }
+    .art-card-title {
+      font-size: 0.6rem; font-weight: 700; letter-spacing: 2px;
+      text-transform: uppercase; color: #a1a1aa;
+      padding: 14px 16px 10px; border-bottom: 1px solid #f4f4f5;
+    }
+    .art-row {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 16px; border-bottom: 1px solid #f4f4f5;
+    }
+    .art-row:last-child { border-bottom: none; }
+    .art-count {
+      font-size: 1.05rem; font-weight: 900; letter-spacing: -0.5px;
+      color: #18181b; min-width: 22px; text-align: center; flex-shrink: 0;
+    }
+    .art-flag { font-size: 1rem; line-height: 1; flex-shrink: 0; }
+    .art-info { flex: 1; min-width: 0; }
+    .art-nome { font-size: 0.82rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .art-pos {
+      font-size: 0.58rem; font-weight: 700; letter-spacing: 1px;
+      text-transform: uppercase; color: #a1a1aa; margin-top: 2px;
+    }
+    .art-vazio { color: #a1a1aa; font-size: 0.78rem; font-style: italic; padding: 16px; }
+    @media (max-width: 640px) { .art-grid { grid-template-columns: 1fr; } }
 
     /* ── FOOTER ──────────────────────────────────────────── */
     .site-footer {
@@ -466,6 +501,25 @@
     <div class="section-title">Painel por Técnicos</div>
     <div class="comp-grid" id="tecnicos-grid"></div>
   </section>
+
+  <!-- ARTILHEIROS -->
+  <section id="sec-artilheiros" style="display:none">
+    <div class="section-title">Artilheiros da Temporada</div>
+    <div class="art-grid">
+      <div class="art-card">
+        <div class="art-card-title">⚽ Gols</div>
+        <div id="art-gols-lista"></div>
+      </div>
+      <div class="art-card">
+        <div class="art-card-title">👟 Assistências</div>
+        <div id="art-assists-lista"></div>
+      </div>
+      <div class="art-card">
+        <div class="art-card-title">⚡ Participações</div>
+        <div id="art-total-lista"></div>
+      </div>
+    </div>
+  </section>
 </main>
 
 <footer class="site-footer">
@@ -537,9 +591,13 @@ function normalizarGols(data) {
     byDate[d].push({
       gol:    limpar(row["JOGADOR GOL"]),
       camisa: limpar(row["CAMISA GOL"]),
+      pos:    limpar(row["POSIÇÃO"]),
+      pais:   limpar(row["PAIS"]),
       pen:    limpar(row["PENALTI"]),
       banco:  limpar(row["BANCO"]),
       assist: limpar(row["JOGADOR ASSISTÊNCIA"]),
+      posA:   limpar(row["POSICAO ASSISTENCIA"]),
+      paisA:  limpar(row["PAIS ASSISTENCIA"]),
     });
   });
   return byDate;
@@ -704,7 +762,7 @@ function renderizar(jogos) {
       : '';
     const hasGols = (golsByDate[j.d] || []).length > 0;
     const golPanel = hasGols
-      ? `<div class="tl-gols-panel" style="display:none">${renderGolsPanel(j.d)}</div>`
+      ? `<div class="tl-gols-panel ${cl}" style="display:none">${renderGolsPanel(j.d)}</div>`
       : '';
     return `<div class="tl-row-wrap">
       <div class="timeline-item ${cl}${hasGols ? ' tl-tem-gols' : ''}" data-date="${esc(j.d)}">
@@ -783,6 +841,8 @@ function renderizar(jogos) {
     const tecOrdenados = Object.entries(tecnicos).sort((a,b) => b[1].total - a[1].total);
     document.getElementById('tecnicos-grid').innerHTML = tecOrdenados.map(([n,s]) => cardGrupo(n,s)).join('');
   }
+
+  renderArtilheiros(jogos);
 }
 
 // ── Atualizar dados ───────────────────────────────────────
@@ -802,7 +862,7 @@ async function atualizarDados() {
   const loadEl = document.getElementById('loading');
   loadEl.innerHTML = '<div class="spinner"></div>Atualizando dados...';
   loadEl.style.display = '';
-  ['sec-eficiencia','sec-gols','sec-timeline','sec-comps','sec-mando','sec-tecnicos']
+  ['sec-eficiencia','sec-gols','sec-timeline','sec-comps','sec-mando','sec-tecnicos','sec-artilheiros']
     .forEach(id => { document.getElementById(id).style.display = 'none'; });
 
   await iniciar(true);
@@ -812,13 +872,102 @@ async function atualizarDados() {
 
 iniciar();
 
+// ── Bandeiras por país ────────────────────────────────────
+function paisBandeira(pais) {
+  if (!pais) return '';
+  const n = pais.toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim();
+  const MAP = {
+    'BRASIL':'🇧🇷','ARGENTINA':'🇦🇷','URUGUAI':'🇺🇾','PARAGUAI':'🇵🇾',
+    'COLOMBIA':'🇨🇴','CHILE':'🇨🇱','EQUADOR':'🇪🇨','PERU':'🇵🇪',
+    'VENEZUELA':'🇻🇪','BOLIVIA':'🇧🇴','MEXICO':'🇲🇽','CUBA':'🇨🇺',
+    'ESPANHA':'🇪🇸','PORTUGAL':'🇵🇹','FRANCA':'🇫🇷','ITALIA':'🇮🇹',
+    'ALEMANHA':'🇩🇪','HOLANDA':'🇳🇱','BELGICA':'🇧🇪','SUECIA':'🇸🇪',
+    'SUICA':'🇨🇭','CROACIA':'🇭🇷','SERVIA':'🇷🇸','UCRANIA':'🇺🇦',
+    'POLONIA':'🇵🇱','AUSTRIA':'🇦🇹','DINAMARCA':'🇩🇰','NORUEGA':'🇳🇴',
+    'REP CHECA':'🇨🇿','REPUBLICA CHECA':'🇨🇿','ESCOCIA':'🏴󠁧󠁢󠁳󠁣󠁴󠁿',
+    'INGLATERRA':'🏴󠁧󠁢󠁥󠁮󠁧󠁿','GALES':'🏴󠁧󠁢󠁷󠁬󠁳󠁿','RUSSIA':'🇷🇺','TURQUIA':'🇹🇷',
+    'ANGOLA':'🇦🇴','SENEGAL':'🇸🇳','NIGERIA':'🇳🇬','MARROCOS':'🇲🇦',
+    'COSTA DO MARFIM':'🇨🇮','CAMEROES':'🇨🇲','GHANA':'🇬🇭','MALI':'🇲🇱',
+    'GUINEE':'🇬🇳','GUINE':'🇬🇳','EUA':'🇺🇸','ESTADOS UNIDOS':'🇺🇸',
+    'COSTA RICA':'🇨🇷','JAPAO':'🇯🇵','COREIA DO SUL':'🇰🇷',
+  };
+  return MAP[n] || '';
+}
+
+// ── Artilheiros da temporada ──────────────────────────────
+function renderArtilheiros(jogos) {
+  const datasAno = new Set(jogos.map(j => j.d));
+  const players = {};
+
+  datasAno.forEach(data => {
+    (golsByDate[data] || []).forEach(g => {
+      if (g.gol) {
+        if (!players[g.gol]) players[g.gol] = { nome: g.gol, pos: '', pais: '', gols: 0, assists: 0 };
+        players[g.gol].gols++;
+        if (!players[g.gol].pos  && g.pos)  players[g.gol].pos  = g.pos;
+        if (!players[g.gol].pais && g.pais) players[g.gol].pais = g.pais;
+      }
+      if (g.assist) {
+        if (!players[g.assist]) players[g.assist] = { nome: g.assist, pos: '', pais: '', gols: 0, assists: 0 };
+        players[g.assist].assists++;
+        if (!players[g.assist].pos  && g.posA)  players[g.assist].pos  = g.posA;
+        if (!players[g.assist].pais && g.paisA) players[g.assist].pais = g.paisA;
+      }
+    });
+  });
+
+  const lista = Object.values(players);
+  const sec = document.getElementById('sec-artilheiros');
+
+  if (lista.length === 0) { sec.style.display = 'none'; return; }
+  sec.style.display = '';
+
+  const TOP = 10;
+  function artRow(p, stat) {
+    const flag = paisBandeira(p.pais);
+    return `<div class="art-row">
+      <span class="art-count">${stat}</span>
+      ${flag ? `<span class="art-flag">${flag}</span>` : ''}
+      <div class="art-info">
+        <div class="art-nome">${p.nome}</div>
+        ${p.pos ? `<div class="art-pos">${p.pos}</div>` : ''}
+      </div>
+    </div>`;
+  }
+
+  function fillLista(id, sorted) {
+    const el = document.getElementById(id);
+    el.innerHTML = sorted.length
+      ? sorted.slice(0, TOP).map(p => artRow(p, p._stat)).join('')
+      : '<div class="art-vazio">Sem dados</div>';
+  }
+
+  fillLista('art-gols-lista',
+    lista.filter(p => p.gols > 0)
+      .sort((a,b) => b.gols - a.gols || b.assists - a.assists)
+      .map(p => ({ ...p, _stat: p.gols }))
+  );
+
+  fillLista('art-assists-lista',
+    lista.filter(p => p.assists > 0)
+      .sort((a,b) => b.assists - a.assists || b.gols - a.gols)
+      .map(p => ({ ...p, _stat: p.assists }))
+  );
+
+  fillLista('art-total-lista',
+    lista.filter(p => p.gols + p.assists > 0)
+      .sort((a,b) => (b.gols + b.assists) - (a.gols + a.assists))
+      .map(p => ({ ...p, _stat: p.gols + p.assists }))
+  );
+}
+
 // ── Painel de gols ────────────────────────────────────────
 function renderGolsPanel(date) {
   const gols = golsByDate[date] || [];
   if (gols.length === 0) {
     return '<div class="tl-no-gol-data">Dados de gols não disponíveis para esta partida.</div>';
   }
-  return gols.map(g => {
+  return [...gols].reverse().map(g => {
     const camisa = g.camisa ? `<span class="tl-gol-camisa">#${g.camisa}</span> ` : '';
     const norm = v => (v || '').toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim();
     const isPen   = norm(g.pen)   !== '' && norm(g.pen)   !== 'NAO' && norm(g.pen)   !== 'N';
