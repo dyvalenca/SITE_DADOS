@@ -888,35 +888,81 @@ function paisBandeira(pais) {
 // =====================================================================
 // ARTILHEIROS (usa dadosFiltrados × golsByDate)
 // =====================================================================
+function _preencherDropdownArt(id, lista, labelPadrao, selecionados) {
+  const container = document.querySelector(`#${id} .items`);
+  if (!container) return;
+  container.innerHTML = '';
+  lista.forEach(item => {
+    const isChecked = selecionados.includes(item) ? 'checked' : '';
+    const label = document.createElement('label');
+    label.innerHTML = `<input type="checkbox" value="${item}" ${isChecked} onchange="atualizarAnchorLabel('${id}','${labelPadrao}');renderArtilheiros(dadosFiltrados)"> ${item}`;
+    container.appendChild(label);
+  });
+  atualizarAnchorLabel(id, labelPadrao);
+}
+
+function limparFiltrosArt() {
+  document.querySelectorAll('#fArtPais .items input, #fArtPos .items input').forEach(cb => cb.checked = false);
+  const excP = document.getElementById('excArtPais');
+  const excO = document.getElementById('excArtPos');
+  if (excP) excP.checked = false;
+  if (excO) excO.checked = false;
+  atualizarAnchorLabel('fArtPais', 'Todas');
+  atualizarAnchorLabel('fArtPos', 'Todas');
+  renderArtilheiros(dadosFiltrados);
+}
+
 function renderArtilheiros(jogos) {
   const sec = document.getElementById('sec-artilheiros-dash');
   if (!sec) return;
 
+  // 1. Agrega todos os jogadores dos jogos filtrados (antes dos filtros de artilheiro)
   const datasJogos = new Set(jogos.map(j => j.d));
-  const players = {};
+  const allPlayers = {};
 
   datasJogos.forEach(data => {
     (golsByDate[data] || []).forEach(g => {
       if (g.gol) {
-        if (!players[g.gol]) players[g.gol] = { nome: g.gol, pos: '', pais: '', gols: 0, assists: 0 };
-        players[g.gol].gols++;
-        if (!players[g.gol].pos  && g.pos)  players[g.gol].pos  = g.pos;
-        if (!players[g.gol].pais && g.pais) players[g.gol].pais = g.pais;
+        if (!allPlayers[g.gol]) allPlayers[g.gol] = { nome: g.gol, pos: '', pais: '', gols: 0, assists: 0 };
+        allPlayers[g.gol].gols++;
+        if (!allPlayers[g.gol].pos  && g.pos)  allPlayers[g.gol].pos  = g.pos;
+        if (!allPlayers[g.gol].pais && g.pais) allPlayers[g.gol].pais = g.pais;
       }
       if (g.assist) {
-        if (!players[g.assist]) players[g.assist] = { nome: g.assist, pos: '', pais: '', gols: 0, assists: 0 };
-        players[g.assist].assists++;
-        if (!players[g.assist].pos  && g.posA)  players[g.assist].pos  = g.posA;
-        if (!players[g.assist].pais && g.paisA) players[g.assist].pais = g.paisA;
+        if (!allPlayers[g.assist]) allPlayers[g.assist] = { nome: g.assist, pos: '', pais: '', gols: 0, assists: 0 };
+        allPlayers[g.assist].assists++;
+        if (!allPlayers[g.assist].pos  && g.posA)  allPlayers[g.assist].pos  = g.posA;
+        if (!allPlayers[g.assist].pais && g.paisA) allPlayers[g.assist].pais = g.paisA;
       }
     });
   });
 
-  const lista = Object.values(players);
-
-  if (lista.length === 0) { sec.style.display = 'none'; return; }
+  if (Object.keys(allPlayers).length === 0) { sec.style.display = 'none'; return; }
   sec.style.display = '';
 
+  // 2. Popula os dropdowns com os valores disponíveis, preservando a seleção atual
+  const paisDisp = [...new Set(Object.values(allPlayers).map(p => p.pais).filter(Boolean))].sort();
+  const posDisp  = [...new Set(Object.values(allPlayers).map(p => p.pos).filter(Boolean))].sort();
+  const selPaisAntes = getValoresMulti('fArtPais');
+  const selPosAntes  = getValoresMulti('fArtPos');
+  _preencherDropdownArt('fArtPais', paisDisp, 'Todas', selPaisAntes);
+  _preencherDropdownArt('fArtPos',  posDisp,  'Todas', selPosAntes);
+
+  // 3. Lê e aplica os filtros de artilheiros
+  const selPais = getValoresMulti('fArtPais');
+  const excPais = document.getElementById('excArtPais') && document.getElementById('excArtPais').checked;
+  const selPos  = getValoresMulti('fArtPos');
+  const excPos  = document.getElementById('excArtPos') && document.getElementById('excArtPos').checked;
+
+  let lista = Object.values(allPlayers);
+  if (selPais.length > 0) {
+    lista = lista.filter(p => excPais ? !selPais.includes(p.pais) : selPais.includes(p.pais));
+  }
+  if (selPos.length > 0) {
+    lista = lista.filter(p => excPos ? !selPos.includes(p.pos) : selPos.includes(p.pos));
+  }
+
+  // 4. Renderiza as listas
   function artRow(p, stat) {
     const flag = paisBandeira(p.pais);
     return `<div class="art-row">

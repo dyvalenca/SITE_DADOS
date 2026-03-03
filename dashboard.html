@@ -691,7 +691,38 @@
 
   <!-- ── ARTILHEIROS ───────────────────────────────────── -->
   <section id="sec-artilheiros-dash" style="display:none">
-    <div class="section-title">Artilheiros do Período Filtrado</div>
+    <div class="section-header" style="margin-bottom:14px;">
+      <div class="section-title" style="margin-bottom:0;border-bottom:none;padding-bottom:0;">Artilheiros do Período Filtrado</div>
+      <button class="btn-limpar" onclick="limparFiltrosArt()">Limpar Filtros</button>
+    </div>
+
+    <div class="card-section" style="margin-bottom:14px;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div>
+          <span class="filter-label">Nacionalidade</span>
+          <div id="fArtPais" class="dropdown-check-list">
+            <span class="anchor" onclick="toggleDropdown('fArtPais')">Todas</span>
+            <div class="items"></div>
+          </div>
+          <div class="form-check form-switch" style="margin-top:6px;">
+            <input class="form-check-input" type="checkbox" id="excArtPais" onchange="renderArtilheiros(dadosFiltrados)">
+            <label class="form-check-label exceto-label" for="excArtPais">EXCETO SELECIONADOS</label>
+          </div>
+        </div>
+        <div>
+          <span class="filter-label">Posição</span>
+          <div id="fArtPos" class="dropdown-check-list">
+            <span class="anchor" onclick="toggleDropdown('fArtPos')">Todas</span>
+            <div class="items"></div>
+          </div>
+          <div class="form-check form-switch" style="margin-top:6px;">
+            <input class="form-check-input" type="checkbox" id="excArtPos" onchange="renderArtilheiros(dadosFiltrados)">
+            <label class="form-check-label exceto-label" for="excArtPos">EXCETO SELECIONADOS</label>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="art-grid">
       <div class="art-card">
         <div class="art-card-title">⚽ Gols</div>
