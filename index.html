@@ -9,6 +9,7 @@
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-0090007344741060" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script src="auth.js"></script>
+  <link rel="stylesheet" href="css/ads.css">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -33,7 +34,7 @@
     main {
       min-height: 100vh;
       display: flex; align-items: center; justify-content: center;
-      padding: 78px 20px 40px;
+      padding: 20px 20px 40px;   /* o .ad-strip já absorve o header fixo */
     }
 
     .menu-wrap { max-width: 700px; width: 100%; }
@@ -129,6 +130,28 @@
   <div class="logo">Números Fieis <span>- Corinthians</span></div>
   <div id="auth-header" style="margin-left:auto;"></div>
 </header>
+
+<!-- ── BANNER PUBLICITÁRIO — Flats Laguna ──────────────── -->
+<div class="ad-strip">
+  <!-- Desktop: 728×90px — visível apenas em telas ≥ 769px -->
+  <a class="ad-banner-desktop"
+     href="https://www.airbnb.com.br/rooms/746984658105861066"
+     target="_blank" rel="noopener sponsored"
+     aria-label="Flats Laguna no Airbnb">
+    <img src="/public/assets/img/ads/banner-desktop-laguna.png"
+         width="728" height="90"
+         alt="Flats Laguna — Reserve no Airbnb">
+  </a>
+  <!-- Mobile: 320×100px — visível apenas em telas ≤ 768px -->
+  <a class="ad-banner-mobile"
+     href="https://www.airbnb.com.br/rooms/746984658105861066"
+     target="_blank" rel="noopener sponsored"
+     aria-label="Flats Laguna no Airbnb">
+    <img src="/public/assets/img/ads/banner-mobile-laguna.png"
+         width="320" height="100"
+         alt="Flats Laguna — Reserve no Airbnb">
+  </a>
+</div>
 
 <main>
   <div class="menu-wrap">

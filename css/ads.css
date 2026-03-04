@@ -1,0 +1,47 @@
+/* ─────────────────────────────────────────────────────────
+   ads.css — Banners publicitários responsivos
+   Flats Laguna · Airbnb
+───────────────────────────────────────────────────────── */
+
+.ad-strip {
+  width: 100%;
+  background: #f1f1f3;       /* mesmo fundo da página */
+  margin-top: 58px;          /* altura do header fixo  */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 10px 20px;
+}
+
+/* Link envolve a imagem — remove sublinhado e garante inline-block */
+.ad-strip a {
+  display: block;
+  line-height: 0;            /* elimina espaço extra abaixo da img */
+}
+
+.ad-strip img {
+  display: block;
+  border-radius: 8px;
+  max-width: 100%;
+  height: auto;
+}
+
+/* ── Desktop: 728×90 ────────────────────────────────── */
+.ad-banner-desktop {
+  display: none;
+}
+
+/* ── Mobile: 320×100 ────────────────────────────────── */
+.ad-banner-mobile {
+  display: none;
+}
+
+/* ── Breakpoints ────────────────────────────────────── */
+@media (min-width: 769px) {
+  .ad-banner-desktop { display: block; }
+}
+
+@media (max-width: 768px) {
+  .ad-banner-mobile { display: block; }
+  .ad-strip { padding: 8px 12px; }
+}
