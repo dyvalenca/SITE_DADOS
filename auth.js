@@ -16,10 +16,10 @@
   const authDB = createClient(SUPABASE_URL, SUPABASE_KEY);
 
   /* ── Estado interno ───────────────────────────────────────── */
-  let _user  = null;
-  let _nivel = null;   // 'comum' | 'premium' | 'admin'
-  let _ready = false;
-  let _readyCbs = [];
+  let _user      = null;
+  let _nivel     = null;   // 'comum' | 'premium' | 'admin'
+  let _ready     = false;
+  let _listeners = [];     // chamados na 1ª resolução E em cada mudança posterior
 
   /* ── CSS injetado ─────────────────────────────────────────── */
   (function injetarCSS() {
@@ -59,11 +59,8 @@
       }
       .auth-badge-admin   { background: #fef9c3; color: #854d0e; }
       .auth-badge-premium { background: #dbeafe; color: #1e40af; }
-      .auth-loading {
-        font-size: 0.72rem; color: #a1a1aa;
-      }
       @media (max-width: 480px) {
-        .auth-name { display: none; }
+        .auth-name  { display: none; }
         .auth-badge { display: none; }
       }
     `;
@@ -101,55 +98,69 @@
         `</svg>` +
         `Entrar com Google</button>`;
     } else {
-      const foto  = _user.user_metadata?.avatar_url  || '';
-      const nome  = _user.user_metadata?.full_name   || _user.email || '';
+      const foto  = _user.user_metadata?.avatar_url || '';
+      const nome  = _user.user_metadata?.full_name  || _user.email || '';
       const badge = _nivel === 'admin'
         ? `<span class="auth-badge auth-badge-admin">Admin</span>`
         : _nivel === 'premium'
         ? `<span class="auth-badge auth-badge-premium">Premium</span>`
         : '';
-      const avatarHTML = foto
-        ? `<img src="${foto}" class="auth-avatar" alt="">`
-        : '';
       el.innerHTML =
-        avatarHTML +
+        (foto ? `<img src="${foto}" class="auth-avatar" alt="">` : '') +
         `<span class="auth-name">${_escHtml(nome)}</span>` +
         badge +
         `<button class="auth-btn auth-btn-logout" onclick="sair()">Sair</button>`;
     }
+  }
 
-    /* Dispara evento para que a página reaja à mudança de estado */
-    document.dispatchEvent(new CustomEvent('auth:update', {
-      detail: { user: _user, nivel: _nivel }
-    }));
+  /* ── Notifica todos os listeners com o estado atual ───────── */
+  function _notificar() {
+    const payload = { user: _user, nivel: _nivel };
+    _listeners.forEach(function (cb) { try { cb(payload); } catch (_) {} });
   }
 
   function _escHtml(str) {
     return String(str)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;');
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
 
   /* ── Inicialização: escuta mudanças de sessão ─────────────── */
   authDB.auth.onAuthStateChange(async function (event, session) {
-    _user = session?.user || null;
-    await _carregarPerfil(_user);
+    const newUser = session?.user || null;
+
+    // Se o user não mudou e já está pronto, evita round-trip desnecessário
+    const sameUser = _ready && (newUser?.id === _user?.id) && newUser !== null;
+    _user = newUser;
+
+    if (!sameUser) {
+      // Renderiza imediatamente com os dados da sessão (sem badge, sem espera)
+      _nivel = null;
+      _renderAuthHeader();
+
+      // Busca o nivel_acesso em paralelo, então re-renderiza e notifica
+      await _carregarPerfil(_user);
+    }
+
     _renderAuthHeader();
 
-    if (!_ready) {
-      _ready = true;
-      const payload = { user: _user, nivel: _nivel };
-      _readyCbs.forEach(function (cb) { cb(payload); });
-      _readyCbs = [];
-    }
+    _ready = true;
+    _notificar();
   });
 
   /* ── API pública ──────────────────────────────────────────── */
+
+  /**
+   * Registra um callback que é chamado:
+   *  - imediatamente se o estado já foi resolvido
+   *  - assim que resolver, se ainda estiver pendente
+   *  - novamente a cada mudança de sessão (login / logout)
+   */
   function onAuthReady(cb) {
-    if (_ready) cb({ user: _user, nivel: _nivel });
-    else _readyCbs.push(cb);
+    _listeners.push(cb);
+    if (_ready) {
+      try { cb({ user: _user, nivel: _nivel }); } catch (_) {}
+    }
   }
 
   async function entrarComGoogle() {
@@ -163,10 +174,10 @@
     await authDB.auth.signOut();
   }
 
-  function getUser()    { return _user; }
-  function getNivel()   { return _nivel; }
-  function isAdmin()    { return _nivel === 'admin'; }
-  function isPremium()  { return _nivel === 'admin' || _nivel === 'premium'; }
+  function getUser()   { return _user; }
+  function getNivel()  { return _nivel; }
+  function isAdmin()   { return _nivel === 'admin'; }
+  function isPremium() { return _nivel === 'admin' || _nivel === 'premium'; }
 
   /* Expõe globalmente */
   window.authDB          = authDB;
