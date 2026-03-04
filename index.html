@@ -83,6 +83,20 @@
       letter-spacing: 0.5px; color: #a1a1aa;
     }
 
+    .menu-card-locked {
+      cursor: default; opacity: 0.7;
+    }
+    .menu-card-locked:hover {
+      border-color: #e4e4e7; box-shadow: none; transform: none;
+    }
+    .menu-card-premium-badge {
+      display: inline-flex; align-items: center;
+      font-size: 0.6rem; font-weight: 700; letter-spacing: 0.8px;
+      text-transform: uppercase; padding: 2px 9px; border-radius: 10px;
+      background: #fef9c3; color: #854d0e;
+      vertical-align: middle; margin-left: 8px;
+    }
+
     @media (max-width: 480px) {
       .menu-grid { grid-template-columns: 1fr; }
       .menu-card { padding: 24px 20px; }
@@ -119,24 +133,34 @@
 <main>
   <div class="menu-wrap">
     <div class="menu-grid">
+      <!-- 1. Jogos por Ano -->
       <a href="jogos.html" class="menu-card">
         <div class="menu-card-icon">📅</div>
         <div class="menu-card-title">Jogos por Ano</div>
         <div class="menu-card-desc">Resultados, eficiência, balanço de gols, timeline e distribuição por temporada</div>
         <div class="menu-card-cta">Acessar →</div>
       </a>
-      <a href="dashboard.html" class="menu-card">
-        <div class="menu-card-icon">📊</div>
-        <div class="menu-card-title">Dashboard</div>
-        <div class="menu-card-desc">Tabela completa com filtros, gráficos históricos e análise de sequências</div>
-        <div class="menu-card-cta">Acessar →</div>
-      </a>
-      <a href="brasileirao.html" class="menu-card" style="grid-column: 1 / -1;">
+
+      <!-- 2. Brasileirão -->
+      <a href="brasileirao.html" class="menu-card">
         <div class="menu-card-icon">🏆</div>
         <div class="menu-card-title">Brasileirão (Pontos Corridos)</div>
         <div class="menu-card-desc">Performance histórica desde 2003, gráfico interativo por temporada, confronto direto contra cada adversário e filtros por era, títulos e período recente</div>
         <div class="menu-card-cta">Acessar →</div>
       </a>
+
+      <!-- 3. Dashboard — acesso restrito a assinantes (premium/admin) -->
+      <a id="dashboard-card" href="dashboard.html" class="menu-card" style="grid-column: 1 / -1;">
+        <div class="menu-card-icon">📊</div>
+        <div class="menu-card-title">
+          Dashboard
+          <span id="dashboard-premium-badge" class="menu-card-premium-badge" style="display:none;">Assinantes</span>
+        </div>
+        <div class="menu-card-desc">Tabela completa com filtros, gráficos históricos e análise de sequências</div>
+        <div id="dashboard-cta" class="menu-card-cta">Acessar →</div>
+      </a>
+
+      <!-- 4. Administrativo — visível apenas para admin -->
       <a id="admin-card" href="admin.html" class="menu-card" style="grid-column: 1 / -1; display:none; border-color:#fef9c3;">
         <div class="menu-card-icon">⚙️</div>
         <div class="menu-card-title">Administrativo</div>
@@ -162,10 +186,27 @@
 <script>document.querySelector('.footer-year').textContent = new Date().getFullYear();</script>
 
 <script>
-// Exibe card admin apenas para usuários com nivel_acesso === 'admin'
 onAuthReady(function ({ nivel }) {
-  if (nivel === 'admin') {
-    document.getElementById('admin-card').style.display = '';
+  // Admin card: só para admin
+  document.getElementById('admin-card').style.display =
+    (nivel === 'admin') ? '' : 'none';
+
+  // Dashboard card: premium e admin têm acesso livre; comum e visitante, bloqueado
+  var dashCard  = document.getElementById('dashboard-card');
+  var dashBadge = document.getElementById('dashboard-premium-badge');
+  var dashCta   = document.getElementById('dashboard-cta');
+  var temAcesso = (nivel === 'premium' || nivel === 'admin');
+
+  if (temAcesso) {
+    dashCard.href = 'dashboard.html';
+    dashCard.classList.remove('menu-card-locked');
+    dashBadge.style.display = 'none';
+    dashCta.textContent = 'Acessar →';
+  } else {
+    dashCard.removeAttribute('href');
+    dashCard.classList.add('menu-card-locked');
+    dashBadge.style.display = '';
+    dashCta.textContent = '🔒 Somente para assinantes';
   }
 });
 </script>
