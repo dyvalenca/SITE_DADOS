@@ -112,7 +112,6 @@
       (foto ? '<img src="' + foto + '" class="auth-avatar" alt="">' : '') +
       '<span class="auth-name">' + _esc(nome) + '</span>' +
       badge +
-      '<button class="auth-btn auth-btn-logout" onclick="_authInfo()" title="Ver dados da sessão">🛈</button>' +
       '<button class="auth-btn auth-btn-logout" onclick="sair()">Sair</button>';
   }
 
@@ -220,19 +219,7 @@
   function isAdmin()   { return _nivel === 'admin'; }
   function isPremium() { return _nivel === 'admin' || _nivel === 'premium'; }
 
-  function _authInfo() {
-    if (!_user) { alert('Nenhum usuário logado.'); return; }
-    alert(
-      'Usuário logado:\n\n' +
-      '  Nome:      ' + (_user.user_metadata?.full_name || '—') + '\n' +
-      '  Email:     ' + (_user.email || '—') + '\n' +
-      '  Permissão: ' + (_nivel || 'comum') + '\n' +
-      '  ID:        ' + _user.id
-    );
-  }
-
   /* Expõe globalmente */
-  window._authInfo       = _authInfo;
   window.authDB          = authDB;
   window.getUser         = getUser;
   window.getNivel        = getNivel;
