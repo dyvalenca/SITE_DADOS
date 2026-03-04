@@ -9,6 +9,8 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-0090007344741060" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="auth.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -444,6 +446,7 @@
   <div class="logo">Números Fieis <span>- Corinthians</span></div>
   <div class="header-right">
     <span id="msg-status">Conectando...</span>
+    <div id="auth-header"></div>
     <button id="btn-atualizar" class="btn-nav" style="background:none;cursor:pointer;font-family:'Inter',sans-serif;" onclick="atualizarDados()">↻ Atualizar</button>
     <a href="index.html" class="btn-nav">← Início</a>
   </div>

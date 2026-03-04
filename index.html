@@ -7,6 +7,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap" rel="stylesheet">
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-0090007344741060" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="auth.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -111,6 +113,7 @@
 
 <header>
   <div class="logo">Números Fieis <span>- Corinthians</span></div>
+  <div id="auth-header" style="margin-left:auto;"></div>
 </header>
 
 <main>
@@ -134,6 +137,12 @@
         <div class="menu-card-desc">Performance histórica desde 2003, gráfico interativo por temporada, confronto direto contra cada adversário e filtros por era, títulos e período recente</div>
         <div class="menu-card-cta">Acessar →</div>
       </a>
+      <a id="admin-card" href="admin.html" class="menu-card" style="grid-column: 1 / -1; display:none; border-color:#fef9c3;">
+        <div class="menu-card-icon">⚙️</div>
+        <div class="menu-card-title">Administrativo</div>
+        <div class="menu-card-desc">Inserir, editar e remover registros de jogos e gols — acesso restrito a administradores</div>
+        <div class="menu-card-cta">Acessar →</div>
+      </a>
     </div>
   </div>
 </main>
@@ -151,6 +160,15 @@
   <p class="footer-copy">© <span class="footer-year"></span> Números Fieis</p>
 </footer>
 <script>document.querySelector('.footer-year').textContent = new Date().getFullYear();</script>
+
+<script>
+// Exibe card admin apenas para usuários com nivel_acesso === 'admin'
+onAuthReady(function ({ nivel }) {
+  if (nivel === 'admin') {
+    document.getElementById('admin-card').style.display = '';
+  }
+});
+</script>
 
 <script>
 // Pré-carrega dados de jogos em background para acelerar jogos.html

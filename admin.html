@@ -7,6 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="auth.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -186,20 +187,18 @@
 
 <header>
   <a href="index.html" class="logo">Números Fieis <span>- Corinthians</span></a>
+  <div id="auth-header" style="margin-left:auto; margin-right:12px;"></div>
   <a href="index.html" class="back-link">← Menu</a>
 </header>
 
 <main>
 
-  <!-- ── TELA DE SENHA ── -->
+  <!-- ── TELA DE ACESSO ── -->
   <div id="pwd-screen" class="pwd-screen">
     <div class="pwd-card">
-      <div class="pwd-icon">🔐</div>
-      <div class="pwd-title">Área Administrativa</div>
-      <div class="pwd-sub">Acesso restrito. Digite a senha para continuar.</div>
-      <input id="pwd-input" type="password" class="pwd-input" placeholder="••••••" autocomplete="off">
-      <div id="pwd-error" class="pwd-error"></div>
-      <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="verificarSenha()">Entrar</button>
+      <div class="pwd-icon">⏳</div>
+      <div class="pwd-title">Verificando acesso…</div>
+      <div class="pwd-sub">Aguarde enquanto verificamos sua sessão.</div>
     </div>
   </div>
 
@@ -342,34 +341,39 @@
 
 <script>
 // ============================================================
-// SUPABASE
+// SUPABASE  (usa o client compartilhado de auth.js)
 // ============================================================
-const SUPABASE_URL = 'https://xtdavfobpodxeawaygtn.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_B9X6t6kanjvTmGa8zEAF6w_MqxxcZh4';
-const { createClient } = window.supabase;
-const db = createClient(SUPABASE_URL, SUPABASE_KEY);
+const db = authDB;
 
 document.getElementById('footer-year').textContent = new Date().getFullYear();
 
 // ============================================================
-// SENHA
+// CONTROLE DE ACESSO
 // ============================================================
-const SENHA = '144436';
+onAuthReady(function ({ user, nivel }) {
+  const pwdScreen   = document.getElementById('pwd-screen');
+  const adminScreen = document.getElementById('admin-screen');
 
-function verificarSenha() {
-  const v = document.getElementById('pwd-input').value;
-  if (v === SENHA) {
-    document.getElementById('pwd-screen').style.display = 'none';
-    document.getElementById('admin-screen').style.display = '';
+  if (!user) {
+    pwdScreen.innerHTML =
+      '<div class="pwd-card">' +
+      '<div class="pwd-icon">🔐</div>' +
+      '<div class="pwd-title">Área Administrativa</div>' +
+      '<div class="pwd-sub">Faça login com sua conta Google para continuar.</div>' +
+      '<button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:8px" onclick="entrarComGoogle()">Entrar com Google</button>' +
+      '</div>';
+  } else if (nivel !== 'admin') {
+    pwdScreen.innerHTML =
+      '<div class="pwd-card">' +
+      '<div class="pwd-icon">🚫</div>' +
+      '<div class="pwd-title">Acesso Negado</div>' +
+      '<div class="pwd-sub">Sua conta não tem permissão de administrador.</div>' +
+      '<button class="btn btn-secondary" style="width:100%;justify-content:center;margin-top:8px" onclick="sair()">Sair</button>' +
+      '</div>';
   } else {
-    document.getElementById('pwd-error').textContent = 'Senha incorreta. Tente novamente.';
-    document.getElementById('pwd-input').value = '';
-    document.getElementById('pwd-input').focus();
+    pwdScreen.style.display  = 'none';
+    adminScreen.style.display = '';
   }
-}
-
-document.getElementById('pwd-input').addEventListener('keydown', e => {
-  if (e.key === 'Enter') verificarSenha();
 });
 
 // ============================================================
