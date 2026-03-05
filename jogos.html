@@ -971,7 +971,7 @@ function renderGolsPanel(date) {
   if (gols.length === 0) {
     return '<div class="tl-no-gol-data">Dados de gols não disponíveis para esta partida.</div>';
   }
-  return [...gols].reverse().map(g => {
+  return gols.map(g => {
     const camisa = g.camisa ? `<span class="tl-gol-camisa">#${g.camisa}</span> ` : '';
     const norm = v => (v || '').toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim();
     const isPen   = norm(g.pen)   !== '' && norm(g.pen)   !== 'NAO' && norm(g.pen)   !== 'N';

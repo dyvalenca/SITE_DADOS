@@ -269,14 +269,14 @@ function filtrarPorCelula(campo, valor) {
 }
 
 function popularAnos() {
-  const anosUnicos = [...new Set(dadosGlobais.map(j => parseInt(j.a)))].filter(Boolean).sort((a, b) => a - b);
+  const anosUnicos = [...new Set(dadosGlobais.map(j => parseInt(j.a)))].filter(Boolean).sort((a, b) => b - a);
   const sDe = document.getElementById('fAnoDe');
   const sAte = document.getElementById('fAnoAte');
   sDe.innerHTML = "";
   sAte.innerHTML = "";
   anosUnicos.forEach(ano => { sDe.add(new Option(ano, ano)); sAte.add(new Option(ano, ano)); });
-  sDe.value = anosUnicos[0];
-  sAte.value = anosUnicos[anosUnicos.length - 1];
+  sDe.value = anosUnicos[anosUnicos.length - 1];   // menor ano (último na lista decrescente)
+  sAte.value = anosUnicos[0];                       // maior ano (primeiro na lista decrescente)
 }
 
 function popularListasDinamicas(baseDeDados) {
