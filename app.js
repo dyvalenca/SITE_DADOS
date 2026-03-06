@@ -1120,15 +1120,58 @@ function compartilharArtilheiros(tipo) {
   ctx.textAlign = 'center';
   ctx.fillText('numeros-fieis.vercel.app', W / 2, H - 16);
 
-  // ── Download da imagem ──────────────────────────────────────────
-  var link = document.createElement('a');
-  link.download = 'artilheiros-' + tipo + '.png';
-  link.href = canvas.toDataURL('image/png');
-  link.click();
-
-  // ── Abre Twitter com texto ──────────────────────────────────────
   var texto = 'OS 5 MAIORES ARTILHEIROS ' + label + ' DO CORINTHIANS 🏆⬛⬜\n#Corinthians #Timão';
-  window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent(texto), '_blank');
+  var twitterUrl = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(texto);
+  var fileName = 'artilheiros-' + tipo + '.png';
+
+  // ── Tenta compartilhar via Web Share API (nativo — funciona no celular e Chrome/Edge desktop) ──
+  canvas.toBlob(async function(blob) {
+    var file = new File([blob], fileName, { type: 'image/png' });
+
+    // 1ª opção: Web Share API com arquivo (celular, Chrome Android, Safari iOS, Edge)
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({ files: [file], text: texto });
+        return;
+      } catch(e) {
+        if (e.name === 'AbortError') return; // usuário cancelou
+      }
+    }
+
+    // 2ª opção: copiar imagem para o clipboard e abrir Twitter (Chrome/Edge desktop)
+    if (window.ClipboardItem && navigator.clipboard && navigator.clipboard.write) {
+      try {
+        await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+        window.open(twitterUrl, '_blank');
+        _artToast('Imagem copiada! Cole no tweet com Ctrl+V (ou ⌘V).');
+        return;
+      } catch(e) { /* sem permissão de clipboard — cai no fallback */ }
+    }
+
+    // 3ª opção (fallback): download + abre Twitter
+    var link = document.createElement('a');
+    link.download = fileName;
+    link.href = URL.createObjectURL(blob);
+    link.click();
+    window.open(twitterUrl, '_blank');
+    _artToast('Imagem baixada! Anexe-a ao tweet manualmente.');
+  }, 'image/png');
+}
+
+function _artToast(msg) {
+  var t = document.getElementById('_art-toast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = '_art-toast';
+    t.style.cssText = 'position:fixed;bottom:28px;left:50%;transform:translateX(-50%);' +
+      'background:#18181b;color:#fff;font-size:0.8rem;font-weight:600;padding:10px 20px;' +
+      'border-radius:10px;z-index:9999;pointer-events:none;transition:opacity 0.4s;';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.style.opacity = '1';
+  clearTimeout(t._tid);
+  t._tid = setTimeout(function() { t.style.opacity = '0'; }, 3500);
 }
 
 // =====================================================================
