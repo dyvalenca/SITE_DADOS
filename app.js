@@ -1042,7 +1042,7 @@ function renderArtilheiros(jogos) {
 // =====================================================================
 // COMPARTILHAR ARTILHEIROS NO X (Twitter)
 // =====================================================================
-function compartilharArtilheiros(tipo) {
+async function compartilharArtilheiros(tipo) {
   var dados = (_artTop5[tipo] || []).slice(0, 5);
   var titulosLabel = { gols: 'GOLS', assists: 'ASSISTÊNCIAS', total: 'PARTICIPAÇÕES (G+A)' };
   var label = titulosLabel[tipo] || tipo.toUpperCase();
@@ -1133,36 +1133,35 @@ function compartilharArtilheiros(tipo) {
   var blob = new Blob([ab], { type: 'image/png' });
   var file = new File([blob], fileName, { type: 'image/png' });
 
-  (async function() {
-    // 1ª opção: Web Share API — apenas no celular (no desktop abre diálogo do SO, não vai direto pro X)
-    var isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-    if (isMobile && navigator.canShare && navigator.canShare({ files: [file] })) {
-      try {
-        await navigator.share({ files: [file], text: texto });
-        return;
-      } catch(e) {
-        if (e.name === 'AbortError') return; // usuário cancelou
-      }
+  // 1ª opção: Web Share API — apenas no celular (no desktop abre diálogo do SO, não vai direto pro X)
+  var isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  if (isMobile && navigator.share) {
+    try {
+      await navigator.share({ files: [file], text: texto });
+      return;
+    } catch(e) {
+      if (e.name === 'AbortError') return; // usuário cancelou
+      // Outro erro: cai para as próximas opções
     }
+  }
 
-    // 2ª opção: copiar imagem para o clipboard e abrir Twitter (Chrome/Edge desktop)
-    if (window.ClipboardItem && navigator.clipboard && navigator.clipboard.write) {
-      try {
-        await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
-        window.open(twitterUrl, '_blank');
-        _artToast('Imagem copiada! Cole no tweet com Ctrl+V (ou ⌘V).');
-        return;
-      } catch(e) { /* sem permissão de clipboard — cai no fallback */ }
-    }
+  // 2ª opção: copiar imagem para o clipboard e abrir Twitter (Chrome/Edge desktop)
+  if (window.ClipboardItem && navigator.clipboard && navigator.clipboard.write) {
+    try {
+      await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+      window.open(twitterUrl, '_blank');
+      _artToast('Imagem copiada! Cole no tweet com Ctrl+V (ou ⌘V).');
+      return;
+    } catch(e) { /* sem permissão de clipboard — cai no fallback */ }
+  }
 
-    // 3ª opção (fallback): download + abre Twitter
-    var link = document.createElement('a');
-    link.download = fileName;
-    link.href = dataUrl;
-    link.click();
-    window.open(twitterUrl, '_blank');
-    _artToast('Imagem baixada! Anexe-a ao tweet manualmente.');
-  })();
+  // 3ª opção (fallback): download + abre Twitter
+  var link = document.createElement('a');
+  link.download = fileName;
+  link.href = dataUrl;
+  link.click();
+  window.open(twitterUrl, '_blank');
+  _artToast('Imagem baixada! Anexe-a ao tweet manualmente.');
 }
 
 function _artToast(msg) {
