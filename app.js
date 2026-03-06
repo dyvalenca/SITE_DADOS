@@ -1042,145 +1042,38 @@ function renderArtilheiros(jogos) {
 // =====================================================================
 // COMPARTILHAR ARTILHEIROS NO X (Twitter)
 // =====================================================================
-async function compartilharArtilheiros(tipo) {
+function compartilharArtilheiros(tipo) {
   var dados = (_artTop5[tipo] || []).slice(0, 5);
-  var titulosLabel = { gols: 'GOLS', assists: 'ASSISTÊNCIAS', total: 'PARTICIPAÇÕES (G+A)' };
-  var label = titulosLabel[tipo] || tipo.toUpperCase();
+  var emojis     = { gols: '⚽', assists: '👟', total: '⚡' };
+  var rotulos    = { gols: 'gol', assists: 'assistência', total: 'participação' };
+  var rotulosPl  = { gols: 'gols', assists: 'assistências', total: 'participações' };
+  var rankEmoji  = ['1️⃣','2️⃣','3️⃣','4️⃣','5️⃣'];
 
-  // ── Canvas ──────────────────────────────────────────────────────
-  var W = 600, H = 56 + 52 * Math.max(dados.length, 1) + 80;
-  var canvas = document.createElement('canvas');
-  canvas.width = W; canvas.height = H;
-  var ctx = canvas.getContext('2d');
+  var emoji  = emojis[tipo]  || '🏆';
+  var rotulo = rotulos[tipo] || tipo;
+  var rotuloPlural = rotulosPl[tipo] || tipo;
 
-  // Fundo preto (Corinthians)
-  ctx.fillStyle = '#0a0a0a';
-  ctx.fillRect(0, 0, W, H);
+  var linhas = ['🏆 OS 5 MAIORES ARTILHEIROS EM ' + rotuloPlural.toUpperCase() + ' DO CORINTHIANS ' + emoji];
+  linhas.push('');
 
-  // Borda branca
-  ctx.strokeStyle = '#ffffff';
-  ctx.lineWidth = 2;
-  ctx.strokeRect(10, 10, W - 20, H - 20);
-
-  // Título
-  ctx.fillStyle = '#ffffff';
-  ctx.font = 'bold 16px Arial, sans-serif';
-  ctx.textAlign = 'center';
-  ctx.fillText('OS 5 MAIORES ARTILHEIROS', W / 2, 38);
-
-  ctx.fillStyle = '#d4d4d8';
-  ctx.font = 'bold 13px Arial, sans-serif';
-  ctx.fillText(label + ' — CORINTHIANS', W / 2, 56);
-
-  // Separador
-  ctx.strokeStyle = '#333333';
-  ctx.lineWidth = 1;
-  ctx.beginPath(); ctx.moveTo(30, 66); ctx.lineTo(W - 30, 66); ctx.stroke();
-
-  // Jogadores
   dados.forEach(function(p, i) {
-    var y = 96 + i * 52;
-
-    // Posição ranking
-    ctx.fillStyle = '#52525b';
-    ctx.font = 'bold 12px Arial, sans-serif';
-    ctx.textAlign = 'right';
-    ctx.fillText('#' + (i + 1), 52, y);
-
-    // Stat em destaque
-    ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 28px Arial, sans-serif';
-    ctx.textAlign = 'left';
-    ctx.fillText(p._stat, 62, y + 4);
-
-    // Nome
-    ctx.fillStyle = '#f4f4f5';
-    ctx.font = 'bold 15px Arial, sans-serif';
-    ctx.fillText(p.nome, 108, y - 4);
-
-    // Pos · País
+    var stat = p._stat;
+    var sufixo = stat === 1 ? rotulo : rotuloPlural;
+    var extra = '';
+    if (tipo === 'total') extra = ' (' + p.gols + 'g ' + p.assists + 'a)';
     var sub = [p.pos, p.pais].filter(Boolean).join(' · ');
-    if (sub) {
-      ctx.fillStyle = '#71717a';
-      ctx.font = '12px Arial, sans-serif';
-      ctx.fillText(sub, 108, y + 13);
-    }
-
-    // Linha separadora leve
-    if (i < dados.length - 1) {
-      ctx.strokeStyle = '#1f1f1f';
-      ctx.lineWidth = 1;
-      ctx.beginPath(); ctx.moveTo(30, y + 26); ctx.lineTo(W - 30, y + 26); ctx.stroke();
-    }
+    var linha = rankEmoji[i] + ' ' + p.nome + ' — ' + stat + ' ' + sufixo + extra;
+    if (sub) linha += ' | ' + sub;
+    linhas.push(linha);
   });
 
-  // Branding
-  ctx.fillStyle = '#3f3f46';
-  ctx.font = '11px Arial, sans-serif';
-  ctx.textAlign = 'center';
-  ctx.fillText('numeros-fieis.vercel.app', W / 2, H - 16);
+  linhas.push('');
+  linhas.push('#Corinthians #Timão #NúmerosFieis');
 
-  var texto = 'OS 5 MAIORES ARTILHEIROS ' + label + ' DO CORINTHIANS 🏆⬛⬜\n#Corinthians #Timão';
-  var twitterUrl = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(texto);
-  var fileName = 'artilheiros-' + tipo + '.png';
-
-  // Converte canvas para blob de forma síncrona (preserva contexto de gesto do usuário para Web Share API)
-  var dataUrl = canvas.toDataURL('image/png');
-  var byteStr = atob(dataUrl.split(',')[1]);
-  var ab = new ArrayBuffer(byteStr.length);
-  var ia = new Uint8Array(ab);
-  for (var i = 0; i < byteStr.length; i++) ia[i] = byteStr.charCodeAt(i);
-  var blob = new Blob([ab], { type: 'image/png' });
-  var file = new File([blob], fileName, { type: 'image/png' });
-
-  // 1ª opção: Web Share API — apenas no celular (no desktop abre diálogo do SO, não vai direto pro X)
-  var isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-  if (isMobile && navigator.share) {
-    try {
-      await navigator.share({ files: [file], text: texto });
-      return;
-    } catch(e) {
-      if (e.name === 'AbortError') return; // usuário cancelou
-      _artToast('[DEBUG] ' + e.name + ': ' + e.message); // temporário — remover após diagnóstico
-    }
-  } else if (isMobile) {
-    _artToast('[DEBUG] navigator.share não disponível neste browser');
-  }
-
-  // 2ª opção: copiar imagem para o clipboard e abrir Twitter (Chrome/Edge desktop)
-  if (window.ClipboardItem && navigator.clipboard && navigator.clipboard.write) {
-    try {
-      await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
-      window.open(twitterUrl, '_blank');
-      _artToast('Imagem copiada! Cole no tweet com Ctrl+V (ou ⌘V).');
-      return;
-    } catch(e) { /* sem permissão de clipboard — cai no fallback */ }
-  }
-
-  // 3ª opção (fallback): download + abre Twitter
-  var link = document.createElement('a');
-  link.download = fileName;
-  link.href = dataUrl;
-  link.click();
-  window.open(twitterUrl, '_blank');
-  _artToast('Imagem baixada! Anexe-a ao tweet manualmente.');
+  var texto = linhas.join('\n');
+  window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent(texto), '_blank');
 }
 
-function _artToast(msg) {
-  var t = document.getElementById('_art-toast');
-  if (!t) {
-    t = document.createElement('div');
-    t.id = '_art-toast';
-    t.style.cssText = 'position:fixed;bottom:28px;left:50%;transform:translateX(-50%);' +
-      'background:#18181b;color:#fff;font-size:0.8rem;font-weight:600;padding:10px 20px;' +
-      'border-radius:10px;z-index:9999;pointer-events:none;transition:opacity 0.4s;';
-    document.body.appendChild(t);
-  }
-  t.textContent = msg;
-  t.style.opacity = '1';
-  clearTimeout(t._tid);
-  t._tid = setTimeout(function() { t.style.opacity = '0'; }, 3500);
-}
 
 // =====================================================================
 async function atualizarDados() {
