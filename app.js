@@ -12,6 +12,7 @@ let golsByDate = {};
 let paginaAtual = 1;
 let chartInstance = null;
 let chartCompInstance = null;
+let chartArtilheirosInstance = null;
 const itensPorPagina = 50;
 let metricaAtual = "aproveitamento";
 let sortColTec = 'jogos';
@@ -1035,10 +1036,66 @@ function renderArtilheiros(jogos) {
     .map(p => ({ ...p, _stat: p.gols + p.assists }));
   _artTop5.total = top5Total;
   fillLista('dash-art-total-lista', top5Total);
+
+  renderizarGraficoArtilheiros();
 }
 
 // =====================================================================
-// ATUALIZAR DADOS (botão ↻)
+// GRÁFICO EVOLUÇÃO DE GOLS — TOP 5 ARTILHEIROS POR ANO
+// =====================================================================
+function renderizarGraficoArtilheiros() {
+  var top5 = (_artTop5.gols || []).slice(0, 5);
+  var anos = [...new Set(dadosFiltrados.map(j => parseInt(j.a)))].filter(Boolean).sort((a, b) => a - b);
+  var el = document.getElementById('graficoArtilheiros');
+  if (!el || !top5.length || anos.length < 2) return;
+
+  var cores = ['#18181b', '#2563eb', '#dc2626', '#16a34a', '#d97706'];
+
+  var datasets = top5.map(function(p, i) {
+    var golsPorAno = {};
+    anos.forEach(function(ano) { golsPorAno[ano] = 0; });
+    dadosFiltrados.forEach(function(j) {
+      var ano = parseInt(j.a);
+      (golsByDate[j.d] || []).forEach(function(g) {
+        if (g.gol === p.nome && (g.pos || '') === p.pos && (g.pais || '') === p.pais) {
+          golsPorAno[ano]++;
+        }
+      });
+    });
+    return {
+      label: p.nome,
+      data: anos.map(function(a) { return golsPorAno[a]; }),
+      borderColor: cores[i],
+      backgroundColor: 'transparent',
+      borderWidth: 2,
+      tension: 0.3,
+      pointRadius: 4,
+      pointBackgroundColor: cores[i],
+      datalabels: { display: false }
+    };
+  });
+
+  var ctx = el.getContext('2d');
+  if (chartArtilheirosInstance) chartArtilheirosInstance.destroy();
+  chartArtilheirosInstance = new Chart(ctx, {
+    type: 'line',
+    plugins: [ChartDataLabels],
+    data: { labels: anos, datasets: datasets },
+    options: {
+      responsive: true,
+      layout: { padding: { top: 10, right: 20 } },
+      plugins: {
+        legend: { display: true, position: 'top' },
+        datalabels: { display: false }
+      },
+      scales: {
+        y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: 'rgba(0,0,0,0.05)' } },
+        x: { grid: { display: false } }
+      }
+    }
+  });
+}
+
 // =====================================================================
 // COMPARTILHAR ARTILHEIROS NO X (Twitter)
 // =====================================================================
@@ -1084,8 +1141,9 @@ async function atualizarDados() {
   try { sessionStorage.removeItem('nf_gols_cache'); } catch(e) {}
 
   dadosGlobais = []; dadosFiltrados = []; golsByDate = {}; paginaAtual = 1;
-  if (chartInstance)    { chartInstance.destroy();    chartInstance = null; }
-  if (chartCompInstance){ chartCompInstance.destroy(); chartCompInstance = null; }
+  if (chartInstance)          { chartInstance.destroy();          chartInstance = null; }
+  if (chartCompInstance)      { chartCompInstance.destroy();      chartCompInstance = null; }
+  if (chartArtilheirosInstance){ chartArtilheirosInstance.destroy(); chartArtilheirosInstance = null; }
 
   const overlay = document.getElementById('loading-overlay');
   if (overlay) {
