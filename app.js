@@ -1141,8 +1141,10 @@ async function compartilharArtilheiros(tipo) {
       return;
     } catch(e) {
       if (e.name === 'AbortError') return; // usuário cancelou
-      // Outro erro: cai para as próximas opções
+      _artToast('[DEBUG] ' + e.name + ': ' + e.message); // temporário — remover após diagnóstico
     }
+  } else if (isMobile) {
+    _artToast('[DEBUG] navigator.share não disponível neste browser');
   }
 
   // 2ª opção: copiar imagem para o clipboard e abrir Twitter (Chrome/Edge desktop)
