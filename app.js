@@ -1045,26 +1045,39 @@ function renderArtilheiros(jogos) {
 // =====================================================================
 function renderizarGraficoArtilheiros() {
   var top5 = (_artTop5.gols || []).slice(0, 5);
-  var anos = [...new Set(dadosFiltrados.map(j => parseInt(j.a)))].filter(Boolean).sort((a, b) => a - b);
   var el = document.getElementById('graficoArtilheiros');
-  if (!el || !top5.length || anos.length < 2) return;
+  if (!el || !top5.length) return;
 
   var cores = ['#18181b', '#2563eb', '#dc2626', '#d97706', '#7c3aed'];
 
-  var datasets = top5.map(function(p, i) {
-    var golsPorAno = {};
-    anos.forEach(function(ano) { golsPorAno[ano] = 0; });
+  // 1. Conta gols por ano por jogador (todos os anos do período filtrado)
+  var todosAnos = [...new Set(dadosFiltrados.map(j => parseInt(j.a)))].filter(Boolean).sort((a, b) => a - b);
+  var golsPorJogadorAno = top5.map(function(p) {
+    var mapa = {};
+    todosAnos.forEach(function(ano) { mapa[ano] = 0; });
     dadosFiltrados.forEach(function(j) {
       var ano = parseInt(j.a);
       (golsByDate[j.d] || []).forEach(function(g) {
         if (g.gol === p.nome && (g.pos || '') === p.pos && (g.pais || '') === p.pais) {
-          golsPorAno[ano]++;
+          mapa[ano]++;
         }
       });
     });
-    // Acumulativo
+    return mapa;
+  });
+
+  // 2. Filtra apenas anos onde ao menos um jogador marcou gol
+  var anos = todosAnos.filter(function(ano) {
+    return golsPorJogadorAno.some(function(mapa) { return mapa[ano] > 0; });
+  });
+
+  if (anos.length < 2) return;
+
+  // 3. Monta datasets com valores acumulativos
+  var datasets = top5.map(function(p, i) {
+    var mapa = golsPorJogadorAno[i];
     var acum = 0;
-    var dadosAcum = anos.map(function(a) { acum += golsPorAno[a]; return acum; });
+    var dadosAcum = anos.map(function(a) { acum += mapa[a]; return acum; });
     return {
       label: p.nome,
       data: dadosAcum,
