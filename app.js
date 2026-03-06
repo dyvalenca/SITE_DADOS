@@ -1049,7 +1049,7 @@ function renderizarGraficoArtilheiros() {
   var el = document.getElementById('graficoArtilheiros');
   if (!el || !top5.length || anos.length < 2) return;
 
-  var cores = ['#18181b', '#2563eb', '#dc2626', '#16a34a', '#d97706'];
+  var cores = ['#18181b', '#2563eb', '#dc2626', '#d97706', '#7c3aed'];
 
   var datasets = top5.map(function(p, i) {
     var golsPorAno = {};
@@ -1062,9 +1062,12 @@ function renderizarGraficoArtilheiros() {
         }
       });
     });
+    // Acumulativo
+    var acum = 0;
+    var dadosAcum = anos.map(function(a) { acum += golsPorAno[a]; return acum; });
     return {
       label: p.nome,
-      data: anos.map(function(a) { return golsPorAno[a]; }),
+      data: dadosAcum,
       borderColor: cores[i],
       backgroundColor: 'transparent',
       borderWidth: 2,
