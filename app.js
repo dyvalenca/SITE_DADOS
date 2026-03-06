@@ -1128,8 +1128,9 @@ function compartilharArtilheiros(tipo) {
   canvas.toBlob(async function(blob) {
     var file = new File([blob], fileName, { type: 'image/png' });
 
-    // 1ª opção: Web Share API com arquivo (celular, Chrome Android, Safari iOS, Edge)
-    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    // 1ª opção: Web Share API — apenas no celular (no desktop abre diálogo do SO, não vai direto pro X)
+    var isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    if (isMobile && navigator.canShare && navigator.canShare({ files: [file] })) {
       try {
         await navigator.share({ files: [file], text: texto });
         return;
