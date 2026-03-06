@@ -907,16 +907,14 @@ function renderArtilheiros(jogos) {
   datasAno.forEach(data => {
     (golsByDate[data] || []).forEach(g => {
       if (g.gol) {
-        if (!players[g.gol]) players[g.gol] = { nome: g.gol, pos: '', pais: '', gols: 0, assists: 0 };
-        players[g.gol].gols++;
-        if (!players[g.gol].pos  && g.pos)  players[g.gol].pos  = g.pos;
-        if (!players[g.gol].pais && g.pais) players[g.gol].pais = g.pais;
+        const k = g.gol + '|' + (g.pos || '') + '|' + (g.pais || '');
+        if (!players[k]) players[k] = { nome: g.gol, pos: g.pos || '', pais: g.pais || '', gols: 0, assists: 0 };
+        players[k].gols++;
       }
       if (g.assist) {
-        if (!players[g.assist]) players[g.assist] = { nome: g.assist, pos: '', pais: '', gols: 0, assists: 0 };
-        players[g.assist].assists++;
-        if (!players[g.assist].pos  && g.posA)  players[g.assist].pos  = g.posA;
-        if (!players[g.assist].pais && g.paisA) players[g.assist].pais = g.paisA;
+        const k = g.assist + '|' + (g.posA || '') + '|' + (g.paisA || '');
+        if (!players[k]) players[k] = { nome: g.assist, pos: g.posA || '', pais: g.paisA || '', gols: 0, assists: 0 };
+        players[k].assists++;
       }
     });
   });

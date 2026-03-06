@@ -395,7 +395,15 @@
       font-size: 0.6rem; font-weight: 700; letter-spacing: 2px;
       text-transform: uppercase; color: #a1a1aa;
       padding: 14px 16px 10px; border-bottom: 1px solid #f4f4f5;
+      display: flex; align-items: center; justify-content: space-between;
     }
+    .art-share-btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      background: none; border: none; cursor: pointer;
+      padding: 3px 5px; border-radius: 6px; opacity: 0.5;
+      transition: opacity 0.15s, background 0.15s; flex-shrink: 0;
+    }
+    .art-share-btn:hover { opacity: 1; background: #f4f4f5; }
     .art-row {
       display: flex; align-items: center; gap: 10px;
       padding: 9px 16px; border-bottom: 1px solid #f4f4f5;
@@ -729,15 +737,30 @@
 
     <div class="art-grid">
       <div class="art-card">
-        <div class="art-card-title">⚽ Gols</div>
+        <div class="art-card-title">
+          <span>⚽ Gols</span>
+          <button class="art-share-btn" onclick="compartilharArtilheiros('gols')" title="Compartilhar no X">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.73-8.835L1.254 2.25H8.08l4.253 5.622 5.911-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+          </button>
+        </div>
         <div id="dash-art-gols-lista"></div>
       </div>
       <div class="art-card">
-        <div class="art-card-title">👟 Assistências</div>
+        <div class="art-card-title">
+          <span>👟 Assistências</span>
+          <button class="art-share-btn" onclick="compartilharArtilheiros('assists')" title="Compartilhar no X">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.73-8.835L1.254 2.25H8.08l4.253 5.622 5.911-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+          </button>
+        </div>
         <div id="dash-art-assists-lista"></div>
       </div>
       <div class="art-card">
-        <div class="art-card-title">⚡ Participações</div>
+        <div class="art-card-title">
+          <span>⚡ Participações</span>
+          <button class="art-share-btn" onclick="compartilharArtilheiros('total')" title="Compartilhar no X">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.73-8.835L1.254 2.25H8.08l4.253 5.622 5.911-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+          </button>
+        </div>
         <div id="dash-art-total-lista"></div>
       </div>
     </div>

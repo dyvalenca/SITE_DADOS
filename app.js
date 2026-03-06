@@ -948,6 +948,8 @@ function limparFiltrosArt() {
   renderArtilheiros(dadosFiltrados);
 }
 
+var _artTop5 = {};
+
 function renderArtilheiros(jogos) {
   const sec = document.getElementById('sec-artilheiros-dash');
   if (!sec) return;
@@ -959,16 +961,14 @@ function renderArtilheiros(jogos) {
   datasJogos.forEach(data => {
     (golsByDate[data] || []).forEach(g => {
       if (g.gol) {
-        if (!allPlayers[g.gol]) allPlayers[g.gol] = { nome: g.gol, pos: '', pais: '', gols: 0, assists: 0 };
-        allPlayers[g.gol].gols++;
-        if (!allPlayers[g.gol].pos  && g.pos)  allPlayers[g.gol].pos  = g.pos;
-        if (!allPlayers[g.gol].pais && g.pais) allPlayers[g.gol].pais = g.pais;
+        const k = g.gol + '|' + (g.pos || '') + '|' + (g.pais || '');
+        if (!allPlayers[k]) allPlayers[k] = { nome: g.gol, pos: g.pos || '', pais: g.pais || '', gols: 0, assists: 0 };
+        allPlayers[k].gols++;
       }
       if (g.assist) {
-        if (!allPlayers[g.assist]) allPlayers[g.assist] = { nome: g.assist, pos: '', pais: '', gols: 0, assists: 0 };
-        allPlayers[g.assist].assists++;
-        if (!allPlayers[g.assist].pos  && g.posA)  allPlayers[g.assist].pos  = g.posA;
-        if (!allPlayers[g.assist].pais && g.paisA) allPlayers[g.assist].pais = g.paisA;
+        const k = g.assist + '|' + (g.posA || '') + '|' + (g.paisA || '');
+        if (!allPlayers[k]) allPlayers[k] = { nome: g.assist, pos: g.posA || '', pais: g.paisA || '', gols: 0, assists: 0 };
+        allPlayers[k].assists++;
       }
     });
   });
@@ -1018,25 +1018,119 @@ function renderArtilheiros(jogos) {
       : '<div class="art-vazio">Sem dados</div>';
   }
 
-  fillLista('dash-art-gols-lista',
-    lista.filter(p => p.gols > 0)
-      .sort((a,b) => b.gols - a.gols || b.assists - a.assists)
-      .map(p => ({ ...p, _stat: p.gols }))
-  );
-  fillLista('dash-art-assists-lista',
-    lista.filter(p => p.assists > 0)
-      .sort((a,b) => b.assists - a.assists || b.gols - a.gols)
-      .map(p => ({ ...p, _stat: p.assists }))
-  );
-  fillLista('dash-art-total-lista',
-    lista.filter(p => p.gols + p.assists > 0)
-      .sort((a,b) => (b.gols + b.assists) - (a.gols + a.assists))
-      .map(p => ({ ...p, _stat: p.gols + p.assists }))
-  );
+  var top5Gols = lista.filter(p => p.gols > 0)
+    .sort((a,b) => b.gols - a.gols || b.assists - a.assists)
+    .map(p => ({ ...p, _stat: p.gols }));
+  _artTop5.gols = top5Gols;
+  fillLista('dash-art-gols-lista', top5Gols);
+
+  var top5Assists = lista.filter(p => p.assists > 0)
+    .sort((a,b) => b.assists - a.assists || b.gols - a.gols)
+    .map(p => ({ ...p, _stat: p.assists }));
+  _artTop5.assists = top5Assists;
+  fillLista('dash-art-assists-lista', top5Assists);
+
+  var top5Total = lista.filter(p => p.gols + p.assists > 0)
+    .sort((a,b) => (b.gols + b.assists) - (a.gols + a.assists))
+    .map(p => ({ ...p, _stat: p.gols + p.assists }));
+  _artTop5.total = top5Total;
+  fillLista('dash-art-total-lista', top5Total);
 }
 
 // =====================================================================
 // ATUALIZAR DADOS (botão ↻)
+// =====================================================================
+// COMPARTILHAR ARTILHEIROS NO X (Twitter)
+// =====================================================================
+function compartilharArtilheiros(tipo) {
+  var dados = (_artTop5[tipo] || []).slice(0, 5);
+  var titulosLabel = { gols: 'GOLS', assists: 'ASSISTÊNCIAS', total: 'PARTICIPAÇÕES (G+A)' };
+  var label = titulosLabel[tipo] || tipo.toUpperCase();
+
+  // ── Canvas ──────────────────────────────────────────────────────
+  var W = 600, H = 56 + 52 * Math.max(dados.length, 1) + 80;
+  var canvas = document.createElement('canvas');
+  canvas.width = W; canvas.height = H;
+  var ctx = canvas.getContext('2d');
+
+  // Fundo preto (Corinthians)
+  ctx.fillStyle = '#0a0a0a';
+  ctx.fillRect(0, 0, W, H);
+
+  // Borda branca
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(10, 10, W - 20, H - 20);
+
+  // Título
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 16px Arial, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('OS 5 MAIORES ARTILHEIROS', W / 2, 38);
+
+  ctx.fillStyle = '#d4d4d8';
+  ctx.font = 'bold 13px Arial, sans-serif';
+  ctx.fillText(label + ' — CORINTHIANS', W / 2, 56);
+
+  // Separador
+  ctx.strokeStyle = '#333333';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(30, 66); ctx.lineTo(W - 30, 66); ctx.stroke();
+
+  // Jogadores
+  dados.forEach(function(p, i) {
+    var y = 96 + i * 52;
+
+    // Posição ranking
+    ctx.fillStyle = '#52525b';
+    ctx.font = 'bold 12px Arial, sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText('#' + (i + 1), 52, y);
+
+    // Stat em destaque
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 28px Arial, sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText(p._stat, 62, y + 4);
+
+    // Nome
+    ctx.fillStyle = '#f4f4f5';
+    ctx.font = 'bold 15px Arial, sans-serif';
+    ctx.fillText(p.nome, 108, y - 4);
+
+    // Pos · País
+    var sub = [p.pos, p.pais].filter(Boolean).join(' · ');
+    if (sub) {
+      ctx.fillStyle = '#71717a';
+      ctx.font = '12px Arial, sans-serif';
+      ctx.fillText(sub, 108, y + 13);
+    }
+
+    // Linha separadora leve
+    if (i < dados.length - 1) {
+      ctx.strokeStyle = '#1f1f1f';
+      ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(30, y + 26); ctx.lineTo(W - 30, y + 26); ctx.stroke();
+    }
+  });
+
+  // Branding
+  ctx.fillStyle = '#3f3f46';
+  ctx.font = '11px Arial, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('numeros-fieis.vercel.app', W / 2, H - 16);
+
+  // ── Download da imagem ──────────────────────────────────────────
+  var link = document.createElement('a');
+  link.download = 'artilheiros-' + tipo + '.png';
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+
+  // ── Abre Twitter com texto ──────────────────────────────────────
+  var texto = 'OS 5 MAIORES ARTILHEIROS ' + label + ' DO CORINTHIANS 🏆⬛⬜\n#Corinthians #Timão';
+  window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent(texto), '_blank');
+}
+
 // =====================================================================
 async function atualizarDados() {
   const btn = document.getElementById('btn-atualizar');
