@@ -334,7 +334,7 @@ function filtrarDadosParaListas() {
   const fM = document.getElementById('fMando').value;
   const fClassicos = document.getElementById('fClassicos').checked;
   const fNQA = document.getElementById('fNQA').checked;
-  const listaClassicos = ['PALMEIRAS', 'SANTOS', 'SAO PAULO'];
+  const listaClassicos = ['PALMEIRAS-SP', 'SANTOS-SP', 'SAO PAULO-SP'];
 
   const dadosParaListas = dadosGlobais.filter(j => {
     const dataJogo = parseDataBR(j.d);
@@ -419,7 +419,7 @@ function aplicarFiltros() {
   const fM = document.getElementById('fMando').value;
   const fClassicos = document.getElementById('fClassicos').checked;
   const fNQA = document.getElementById('fNQA').checked;
-  const listaClassicos = ['PALMEIRAS', 'SANTOS', 'SAO PAULO'];
+  const listaClassicos = ['PALMEIRAS-SP', 'SANTOS-SP', 'SAO PAULO-SP'];
   const selGolsPro = getValoresMulti('fGolsPro').map(Number);
   const selGolsCon = getValoresMulti('fGolsCon').map(Number);
   const selSaldo = getValoresMulti('fSaldo').map(Number);
