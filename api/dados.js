@@ -44,7 +44,7 @@ module.exports = async function handler(req, res) {
     const rows = await fetchAll(table);
 
     res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Cache-Control', 's-maxage=3600, stale-while-revalidate=86400');
+    res.setHeader('Cache-Control', 'no-store');
     res.json({ data: rows, total: rows.length });
   } catch (err) {
     res.status(500).json({ erro: err.message });
