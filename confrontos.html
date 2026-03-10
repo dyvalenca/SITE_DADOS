@@ -50,6 +50,11 @@
       color: #a1a1aa; margin-bottom: 18px;
       padding-bottom: 10px; border-bottom: 1px solid #e4e4e7;
     }
+    .section-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 18px; padding-bottom: 10px; border-bottom: 1px solid #e4e4e7;
+    }
+    .section-header .section-title { margin-bottom: 0; border-bottom: none; padding-bottom: 0; }
 
     /* ── BUSCA ───────────────────────────────────────────── */
     .page-intro {
@@ -70,9 +75,9 @@
 
     /* ── EMPTY STATE ─────────────────────────────────────── */
     .empty-state { text-align: center; padding: 80px 20px; }
-    .empty-icon { font-size: 3rem; margin-bottom: 16px; opacity: 0.4; }
+    .empty-icon  { font-size: 3rem; margin-bottom: 16px; opacity: 0.4; }
     .empty-title { font-size: 1rem; font-weight: 700; color: #52525b; margin-bottom: 8px; }
-    .empty-sub { font-size: 0.82rem; color: #a1a1aa; }
+    .empty-sub   { font-size: 0.82rem; color: #a1a1aa; }
 
     /* ── STATS GRID ──────────────────────────────────────── */
     .adv-titulo {
@@ -81,9 +86,7 @@
     }
     .adv-titulo span { color: #7c3aed; }
 
-    .stats-grid {
-      display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;
-    }
+    .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
     .stat-card {
       background: #fff; border: 1px solid #e4e4e7; border-radius: 14px;
       padding: 16px 14px; text-align: center;
@@ -120,8 +123,8 @@
       font-size: 1.8rem; font-weight: 900; letter-spacing: -1px;
       line-height: 1; margin-bottom: 8px;
     }
-    .detalhe-placar.win  { color: #2563eb; }
-    .detalhe-placar.loss { color: #dc2626; }
+    .detalhe-placar.win   { color: #2563eb; }
+    .detalhe-placar.loss  { color: #dc2626; }
     .detalhe-placar.nenhum { color: #a1a1aa; font-size: 1.2rem; }
     .detalhe-comp {
       font-size: 0.7rem; font-weight: 700; letter-spacing: 0.5px;
@@ -135,25 +138,50 @@
       border-radius: 20px; padding: 4px 10px; color: #52525b;
     }
 
-    /* Badge de streak (invicto / jejum) */
+    /* Streak */
     .streak-badge {
       display: flex; align-items: center; gap: 12px;
       background: #fff; border: 1px solid #e4e4e7; border-radius: 14px;
       padding: 16px 20px; margin-top: 12px;
     }
-    .streak-icon { font-size: 1.5rem; line-height: 1; flex-shrink: 0; }
-    .streak-text { flex: 1; }
+    .streak-icon  { font-size: 1.5rem; line-height: 1; flex-shrink: 0; }
+    .streak-text  { flex: 1; }
     .streak-title {
       font-size: 0.9rem; font-weight: 900; letter-spacing: -0.3px;
       color: #18181b; margin-bottom: 2px;
     }
     .streak-sub { font-size: 0.72rem; color: #71717a; }
-    .streak-badge.invicto  { border-color: #bfdbfe; background: #eff6ff; }
-    .streak-badge.invicto  .streak-title { color: #1e40af; }
-    .streak-badge.jejum    { border-color: #fecaca; background: #fff5f5; }
-    .streak-badge.jejum    .streak-title { color: #b91c1c; }
+    .streak-badge.invicto { border-color: #bfdbfe; background: #eff6ff; }
+    .streak-badge.invicto .streak-title { color: #1e40af; }
+    .streak-badge.jejum   { border-color: #fecaca; background: #fff5f5; }
+    .streak-badge.jejum   .streak-title { color: #b91c1c; }
 
-    /* ── TIMELINE (igual ao jogos.html) ──────────────────── */
+    /* Botão compartilhar Twitter */
+    .btn-share-twitter {
+      display: inline-flex; align-items: center; gap: 7px;
+      background: #000; color: #fff;
+      font-size: 0.75rem; font-weight: 700;
+      padding: 8px 16px; border-radius: 8px;
+      text-decoration: none; border: none; cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      transition: background 0.15s; white-space: nowrap;
+    }
+    .btn-share-twitter:hover { background: #333; }
+    .btn-share-twitter svg  { width: 14px; height: 14px; fill: currentColor; flex-shrink: 0; }
+
+    .btn-share-locked {
+      display: inline-flex; align-items: center; gap: 7px;
+      background: #f4f4f5; color: #a1a1aa;
+      font-size: 0.75rem; font-weight: 700;
+      padding: 8px 16px; border-radius: 8px;
+      border: 1px solid #e4e4e7; cursor: default;
+      font-family: 'Inter', sans-serif; white-space: nowrap;
+    }
+    .share-locked-hint {
+      font-size: 0.65rem; color: #a1a1aa; margin-top: 6px;
+    }
+
+    /* ── TIMELINE ────────────────────────────────────────── */
     .timeline-wrap {
       background: #fff; border: 1px solid #e4e4e7; border-radius: 14px; overflow: hidden;
     }
@@ -191,23 +219,20 @@
       text-transform: uppercase; color: #a1a1aa;
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
-    .tl-adv   {
-      font-weight: 600; white-space: nowrap;
-      overflow: hidden; text-overflow: ellipsis; color: #18181b;
-    }
+    .tl-adv   { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #18181b; }
     .tl-est   {
       font-size: 0.6rem; font-weight: 700; letter-spacing: 1.2px;
       text-transform: uppercase; color: #a1a1aa;
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
-    .tl-placar { font-weight: 900; font-size: 1rem; letter-spacing: -0.5px; color: #18181b; white-space: nowrap; text-align: right; width: 52px; }
+    .tl-placar  { font-weight: 900; font-size: 1rem; letter-spacing: -0.5px; color: #18181b; white-space: nowrap; text-align: right; width: 52px; }
     .tl-date-col { display: flex; flex-direction: column; align-items: center; gap: 4px; }
     .tl-sub-row  { display: flex; align-items: center; gap: 4px; }
     .tl-mando-icon { font-size: 0.95rem; line-height: 1; }
     .timeline-item.tl-tem-gols { cursor: pointer; }
     .timeline-item.tl-expandido { filter: brightness(0.88) !important; }
 
-    /* ── PAINEL DE GOLS ──────────────────────────────────── */
+    /* Painel de gols */
     .tl-gols-panel {
       padding: 8px 16px 14px; background: #f4f4f5;
       border-bottom: 1px solid rgba(0,0,0,0.05);
@@ -246,23 +271,30 @@
     .btn-page:disabled { opacity: 0.35; cursor: default; }
     .page-info { font-size: 0.75rem; color: #a1a1aa; padding: 0 8px; }
 
-    /* ── ARTILHEIROS ─────────────────────────────────────── */
-    .art-table { width: 100%; border-collapse: collapse; }
-    .art-table th {
+    /* ── ARTILHEIROS (padrão dashboard) ─────────────────── */
+    .art-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .art-col-title {
       font-size: 0.62rem; font-weight: 700; letter-spacing: 1.5px;
       text-transform: uppercase; color: #a1a1aa;
-      padding: 10px 14px; border-bottom: 1px solid #e4e4e7;
-      text-align: left;
+      padding: 10px 16px; border-bottom: 1px solid #e4e4e7;
     }
-    .art-table th.num { text-align: right; }
-    .art-table td { padding: 9px 14px; font-size: 0.83rem; border-bottom: 1px solid #f4f4f5; }
-    .art-table td.num { text-align: right; font-weight: 900; font-size: 0.95rem; color: #18181b; }
-    .art-table tr:last-child td { border-bottom: none; }
-    .art-rank { font-weight: 700; color: #a1a1aa; font-size: 0.75rem; }
-    .art-rank.top1 { font-size: 1rem; }
-    .art-rank.top2 { font-size: 0.95rem; }
-    .art-rank.top3 { font-size: 0.9rem; }
-    .art-nome { font-weight: 600; color: #18181b; }
+    .art-row {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 16px; border-bottom: 1px solid #f4f4f5;
+    }
+    .art-row:last-child { border-bottom: none; }
+    .art-count {
+      font-size: 1.05rem; font-weight: 900; letter-spacing: -0.5px;
+      color: #18181b; min-width: 22px; text-align: center; flex-shrink: 0;
+    }
+    .art-flag   { line-height: 1; flex-shrink: 0; }
+    .art-info   { flex: 1; min-width: 0; }
+    .art-nome   { font-size: 0.82rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .art-pos    {
+      font-size: 0.58rem; font-weight: 700; letter-spacing: 1px;
+      text-transform: uppercase; color: #a1a1aa; margin-top: 2px;
+    }
+    .art-vazio  { padding: 20px 16px; font-size: 0.78rem; color: #a1a1aa; text-align: center; }
 
     /* ── PAYWALL ─────────────────────────────────────────── */
     .paywall-block {
@@ -308,12 +340,13 @@
       padding: 8px 10px; border-radius: 6px; transition: color 0.15s;
     }
     .footer-links a:hover { color: #18181b; }
-    .footer-sep { color: #d4d4d8; font-size: 0.75rem; line-height: 2.8; }
+    .footer-sep  { color: #d4d4d8; font-size: 0.75rem; line-height: 2.8; }
     .footer-copy { margin-top: 8px; font-size: 0.68rem; color: #a1a1aa; }
 
     @media (max-width: 600px) {
       .stats-grid    { grid-template-columns: repeat(2, 1fr); }
       .detalhes-grid { grid-template-columns: 1fr; }
+      .art-cols      { grid-template-columns: 1fr; }
       .timeline-item { grid-template-columns: 68px 1fr 44px; }
       .tl-placar     { width: 44px; font-size: 0.9rem; }
       .paywall-inner { flex-wrap: wrap; }
@@ -404,7 +437,10 @@
 
     <!-- Detalhes Históricos -->
     <section>
-      <div class="section-title">Detalhes Históricos</div>
+      <div class="section-header">
+        <div class="section-title">Detalhes Históricos</div>
+        <div id="share-btn-wrap"></div>
+      </div>
       <div class="detalhes-grid">
         <div class="detalhe-card">
           <div class="detalhe-tag">🏆 Última Vitória</div>
@@ -474,13 +510,14 @@
 const API_URL    = '/api/dados';
 const POR_PAGINA = 10;
 
-let jogosGlobais  = [];
-let golsByDate    = {};
+let jogosGlobais   = [];
+let golsByDate     = {};
 let adversariosSet = new Set();
-let jogosSorted   = [];   // jogos do confronto atual, ordem desc
-let paginaAtual   = 0;
-let userNivel     = null; // set by onAuthReady
-let advAtual      = null; // adversário exibido no momento
+let jogosSorted    = [];  // jogos do confronto atual, ordem desc
+let paginaAtual    = 0;
+let userNivel      = null;
+let advAtual       = null;
+let dadosConfronto = null; // cache dos dados calculados para o tweet
 
 // ── UTILS ─────────────────────────────────────────────────
 function limpar(val) {
@@ -520,6 +557,11 @@ function parseDataBR(str) {
 }
 function rNorm(v) {
   return (v || '').toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
+}
+function diasAtras(dataStr) {
+  const d = parseDataBR(dataStr);
+  if (!d || d.getTime() === 0) return null;
+  return Math.floor((new Date() - d) / (1000 * 60 * 60 * 24));
 }
 function normalizarJogos(data) {
   return data.map(rawRow => {
@@ -566,10 +608,29 @@ function placarParts(p) {
   const pts = p.toLowerCase().split('x');
   return { pro: parseInt(pts[0]) || 0, con: parseInt(pts[1]) || 0 };
 }
-function diasAtras(dataStr) {
-  const d = parseDataBR(dataStr);
-  if (!d || d.getTime() === 0) return null;
-  return Math.floor((new Date() - d) / (1000 * 60 * 60 * 24));
+
+// ── BANDEIRAS ─────────────────────────────────────────────
+function paisBandeira(pais) {
+  if (!pais) return '';
+  const n = pais.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
+  const MAP = {
+    'BRASIL':'br','ARGENTINA':'ar','URUGUAI':'uy','PARAGUAI':'py',
+    'COLOMBIA':'co','CHILE':'cl','EQUADOR':'ec','PERU':'pe',
+    'VENEZUELA':'ve','BOLIVIA':'bo','MEXICO':'mx','CUBA':'cu',
+    'ESPANHA':'es','PORTUGAL':'pt','FRANCA':'fr','ITALIA':'it',
+    'ALEMANHA':'de','HOLANDA':'nl','BELGICA':'be','SUECIA':'se',
+    'SUICA':'ch','CROACIA':'hr','SERVIA':'rs','UCRANIA':'ua',
+    'POLONIA':'pl','AUSTRIA':'at','DINAMARCA':'dk','NORUEGA':'no',
+    'REP CHECA':'cz','REPUBLICA CHECA':'cz','ESCOCIA':'gb-sct',
+    'INGLATERRA':'gb-eng','GALES':'gb-wls','RUSSIA':'ru','TURQUIA':'tr',
+    'ANGOLA':'ao','SENEGAL':'sn','NIGERIA':'ng','MARROCOS':'ma',
+    'COSTA DO MARFIM':'ci','CAMEROES':'cm','GHANA':'gh','MALI':'ml',
+    'GUINEE':'gn','GUINE':'gn','EUA':'us','ESTADOS UNIDOS':'us',
+    'COSTA RICA':'cr','JAPAO':'jp','COREIA DO SUL':'kr',
+  };
+  const code = MAP[n];
+  if (!code) return '';
+  return `<img src="https://flagcdn.com/20x15/${code}.png" width="20" height="15" alt="${pais}" style="vertical-align:middle;border-radius:2px;">`;
 }
 
 // ── CARREGAMENTO ──────────────────────────────────────────
@@ -634,13 +695,12 @@ function renderGolsPanel(date) {
   }).join('');
 }
 
-// ── RENDER TIMELINE (com paginação) ───────────────────────
+// ── RENDER TIMELINE (paginada) ────────────────────────────
 function renderTimeline(pagina) {
   paginaAtual = pagina;
   const total     = jogosSorted.length;
   const totalPags = Math.ceil(total / POR_PAGINA);
-  const inicio    = pagina * POR_PAGINA;
-  const fatia     = jogosSorted.slice(inicio, inicio + POR_PAGINA);
+  const fatia     = jogosSorted.slice(pagina * POR_PAGINA, (pagina + 1) * POR_PAGINA);
 
   const esc = v => (v || '').toString().replace(/&/g,'&amp;').replace(/"/g,'&quot;');
   document.getElementById('timeline-confronto').innerHTML = fatia.map(j => {
@@ -672,7 +732,6 @@ function renderTimeline(pagina) {
     </div>`;
   }).join('');
 
-  // Paginação
   const pag = document.getElementById('pagination-confronto');
   if (totalPags > 1) {
     pag.style.display = '';
@@ -688,16 +747,32 @@ function renderTimeline(pagina) {
 
 // ── ARTILHEIROS ───────────────────────────────────────────
 function calcArtilheiros(jogos) {
-  const gols = {}, assists = {};
+  const mapa = {};
   jogos.forEach(j => {
     (golsByDate[j.d] || []).forEach(g => {
-      if (g.gol)    gols[g.gol]       = (gols[g.gol]    || 0) + 1;
-      if (g.assist) assists[g.assist] = (assists[g.assist] || 0) + 1;
+      if (g.gol) {
+        if (!mapa[g.gol]) mapa[g.gol] = { nome: g.gol, gols: 0, assists: 0, pos: g.pos || '', pais: g.pais || '' };
+        mapa[g.gol].gols++;
+      }
+      if (g.assist) {
+        if (!mapa[g.assist]) mapa[g.assist] = { nome: g.assist, gols: 0, assists: 0, pos: g.posA || '', pais: g.paisA || '' };
+        mapa[g.assist].assists++;
+      }
     });
   });
-  return Object.entries(gols)
-    .sort((a, b) => b[1] - a[1])
-    .map(([nome, total]) => ({ nome, gols: total, assists: assists[nome] || 0 }));
+  return Object.values(mapa);
+}
+
+function artRowHtml(p, stat) {
+  const flag = paisBandeira(p.pais);
+  return `<div class="art-row">
+    <span class="art-count">${stat}</span>
+    ${flag ? `<span class="art-flag">${flag}</span>` : ''}
+    <div class="art-info">
+      <div class="art-nome">${p.nome}</div>
+      ${p.pos ? `<div class="art-pos">${p.pos}</div>` : ''}
+    </div>
+  </div>`;
 }
 
 function renderArtilheirosSection(adv, jogos) {
@@ -722,35 +797,89 @@ function renderArtilheirosSection(adv, jogos) {
     return;
   }
 
-  const ranking = calcArtilheiros(jogos);
-  if (ranking.length === 0) {
-    cont.innerHTML = '<p style="color:#a1a1aa;font-size:0.82rem;padding:20px 0;">Nenhum gol registrado neste confronto.</p>';
-    return;
-  }
-  const rankIcons = ['🥇','🥈','🥉'];
-  const rows = ranking.map((p, i) => {
-    const icon = i < 3
-      ? `<span class="art-rank top${i+1}">${rankIcons[i]}</span>`
-      : `<span class="art-rank">${i + 1}</span>`;
-    return `<tr>
-      <td>${icon}</td>
-      <td><span class="art-nome">${p.nome}</span></td>
-      <td class="num">⚽ ${p.gols}</td>
-      <td class="num">👟 ${p.assists}</td>
-    </tr>`;
-  }).join('');
-  cont.innerHTML = `
-    <div class="timeline-wrap">
-      <table class="art-table">
-        <thead><tr>
-          <th>#</th>
-          <th>Jogador</th>
-          <th class="num">Gols</th>
-          <th class="num">Assists</th>
-        </tr></thead>
-        <tbody>${rows}</tbody>
-      </table>
+  const lista = calcArtilheiros(jogos);
+  const topGols    = lista.filter(p => p.gols > 0)
+    .sort((a, b) => b.gols - a.gols || b.assists - a.assists)
+    .map(p => ({ ...p, _stat: p.gols }));
+  const topAssists = lista.filter(p => p.assists > 0)
+    .sort((a, b) => b.assists - a.assists || b.gols - a.gols)
+    .map(p => ({ ...p, _stat: p.assists }));
+
+  function colHtml(titulo, itens) {
+    const rows = itens.length
+      ? itens.map(p => artRowHtml(p, p._stat)).join('')
+      : '<div class="art-vazio">Sem dados</div>';
+    return `<div class="timeline-wrap">
+      <div class="art-col-title">${titulo}</div>
+      ${rows}
     </div>`;
+  }
+
+  cont.innerHTML = `<div class="art-cols">
+    ${colHtml('⚽ Gols', topGols)}
+    ${colHtml('👟 Assistências', topAssists)}
+  </div>`;
+}
+
+// ── TWITTER / COMPARTILHAR ────────────────────────────────
+var TWITTER_ICON = `<svg viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L1.254 2.25H8.08l4.253 5.622L18.244 2.25zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>`;
+
+function gerarTextoTweet(adv, dados) {
+  const { total, vitorias, empates, derrotas, aprov, saldo,
+          ultimaVitoria, ultimaDerrota, invictos, semVencer } = dados;
+
+  var linhas = [];
+  linhas.push('🔍 Corinthians x ' + adv);
+  linhas.push('');
+  linhas.push('📊 ' + total + ' jogos: ' + vitorias + 'V ' + empates + 'E ' + derrotas + 'D');
+  linhas.push('⚡ Aproveitamento: ' + aprov + '% | Saldo: ' + (saldo >= 0 ? '+' : '') + saldo);
+
+  if (ultimaVitoria) {
+    var dias = diasAtras(ultimaVitoria.d);
+    var dStr = dias !== null ? 'há ' + dias + ' dia' + (dias !== 1 ? 's' : '') : ultimaVitoria.d;
+    linhas.push('');
+    linhas.push('✅ Última vitória: ' + ultimaVitoria.p + ' (' + dStr + ')' + (ultimaVitoria.c ? ' — ' + ultimaVitoria.c : ''));
+  }
+  if (ultimaDerrota) {
+    var diasD = diasAtras(ultimaDerrota.d);
+    var dStrD = diasD !== null ? 'há ' + diasD + ' dia' + (diasD !== 1 ? 's' : '') : ultimaDerrota.d;
+    linhas.push('❌ Última derrota: ' + ultimaDerrota.p + ' (' + dStrD + ')' + (ultimaDerrota.c ? ' — ' + ultimaDerrota.c : ''));
+  }
+
+  if (invictos >= 2) {
+    linhas.push('');
+    linhas.push('🛡️ Invicto há ' + invictos + ' jogos!');
+  } else if (semVencer >= 2) {
+    linhas.push('');
+    linhas.push('🚫 Sem vencer há ' + semVencer + ' jogos');
+  }
+
+  linhas.push('');
+  linhas.push('#Corinthians #FielTorcida');
+  return linhas.join('\n');
+}
+
+function compartilharDetalhes() {
+  if (!dadosConfronto || !advAtual) return;
+  var texto = gerarTextoTweet(advAtual, dadosConfronto);
+  var url = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(texto);
+  window.open(url, '_blank', 'noopener,noreferrer,width=600,height=500');
+}
+
+function renderShareButton() {
+  var wrap = document.getElementById('share-btn-wrap');
+  if (!wrap) return;
+  var temAcesso = (userNivel === 'premium' || userNivel === 'admin');
+  if (temAcesso) {
+    wrap.innerHTML = `<button class="btn-share-twitter" onclick="compartilharDetalhes()">
+      ${TWITTER_ICON} Compartilhar no X
+    </button>`;
+  } else {
+    wrap.innerHTML = `<div>
+      <div class="btn-share-locked">${TWITTER_ICON} Compartilhar no X &nbsp;🔒</div>
+      <div class="share-locked-hint">Disponível para assinantes</div>
+    </div>`;
+  }
 }
 
 // ── RENDER CONFRONTO ──────────────────────────────────────
@@ -824,7 +953,7 @@ function mostrarConfronto(adv) {
   preencherDetalhe('vit', ultimaVitoria, ultimaVitoria ? sorted.indexOf(ultimaVitoria) : -1);
   preencherDetalhe('der', ultimaDerrota, ultimaDerrota ? sorted.indexOf(ultimaDerrota) : -1);
 
-  // ── Streak: invicto ou jejum ──
+  // ── Streak ──
   let invictos = 0, semVencer = 0;
   for (const j of sorted) { if (!rNorm(j.r).includes('DERROT')) invictos++; else break; }
   for (const j of sorted) { if (!rNorm(j.r).includes('VITOR'))  semVencer++; else break; }
@@ -849,22 +978,30 @@ function mostrarConfronto(adv) {
   }
   document.getElementById('streak-container').innerHTML = streakHtml;
 
+  // Salva dados para o tweet
+  dadosConfronto = { total, vitorias, empates, derrotas, aprov, golsPro, golsCon, saldo,
+                     ultimaVitoria, ultimaDerrota, invictos, semVencer };
+  advAtual = adv;
+
   // ── Timeline paginada ──
   jogosSorted = sorted;
   renderTimeline(0);
 
-  // ── Artilheiros (depende do nível de acesso) ──
-  advAtual = adv;
+  // ── Botão compartilhar ──
+  renderShareButton();
+
+  // ── Artilheiros ──
   renderArtilheirosSection(adv, jogos);
 
   document.getElementById('empty-state').style.display = 'none';
   document.getElementById('confronto-resultado').style.display = '';
 }
 
-// ── AUTH: re-renderiza artilheiros quando o nível for conhecido ──
+// ── AUTH ──────────────────────────────────────────────────
 onAuthReady(function(info) {
   userNivel = info && info.nivel ? info.nivel : 'visitante';
   if (advAtual) {
+    renderShareButton();
     renderArtilheirosSection(advAtual, jogosGlobais.filter(j => j.adv === advAtual));
   }
 });
