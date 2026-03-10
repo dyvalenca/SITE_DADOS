@@ -393,6 +393,8 @@ function limparFiltros() {
   document.querySelectorAll('.form-check-input').forEach(cb => cb.checked = false);
   popularListasDinamicas(dadosGlobais);
   document.getElementById('fMando').value = "";
+  const pj = document.getElementById('fPrimeirosJogos');
+  if (pj) pj.value = "";
   resetPaginacao();
 }
 
@@ -461,6 +463,19 @@ function aplicarFiltros() {
       && (selSaldo.length === 0 || selSaldo.includes(saldo));
     return matchAno && matchData && matchComp && matchAdv && matchMando && matchEspecial && matchEst && matchTec && matchGols;
   });
+
+  // Pós-filtro: primeiros X jogos por temporada (ordenados por data)
+  const fPJ = parseInt(document.getElementById('fPrimeirosJogos')?.value);
+  if (fPJ > 0) {
+    const porAno = {};
+    dadosFiltrados.forEach(j => {
+      const a = parseInt(j.a) || 0;
+      if (!porAno[a]) porAno[a] = [];
+      porAno[a].push(j);
+    });
+    Object.values(porAno).forEach(lista => lista.sort((a, b) => parseDataBR(a.d) - parseDataBR(b.d)));
+    dadosFiltrados = Object.values(porAno).flatMap(lista => lista.slice(0, fPJ));
+  }
 
   atualizarEstatisticas(dadosFiltrados);
   render();
