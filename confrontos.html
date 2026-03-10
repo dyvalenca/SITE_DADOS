@@ -877,9 +877,21 @@ function gerarImagemConfronto(adv, sorted) {
   // ── Canvas setup ──
   var SC  = 2;
   var W   = 800;
-  var H   = 636 + (hasStreak ? 84 : 0);
   var PAD = 36;
   var FNT = '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+
+  // Calcular altura dinamicamente
+  var detCardH = 100;
+  var H = 52          // header
+        + 100         // título + badge
+        + 100         // 3 stat cards
+        + 124         // 4 boxes (2 linhas)
+        + 86          // seq label + dots
+        + 20          // gap pré-detalhes
+        + detCardH    // detalhe cards
+        + 20          // gap pós-detalhes
+        + (hasStreak ? 94 : 0)
+        + 52;         // footer
 
   var cv  = document.createElement('canvas');
   cv.width  = W * SC;
@@ -900,7 +912,7 @@ function gerarImagemConfronto(adv, sorted) {
     ctx.fillStyle = C.bgCard;
     rrect(ctx, x, y, w, h, 10); ctx.fill();
     ctx.fillStyle = color;
-    ctx.font = 'bold 24px ' + FNT;
+    ctx.font = 'bold 22px ' + FNT;
     ctx.textAlign = 'center';
     ctx.fillText(val, x + w / 2, y + h * 0.6);
     ctx.fillStyle = C.textMut;
@@ -924,61 +936,78 @@ function gerarImagemConfronto(adv, sorted) {
   ctx.fillText('numerosfieis.com.br', W - PAD, 33);
   ctx.textAlign = 'left';
 
-  // ── Título ──
+  // ── Título (centralizado) ──
   ctx.fillStyle = C.textPri;
   ctx.font = 'bold 30px ' + FNT;
-  ctx.fillText('Corinthians x ' + adv, PAD, 98);
+  ctx.textAlign = 'center';
+  ctx.fillText('Corinthians x ' + adv, W / 2, 98);
 
-  // Badge "ÚLTIMOS N JOGOS"
+  // Badge centralizado
   var badgeTxt = 'ÚLTIMOS ' + n + ' JOGOS';
   ctx.font = 'bold 10px ' + FNT;
-  var badgeW = ctx.measureText(badgeTxt).width + 20;
+  var badgeW = ctx.measureText(badgeTxt).width + 22;
+  var badgeX = (W - badgeW) / 2;
   ctx.fillStyle = C.blue;
-  rrect(ctx, PAD, 108, badgeW, 20, 5); ctx.fill();
+  rrect(ctx, badgeX, 108, badgeW, 22, 6); ctx.fill();
   ctx.fillStyle = '#ffffff';
   ctx.font = 'bold 10px ' + FNT;
-  ctx.fillText(badgeTxt, PAD + 10, 122);
+  ctx.textAlign = 'center';
+  ctx.fillText(badgeTxt, W / 2, 123);
+  ctx.textAlign = 'left';
 
-  hline(142);
+  hline(144);
 
-  // ── 3 Grandes números (V/E/D) ──
-  var colW = (W - PAD * 2) / 3;
-  function bigStat(col, label, val, color) {
-    var cx = PAD + col * colW + colW / 2;
+  // ── 3 cards de stats (V / E / D) ──
+  var statCardW = (W - PAD * 2 - 24) / 3;
+  var statCardH = 88;
+  var statCardY = 154;
+  function statCard(col, label, val, color) {
+    var cx = PAD + col * (statCardW + 12);
+    ctx.fillStyle = C.bgCard;
+    rrect(ctx, cx, statCardY, statCardW, statCardH, 10); ctx.fill();
+    // borda superior colorida
     ctx.fillStyle = color;
-    ctx.font = 'bold 54px ' + FNT;
+    rrect(ctx, cx, statCardY, statCardW, 4, 10); ctx.fill();
+    ctx.fillRect(cx, statCardY + 4, statCardW, 0); // flat bottom of top bar
+    // número
+    ctx.fillStyle = color;
+    ctx.font = 'bold 46px ' + FNT;
     ctx.textAlign = 'center';
-    ctx.fillText(String(val), cx, 210);
+    ctx.fillText(String(val), cx + statCardW / 2, statCardY + 58);
+    // label
     ctx.fillStyle = C.textSec;
-    ctx.font = 'bold 10px ' + FNT;
-    ctx.fillText(label, cx, 226);
+    ctx.font = 'bold 9px ' + FNT;
+    ctx.fillText(label, cx + statCardW / 2, statCardY + 76);
     ctx.textAlign = 'left';
   }
-  bigStat(0, 'VITÓRIAS',  v, C.blue);
-  bigStat(1, 'EMPATES',   e, C.yellow);
-  bigStat(2, 'DERROTAS',  d, C.red);
+  statCard(0, 'VITÓRIAS',  v, C.blue);
+  statCard(1, 'EMPATES',   e, C.yellow);
+  statCard(2, 'DERROTAS',  d, C.red);
 
-  // ── 4 caixas ──
+  // ── 4 caixas (2 linhas × 2) ──
   var bW = (W - PAD * 2 - 12) / 2;
-  var bH = 52;
-  box(PAD,           242, bW, bH, 'APROVEITAMENTO', aprov + '%',                      C.purple);
-  box(PAD + bW + 12, 242, bW, bH, 'SALDO DE GOLS',  (saldo >= 0 ? '+' : '') + saldo, saldo >= 0 ? C.blue : C.red);
-  box(PAD,           302, bW, bH, 'GOLS MARCADOS',  String(gp),                       C.blue);
-  box(PAD + bW + 12, 302, bW, bH, 'GOLS SOFRIDOS',  String(gc),                       C.red);
+  var bH = 50;
+  var bY1 = statCardY + statCardH + 10;
+  var bY2 = bY1 + bH + 8;
+  box(PAD,           bY1, bW, bH, 'APROVEITAMENTO', aprov + '%',                      C.purple);
+  box(PAD + bW + 12, bY1, bW, bH, 'SALDO DE GOLS',  (saldo >= 0 ? '+' : '') + saldo, saldo >= 0 ? C.blue : C.red);
+  box(PAD,           bY2, bW, bH, 'GOLS MARCADOS',  String(gp),                       C.blue);
+  box(PAD + bW + 12, bY2, bW, bH, 'GOLS SOFRIDOS',  String(gc),                       C.red);
 
-  hline(370);
+  var afterBoxesY = bY2 + bH + 14;
+  hline(afterBoxesY);
 
-  // ── Marca d'água (horizontal, acima das bolinhas) ──
+  // ── Marca d'água horizontal ──
   ctx.save();
   ctx.globalAlpha = 0.08;
   ctx.fillStyle = '#ffffff';
-  ctx.font = 'bold 15px ' + FNT;
+  ctx.font = 'bold 14px ' + FNT;
   ctx.textAlign = 'center';
-  ctx.fillText('www.numerosfieis.com.br', W / 2, 392);
+  ctx.fillText('www.numerosfieis.com.br', W / 2, afterBoxesY + 18);
   ctx.restore();
 
-  // ── Sequência dos últimos N jogos ──
-  var seqLabelY = 408;
+  // ── Sequência de resultados ──
+  var seqLabelY = afterBoxesY + 30;
   ctx.fillStyle = C.textMut;
   ctx.font = 'bold 9px ' + FNT;
   ctx.textAlign = 'center';
@@ -992,8 +1021,8 @@ function gerarImagemConfronto(adv, sorted) {
     return                           { color: C.red,    letra: 'D' };
   });
 
-  var dotSize  = 34;
-  var dotGap   = 10;
+  var dotSize   = 34;
+  var dotGap    = 10;
   var totalDotW = icons.length * (dotSize + dotGap) - dotGap;
   var dotStartX = (W - totalDotW) / 2;
   var dotY      = seqLabelY + 10;
@@ -1012,47 +1041,60 @@ function gerarImagemConfronto(adv, sorted) {
     ctx.textAlign = 'left';
   });
 
-  hline(dotY + dotSize + 14);
+  var afterDotsY = dotY + dotSize + 14;
+  hline(afterDotsY);
 
-  // ── Detalhes (última vitória / derrota) ──
-  var detY  = dotY + dotSize + 30;
-  var detW2 = (W - PAD * 2 - 12) / 2;
+  // ── Cards de detalhe (última vitória / derrota) ──
+  var detCardY  = afterDotsY + 18;
+  var detCardW  = (W - PAD * 2 - 12) / 2;
 
-  function detalhe(x, tipo, jogo) {
+  function detalheCard(cardX, tipo, jogo) {
     var isVit    = tipo === 'vit';
-    var labelTxt = isVit ? 'ÚLTIMA VITÓRIA (HISTÓRICO)' : 'ÚLTIMA DERROTA (HISTÓRICO)';
-    var color    = isVit ? C.textPri : C.red;
-    var marca    = isVit ? '✓' : '✗';
+    var accent   = isVit ? C.textSec : C.red;
+    var labelTxt = isVit ? '✓  ÚLTIMA VITÓRIA (HISTÓRICO)' : '✗  ÚLTIMA DERROTA (HISTÓRICO)';
+    var placarClr= isVit ? C.textPri : C.red;
+    var innerX   = cardX + 16;
 
-    ctx.fillStyle = isVit ? C.textSec : C.red;
+    // card background
+    ctx.fillStyle = C.bgCard;
+    rrect(ctx, cardX, detCardY, detCardW, detCardH, 10); ctx.fill();
+
+    // barra de acento à esquerda
+    ctx.fillStyle = accent;
+    ctx.fillRect(cardX, detCardY + 10, 4, detCardH - 20);
+
+    // label
+    ctx.fillStyle = accent;
     ctx.font = 'bold 9px ' + FNT;
-    ctx.fillText(marca + '  ' + labelTxt, x, detY);
+    ctx.textAlign = 'left';
+    ctx.fillText(labelTxt, innerX, detCardY + 22);
 
     if (jogo) {
-      ctx.fillStyle = color;
+      // placar
+      ctx.fillStyle = placarClr;
       ctx.font = 'bold 34px ' + FNT;
-      ctx.fillText(jogo.p, x, detY + 40);
+      ctx.fillText(jogo.p, innerX, detCardY + 62);
+      // info
       var dias = diasAtras(jogo.d);
       var info = (dias !== null ? 'Há ' + dias + ' dia' + (dias !== 1 ? 's' : '') : jogo.d)
                + (jogo.c ? '  ·  ' + jogo.c : '');
       ctx.fillStyle = C.textMut;
-      ctx.font = '12px ' + FNT;
-      while (ctx.measureText(info).width > detW2 - 8 && info.length > 1) info = info.slice(0, -1);
-      ctx.fillText(info, x, detY + 60);
+      ctx.font = '11px ' + FNT;
+      while (ctx.measureText(info).width > detCardW - 28 && info.length > 1) info = info.slice(0, -1);
+      ctx.fillText(info, innerX, detCardY + 82);
     } else {
       ctx.fillStyle = C.textMut;
       ctx.font = '13px ' + FNT;
-      ctx.fillText('Não registrado', x, detY + 30);
+      ctx.fillText('Não registrado', innerX, detCardY + 56);
     }
   }
-  detalhe(PAD,              'vit', ultVit);
-  detalhe(PAD + detW2 + 12, 'der', ultDer);
+  detalheCard(PAD,              'vit', ultVit);
+  detalheCard(PAD + detCardW + 12, 'der', ultDer);
 
   // ── Streak ──
+  var afterDetY = detCardY + detCardH + 18;
   if (hasStreak) {
-    var streakY = detY + 82;
     var isInv   = inv >= 2;
-    // dark tones para o streak
     var sBg     = isInv ? '#172554' : '#450a0a';
     var sAccent = isInv ? '#3b82f6' : '#ef4444';
     var sClr    = isInv ? '#bfdbfe' : '#fecaca';
@@ -1065,18 +1107,17 @@ function gerarImagemConfronto(adv, sorted) {
       : 'O Corinthians não vence ' + adv + ' nos últimos ' + sem + ' confrontos';
 
     ctx.fillStyle = sBg;
-    rrect(ctx, PAD, streakY, W - PAD * 2, 72, 12); ctx.fill();
+    rrect(ctx, PAD, afterDetY, W - PAD * 2, 72, 12); ctx.fill();
     ctx.fillStyle = sAccent;
-    rrect(ctx, PAD, streakY, 6, 72, 12); ctx.fill();
+    ctx.fillRect(PAD, afterDetY + 10, 5, 52);
     ctx.strokeStyle = sAccent; ctx.lineWidth = 1;
-    rrect(ctx, PAD, streakY, W - PAD * 2, 72, 12); ctx.stroke();
-
+    rrect(ctx, PAD, afterDetY, W - PAD * 2, 72, 12); ctx.stroke();
     ctx.fillStyle = sClr;
     ctx.font = 'bold 20px ' + FNT;
-    ctx.fillText(sHead, PAD + 22, streakY + 30);
+    ctx.fillText(sHead, PAD + 22, afterDetY + 30);
     ctx.fillStyle = sSubClr;
     ctx.font = '12px ' + FNT;
-    ctx.fillText(sSub, PAD + 22, streakY + 52);
+    ctx.fillText(sSub, PAD + 22, afterDetY + 52);
   }
 
   // ── Rodapé ──
