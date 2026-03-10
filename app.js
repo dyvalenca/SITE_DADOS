@@ -1134,7 +1134,10 @@ function renderizarGraficoReiDosGols() {
     });
   });
 
-  var anosComDados = Object.keys(anoJogadorGols).map(Number).sort(function(a, b) { return a - b; });
+  var anosComDados = Object.keys(anoJogadorGols)
+    .map(Number)
+    .filter(function(ano) { return Object.keys(anoJogadorGols[ano]).length > 0; })
+    .sort(function(a, b) { return a - b; });
   if (!anosComDados.length) {
     if (chartReiGolsInstance) { chartReiGolsInstance.destroy(); chartReiGolsInstance = null; }
     return;
