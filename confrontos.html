@@ -1022,17 +1022,49 @@ function gerarImagemConfronto(adv, sorted) {
   // ── Streak ──
   var streakY = detY + 80;
   if (hasStreak) {
-    var sBg  = inv >= 2 ? '#eff6ff' : '#fff5f5';
-    var sClr = inv >= 2 ? '#1e40af' : '#b91c1c';
-    var sTxt = inv >= 2
-      ? '🛡️  Invicto há ' + inv + ' jogo' + (inv !== 1 ? 's' : '') + '!'
-      : '🚫  Sem vencer há ' + sem + ' jogo' + (sem !== 1 ? 's' : '');
+    var isInv = inv >= 2;
+    var sBg    = isInv ? '#dbeafe' : '#fecaca';
+    var sBdr   = isInv ? '#93c5fd' : '#f87171';
+    var sAccent= isInv ? '#1d4ed8' : '#b91c1c';
+    var sClr   = isInv ? '#1e3a8a' : '#7f1d1d';
+    var sHead  = isInv
+      ? 'INVICTO HÁ ' + inv + ' JOGO' + (inv !== 1 ? 'S' : '') + '!'
+      : 'SEM VENCER HÁ ' + sem + ' JOGO' + (sem !== 1 ? 'S' : '');
+    var sSub   = isInv
+      ? 'O Corinthians não perde para ' + adv + ' nos últimos ' + inv + ' confrontos'
+      : 'O Corinthians não vence ' + adv + ' nos últimos ' + sem + ' confrontos';
+
+    // Fundo e borda
     ctx.fillStyle = sBg;
-    rrect(ctx, PAD, streakY, W - PAD * 2, 50, 10); ctx.fill();
+    rrect(ctx, PAD, streakY, W - PAD * 2, 72, 12); ctx.fill();
+    ctx.strokeStyle = sBdr; ctx.lineWidth = 1.5;
+    rrect(ctx, PAD, streakY, W - PAD * 2, 72, 12); ctx.stroke();
+
+    // Faixa de acento esquerda
+    ctx.fillStyle = sAccent;
+    rrect(ctx, PAD, streakY, 6, 72, 12); ctx.fill();
+
+    // Título
     ctx.fillStyle = sClr;
-    ctx.font = 'bold 16px ' + FNT;
-    ctx.fillText(sTxt, PAD + 20, streakY + 31);
+    ctx.font = 'bold 20px ' + FNT;
+    ctx.fillText(sHead, PAD + 22, streakY + 30);
+
+    // Subtítulo
+    ctx.fillStyle = sAccent;
+    ctx.font = '12px ' + FNT;
+    ctx.fillText(sSub, PAD + 22, streakY + 52);
   }
+
+  // ── Marca d'água central ──
+  ctx.save();
+  ctx.globalAlpha = 0.07;
+  ctx.translate(W / 2, H / 2);
+  ctx.rotate(-Math.PI / 8);
+  ctx.fillStyle = '#18181b';
+  ctx.font = 'bold 38px ' + FNT;
+  ctx.textAlign = 'center';
+  ctx.fillText('www.numerosfieis.com.br', 0, 0);
+  ctx.restore();
 
   // ── Rodapé ──
   var footY = H - 52;
