@@ -859,9 +859,9 @@ function gerarImagemConfronto(adv, sorted) {
   var hasStreak = inv >= 2 || sem >= 2;
 
   // ── Canvas setup ──
-  var SC  = 2; // retina
+  var SC  = 2;
   var W   = 800;
-  var H   = hasStreak ? 586 : 524;
+  var H   = 624 + (hasStreak ? 62 : 0);
   var PAD = 36;
   var FNT = '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
 
@@ -898,14 +898,27 @@ function gerarImagemConfronto(adv, sorted) {
   ctx.font = '13px ' + FNT;
   ctx.fillText('Retrospecto — últimos ' + n + ' jogos', PAD, 122);
 
-  // ── Linha divisória ──
+  // ── Helpers ──
   function hline(y) {
     ctx.strokeStyle = '#e4e4e7'; ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(PAD, y); ctx.lineTo(W - PAD, y); ctx.stroke();
   }
+  function box(x, y, w, h, label, val, color) {
+    ctx.fillStyle = '#f4f4f5';
+    rrect(ctx, x, y, w, h, 10); ctx.fill();
+    ctx.fillStyle = color;
+    ctx.font = 'bold 24px ' + FNT;
+    ctx.textAlign = 'center';
+    ctx.fillText(val, x + w / 2, y + h * 0.6);
+    ctx.fillStyle = '#71717a';
+    ctx.font = 'bold 9px ' + FNT;
+    ctx.fillText(label, x + w / 2, y + h - 8);
+    ctx.textAlign = 'left';
+  }
+
   hline(140);
 
-  // ── 3 Grandes números ──
+  // ── 3 Grandes números (V/E/D) ──
   var colW = (W - PAD * 2) / 3;
   function bigStat(col, label, val, color) {
     var cx = PAD + col * colW + colW / 2;
@@ -922,61 +935,92 @@ function gerarImagemConfronto(adv, sorted) {
   bigStat(1, 'EMPATES',   e, '#ca8a04');
   bigStat(2, 'DERROTAS',  d, '#dc2626');
 
-  // ── Caixas secundárias ──
-  var boxY = 236, boxH = 56, boxW = (W - PAD * 2 - 12) / 2;
-  function box(x, label, val, color) {
-    ctx.fillStyle = '#f4f4f5';
-    rrect(ctx, x, boxY, boxW, boxH, 10); ctx.fill();
-    ctx.fillStyle = color;
-    ctx.font = 'bold 24px ' + FNT;
-    ctx.textAlign = 'center';
-    ctx.fillText(val, x + boxW / 2, boxY + 34);
-    ctx.fillStyle = '#71717a';
-    ctx.font = 'bold 9px ' + FNT;
-    ctx.fillText(label, x + boxW / 2, boxY + 50);
-    ctx.textAlign = 'left';
-  }
-  box(PAD,              'APROVEITAMENTO',  aprov + '%',                       '#7c3aed');
-  box(PAD + boxW + 12,  'SALDO DE GOLS',   (saldo >= 0 ? '+' : '') + saldo,  saldo >= 0 ? '#2563eb' : '#dc2626');
+  // ── 4 caixas (2 linhas × 2) ──
+  var bW = (W - PAD * 2 - 12) / 2;
+  var bH = 52;
+  box(PAD,          236, bW, bH, 'APROVEITAMENTO', aprov + '%',                      '#7c3aed');
+  box(PAD + bW + 12, 236, bW, bH, 'SALDO DE GOLS',  (saldo >= 0 ? '+' : '') + saldo, saldo >= 0 ? '#2563eb' : '#dc2626');
+  box(PAD,          296, bW, bH, 'GOLS MARCADOS',  String(gp),                       '#2563eb');
+  box(PAD + bW + 12, 296, bW, bH, 'GOLS SOFRIDOS',  String(gc),                       '#dc2626');
 
-  hline(310);
+  hline(364);
+
+  // ── Sequência dos últimos N jogos ──
+  var seqY = 378;
+  ctx.fillStyle = '#a1a1aa';
+  ctx.font = 'bold 9px ' + FNT;
+  ctx.fillText('ÚLTIMOS ' + n + ' JOGOS — MAIS RECENTE À ESQUERDA', PAD, seqY);
+
+  var icons = ult.map(function(j) {
+    var ru = rNorm(j.r);
+    if (ru.includes('VITOR')) return { emoji: '🔵', color: '#2563eb' };
+    if (ru.includes('EMPAT')) return { emoji: '🟡', color: '#ca8a04' };
+    return { emoji: '🔴', color: '#dc2626' };
+  });
+
+  // Desenha bolinhas coloridas + letra (V / E / D) pois emoji pode variar entre OS
+  var dotSize = 32;
+  var dotGap  = 10;
+  var dotTotal = icons.length * (dotSize + dotGap) - dotGap;
+  var dotStartX = PAD;
+  var dotY = seqY + 12;
+
+  icons.forEach(function(ic, idx) {
+    var cx = dotStartX + idx * (dotSize + dotGap) + dotSize / 2;
+    var cy = dotY + dotSize / 2;
+    // círculo colorido
+    ctx.fillStyle = ic.color;
+    ctx.beginPath();
+    ctx.arc(cx, cy, dotSize / 2, 0, Math.PI * 2);
+    ctx.fill();
+    // letra branca dentro
+    var letra = ic.color === '#2563eb' ? 'V' : ic.color === '#ca8a04' ? 'E' : 'D';
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 13px ' + FNT;
+    ctx.textAlign = 'center';
+    ctx.fillText(letra, cx, cy + 5);
+    ctx.textAlign = 'left';
+  });
+
+  hline(seqY + 12 + dotSize + 14);
 
   // ── Detalhes (última vitória / derrota) ──
-  var detW = (W - PAD * 2 - 12) / 2;
-  function detalhe(x, tipo, jogo) {
-    var isVit = tipo === 'vit';
-    var labelTxt = isVit ? 'ULTIMA VITORIA (HISTORICO)' : 'ULTIMA DERROTA (HISTORICO)';
-    var color    = isVit ? '#2563eb' : '#dc2626';
-    var marca    = isVit ? '✅' : '❌';
-    var y = 334;
+  var detY  = seqY + 12 + dotSize + 30;
+  var detW2 = (W - PAD * 2 - 12) / 2;
 
-    ctx.fillStyle = '#a1a1aa';
+  function detalhe(x, tipo, jogo) {
+    var isVit    = tipo === 'vit';
+    var labelTxt = isVit ? 'ÚLTIMA VITÓRIA (HISTÓRICO)' : 'ÚLTIMA DERROTA (HISTÓRICO)';
+    var color    = isVit ? '#18181b' : '#dc2626';   // preto para vitória, vermelho para derrota
+    var marca    = isVit ? '✓' : '✗';
+
+    // Label com marca
+    ctx.fillStyle = color;
     ctx.font = 'bold 9px ' + FNT;
-    ctx.fillText(marca + '  ' + labelTxt, x, y);
+    ctx.fillText(marca + '  ' + labelTxt, x, detY);
 
     if (jogo) {
       ctx.fillStyle = color;
       ctx.font = 'bold 34px ' + FNT;
-      ctx.fillText(jogo.p, x, y + 40);
+      ctx.fillText(jogo.p, x, detY + 40);
       var dias = diasAtras(jogo.d);
       var info = (dias !== null ? 'Há ' + dias + ' dia' + (dias !== 1 ? 's' : '') : jogo.d)
                + (jogo.c ? '  ·  ' + jogo.c : '');
       ctx.fillStyle = '#52525b';
       ctx.font = '12px ' + FNT;
-      while (ctx.measureText(info).width > detW - 8 && info.length > 1) info = info.slice(0, -1);
-      if (info.length < (dias !== null ? 10 : 8)) info += '…';
-      ctx.fillText(info, x, y + 60);
+      while (ctx.measureText(info).width > detW2 - 8 && info.length > 1) info = info.slice(0, -1);
+      ctx.fillText(info, x, detY + 60);
     } else {
       ctx.fillStyle = '#a1a1aa';
       ctx.font = '13px ' + FNT;
-      ctx.fillText('Não registrado', x, y + 30);
+      ctx.fillText('Não registrado', x, detY + 30);
     }
   }
-  detalhe(PAD,             'vit', ultVit);
-  detalhe(PAD + detW + 12, 'der', ultDer);
+  detalhe(PAD,              'vit', ultVit);
+  detalhe(PAD + detW2 + 12, 'der', ultDer);
 
   // ── Streak ──
-  var nextY = 422;
+  var streakY = detY + 80;
   if (hasStreak) {
     var sBg  = inv >= 2 ? '#eff6ff' : '#fff5f5';
     var sClr = inv >= 2 ? '#1e40af' : '#b91c1c';
@@ -984,22 +1028,18 @@ function gerarImagemConfronto(adv, sorted) {
       ? '🛡️  Invicto há ' + inv + ' jogo' + (inv !== 1 ? 's' : '') + '!'
       : '🚫  Sem vencer há ' + sem + ' jogo' + (sem !== 1 ? 's' : '');
     ctx.fillStyle = sBg;
-    rrect(ctx, PAD, nextY, W - PAD * 2, 50, 10); ctx.fill();
+    rrect(ctx, PAD, streakY, W - PAD * 2, 50, 10); ctx.fill();
     ctx.fillStyle = sClr;
     ctx.font = 'bold 16px ' + FNT;
-    ctx.fillText(sTxt, PAD + 20, nextY + 31);
-    nextY += 62;
+    ctx.fillText(sTxt, PAD + 20, streakY + 31);
   }
 
   // ── Rodapé ──
   var footY = H - 52;
   ctx.fillStyle = '#18181b';
   ctx.fillRect(0, footY, W, 52);
-
-  // Linha dourada decorativa
   ctx.fillStyle = '#ca8a04';
   ctx.fillRect(0, footY, W, 3);
-
   ctx.fillStyle = '#ffffff';
   ctx.font = 'bold 15px ' + FNT;
   ctx.textAlign = 'center';
