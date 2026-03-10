@@ -231,6 +231,39 @@
     .tl-gol-tag.banco { color: #2563eb; background: #dbeafe; }
     .tl-no-gol-data { color: #a1a1aa; font-size: 0.74rem; font-style: italic; }
 
+    /* ── PAGINAÇÃO ───────────────────────────────────────── */
+    .pagination {
+      display: flex; align-items: center; justify-content: center;
+      gap: 8px; padding: 16px 0 4px;
+    }
+    .btn-page {
+      background: #fff; border: 1px solid #e4e4e7; border-radius: 8px;
+      padding: 7px 16px; font-size: 0.8rem; font-weight: 700;
+      color: #52525b; cursor: pointer; transition: all 0.15s;
+      font-family: 'Inter', sans-serif;
+    }
+    .btn-page:hover:not(:disabled) { border-color: #a1a1aa; color: #18181b; }
+    .btn-page:disabled { opacity: 0.35; cursor: default; }
+    .page-info { font-size: 0.75rem; color: #a1a1aa; padding: 0 8px; }
+
+    /* ── ARTILHEIROS ─────────────────────────────────────── */
+    .art-table { width: 100%; border-collapse: collapse; }
+    .art-table th {
+      font-size: 0.62rem; font-weight: 700; letter-spacing: 1.5px;
+      text-transform: uppercase; color: #a1a1aa;
+      padding: 10px 14px; border-bottom: 1px solid #e4e4e7;
+      text-align: left;
+    }
+    .art-table th.num { text-align: right; }
+    .art-table td { padding: 9px 14px; font-size: 0.83rem; border-bottom: 1px solid #f4f4f5; }
+    .art-table td.num { text-align: right; font-weight: 900; font-size: 0.95rem; color: #18181b; }
+    .art-table tr:last-child td { border-bottom: none; }
+    .art-rank { font-weight: 700; color: #a1a1aa; font-size: 0.75rem; }
+    .art-rank.top1 { font-size: 1rem; }
+    .art-rank.top2 { font-size: 0.95rem; }
+    .art-rank.top3 { font-size: 0.9rem; }
+    .art-nome { font-weight: 600; color: #18181b; }
+
     /* ── PAYWALL ─────────────────────────────────────────── */
     .paywall-block {
       background: #fff; border: 1px solid #e4e4e7; border-radius: 18px;
@@ -393,20 +426,13 @@
     <section>
       <div class="section-title">Histórico de Jogos — mais recente primeiro</div>
       <div class="timeline-wrap" id="timeline-confronto"></div>
+      <div class="pagination" id="pagination-confronto" style="display:none;"></div>
     </section>
 
-    <!-- Paywall: Artilheiros -->
-    <section>
-      <div class="paywall-block">
-        <div class="paywall-inner">
-          <div class="paywall-lock">🔒</div>
-          <div>
-            <div class="paywall-title">⚽ Artilheiros nos Confrontos — exclusivo para assinantes</div>
-            <div class="paywall-sub" id="paywall-sub">Veja quem mais marcou e assistiu neste confronto histórico, com filtros por competição, técnico e período.</div>
-          </div>
-          <a href="index.html" class="btn-paywall">Acessar Dashboard →</a>
-        </div>
-      </div>
+    <!-- Artilheiros nos Confrontos -->
+    <section id="secao-artilheiros" style="display:none;">
+      <div class="section-title">⚽ Artilheiros nos Confrontos</div>
+      <div id="artilheiros-conteudo"></div>
     </section>
 
   </div>
@@ -445,10 +471,16 @@
 </div>
 
 <script>
-const API_URL = '/api/dados';
-let jogosGlobais = [];
-let golsByDate   = {};
+const API_URL    = '/api/dados';
+const POR_PAGINA = 10;
+
+let jogosGlobais  = [];
+let golsByDate    = {};
 let adversariosSet = new Set();
+let jogosSorted   = [];   // jogos do confronto atual, ordem desc
+let paginaAtual   = 0;
+let userNivel     = null; // set by onAuthReady
+let advAtual      = null; // adversário exibido no momento
 
 // ── UTILS ─────────────────────────────────────────────────
 function limpar(val) {
@@ -537,8 +569,7 @@ function placarParts(p) {
 function diasAtras(dataStr) {
   const d = parseDataBR(dataStr);
   if (!d || d.getTime() === 0) return null;
-  const diff = Math.floor((new Date() - d) / (1000 * 60 * 60 * 24));
-  return diff;
+  return Math.floor((new Date() - d) / (1000 * 60 * 60 * 24));
 }
 
 // ── CARREGAMENTO ──────────────────────────────────────────
@@ -564,8 +595,8 @@ async function carregarDados() {
     return;
   }
 
-  jogosGlobais = normalizarJogos(rawData || []);
-  golsByDate   = normalizarGols(rawGols || []);
+  jogosGlobais   = normalizarJogos(rawData || []);
+  golsByDate     = normalizarGols(rawGols || []);
   adversariosSet = new Set(jogosGlobais.map(j => j.adv).filter(Boolean).sort());
 
   const dl = document.getElementById('dl-advs');
@@ -601,6 +632,125 @@ function renderGolsPanel(date) {
       </div>${assist}
     </div>`;
   }).join('');
+}
+
+// ── RENDER TIMELINE (com paginação) ───────────────────────
+function renderTimeline(pagina) {
+  paginaAtual = pagina;
+  const total     = jogosSorted.length;
+  const totalPags = Math.ceil(total / POR_PAGINA);
+  const inicio    = pagina * POR_PAGINA;
+  const fatia     = jogosSorted.slice(inicio, inicio + POR_PAGINA);
+
+  const esc = v => (v || '').toString().replace(/&/g,'&amp;').replace(/"/g,'&quot;');
+  document.getElementById('timeline-confronto').innerHTML = fatia.map(j => {
+    const ru = rNorm(j.r);
+    const cl = ru.includes('VITOR') ? 'vitoria' : ru.includes('EMPAT') ? 'empate' : 'derrota';
+    const mn = rNorm(j.m);
+    const mandoIcone = (mn.includes('CASA') || mn === 'MANDANTE') ? '🏠'
+                     : (mn.includes('FORA') || mn === 'VISITANTE') ? '✈️' : '🏟️';
+    const hasGols = (golsByDate[j.d] || []).length > 0;
+    const golPanel = hasGols
+      ? `<div class="tl-gols-panel ${cl}" style="display:none">${renderGolsPanel(j.d)}</div>`
+      : '';
+    return `<div class="tl-row-wrap">
+      <div class="timeline-item ${cl}${hasGols ? ' tl-tem-gols' : ''}" data-date="${esc(j.d)}">
+        <div class="tl-date-col">
+          <span class="tl-data">${j.d}</span>
+          <div class="tl-sub-row">
+            <span class="tl-mando-icon" title="${j.m || ''}">${mandoIcone}</span>
+          </div>
+        </div>
+        <div class="tl-info">
+          <div class="tl-comp">${j.c || '—'}</div>
+          <div class="tl-est">${j.e || '—'}</div>
+          <div class="tl-adv">${j.t ? j.t : '—'}</div>
+        </div>
+        <span class="tl-placar">${j.p}</span>
+      </div>
+      ${golPanel}
+    </div>`;
+  }).join('');
+
+  // Paginação
+  const pag = document.getElementById('pagination-confronto');
+  if (totalPags > 1) {
+    pag.style.display = '';
+    pag.innerHTML = `
+      <button class="btn-page" onclick="renderTimeline(${pagina - 1})" ${pagina === 0 ? 'disabled' : ''}>← Anterior</button>
+      <span class="page-info">Página ${pagina + 1} de ${totalPags} &nbsp;·&nbsp; ${total} jogos</span>
+      <button class="btn-page" onclick="renderTimeline(${pagina + 1})" ${pagina >= totalPags - 1 ? 'disabled' : ''}>Próxima →</button>
+    `;
+  } else {
+    pag.style.display = 'none';
+  }
+}
+
+// ── ARTILHEIROS ───────────────────────────────────────────
+function calcArtilheiros(jogos) {
+  const gols = {}, assists = {};
+  jogos.forEach(j => {
+    (golsByDate[j.d] || []).forEach(g => {
+      if (g.gol)    gols[g.gol]       = (gols[g.gol]    || 0) + 1;
+      if (g.assist) assists[g.assist] = (assists[g.assist] || 0) + 1;
+    });
+  });
+  return Object.entries(gols)
+    .sort((a, b) => b[1] - a[1])
+    .map(([nome, total]) => ({ nome, gols: total, assists: assists[nome] || 0 }));
+}
+
+function renderArtilheirosSection(adv, jogos) {
+  const sec  = document.getElementById('secao-artilheiros');
+  const cont = document.getElementById('artilheiros-conteudo');
+  sec.style.display = '';
+
+  const temAcesso = (userNivel === 'premium' || userNivel === 'admin');
+
+  if (!temAcesso) {
+    cont.innerHTML = `
+      <div class="paywall-block">
+        <div class="paywall-inner">
+          <div class="paywall-lock">🔒</div>
+          <div>
+            <div class="paywall-title">Conteúdo exclusivo para assinantes</div>
+            <div class="paywall-sub">Veja quem mais marcou nos ${jogos.length} jogos contra ${adv}. Disponível no Dashboard completo.</div>
+          </div>
+          <a href="index.html" class="btn-paywall">Acessar Dashboard →</a>
+        </div>
+      </div>`;
+    return;
+  }
+
+  const ranking = calcArtilheiros(jogos);
+  if (ranking.length === 0) {
+    cont.innerHTML = '<p style="color:#a1a1aa;font-size:0.82rem;padding:20px 0;">Nenhum gol registrado neste confronto.</p>';
+    return;
+  }
+  const rankIcons = ['🥇','🥈','🥉'];
+  const rows = ranking.map((p, i) => {
+    const icon = i < 3
+      ? `<span class="art-rank top${i+1}">${rankIcons[i]}</span>`
+      : `<span class="art-rank">${i + 1}</span>`;
+    return `<tr>
+      <td>${icon}</td>
+      <td><span class="art-nome">${p.nome}</span></td>
+      <td class="num">⚽ ${p.gols}</td>
+      <td class="num">👟 ${p.assists}</td>
+    </tr>`;
+  }).join('');
+  cont.innerHTML = `
+    <div class="timeline-wrap">
+      <table class="art-table">
+        <thead><tr>
+          <th>#</th>
+          <th>Jogador</th>
+          <th class="num">Gols</th>
+          <th class="num">Assists</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
 }
 
 // ── RENDER CONFRONTO ──────────────────────────────────────
@@ -660,35 +810,24 @@ function mostrarConfronto(adv) {
     document.getElementById(`det-${prefixo}-comp`).textContent =
       jogo.d + (jogo.c ? ' — ' + jogo.c : '');
     const pills = [];
-    if (dias !== null) {
+    if (dias !== null)
       pills.push(`<span class="pill">Há ${dias.toLocaleString('pt-BR')} dia${dias !== 1 ? 's' : ''}</span>`);
-    }
-    if (indexNoRanking > 0) {
+    if (indexNoRanking > 0)
       pills.push(`<span class="pill">Há ${indexNoRanking} jogo${indexNoRanking !== 1 ? 's' : ''}</span>`);
-    } else {
+    else
       pills.push(`<span class="pill">Último jogo</span>`);
-    }
     document.getElementById(`det-${prefixo}-pills`).innerHTML = pills.join('');
   }
 
-  const ultimaVitoria  = sorted.find(j => rNorm(j.r).includes('VITOR'));
-  const ultimaDerrota  = sorted.find(j => rNorm(j.r).includes('DERROT'));
-  const idxVit = ultimaVitoria  ? sorted.indexOf(ultimaVitoria)  : -1;
-  const idxDer = ultimaDerrota  ? sorted.indexOf(ultimaDerrota)  : -1;
-
-  preencherDetalhe('vit', ultimaVitoria,  idxVit);
-  preencherDetalhe('der', ultimaDerrota,  idxDer);
+  const ultimaVitoria = sorted.find(j => rNorm(j.r).includes('VITOR'));
+  const ultimaDerrota = sorted.find(j => rNorm(j.r).includes('DERROT'));
+  preencherDetalhe('vit', ultimaVitoria, ultimaVitoria ? sorted.indexOf(ultimaVitoria) : -1);
+  preencherDetalhe('der', ultimaDerrota, ultimaDerrota ? sorted.indexOf(ultimaDerrota) : -1);
 
   // ── Streak: invicto ou jejum ──
   let invictos = 0, semVencer = 0;
-  for (const j of sorted) {
-    const ru = rNorm(j.r);
-    if (!ru.includes('DERROT')) invictos++; else break;
-  }
-  for (const j of sorted) {
-    const ru = rNorm(j.r);
-    if (!ru.includes('VITOR')) semVencer++; else break;
-  }
+  for (const j of sorted) { if (!rNorm(j.r).includes('DERROT')) invictos++; else break; }
+  for (const j of sorted) { if (!rNorm(j.r).includes('VITOR'))  semVencer++; else break; }
 
   let streakHtml = '';
   if (invictos >= 2) {
@@ -710,44 +849,25 @@ function mostrarConfronto(adv) {
   }
   document.getElementById('streak-container').innerHTML = streakHtml;
 
-  // ── Timeline ──
-  const esc = v => (v || '').toString().replace(/&/g,'&amp;').replace(/"/g,'&quot;');
-  document.getElementById('timeline-confronto').innerHTML = sorted.map(j => {
-    const ru = rNorm(j.r);
-    const cl = ru.includes('VITOR') ? 'vitoria' : ru.includes('EMPAT') ? 'empate' : 'derrota';
-    const mn = rNorm(j.m);
-    const mandoIcone = (mn.includes('CASA') || mn === 'MANDANTE') ? '🏠'
-                     : (mn.includes('FORA') || mn === 'VISITANTE') ? '✈️' : '🏟️';
-    const hasGols = (golsByDate[j.d] || []).length > 0;
-    const golPanel = hasGols
-      ? `<div class="tl-gols-panel ${cl}" style="display:none">${renderGolsPanel(j.d)}</div>`
-      : '';
-    return `<div class="tl-row-wrap">
-      <div class="timeline-item ${cl}${hasGols ? ' tl-tem-gols' : ''}" data-date="${esc(j.d)}">
-        <div class="tl-date-col">
-          <span class="tl-data">${j.d}</span>
-          <div class="tl-sub-row">
-            <span class="tl-mando-icon" title="${j.m || ''}">${mandoIcone}</span>
-          </div>
-        </div>
-        <div class="tl-info">
-          <div class="tl-comp">${j.c || '—'}</div>
-          <div class="tl-est">${j.e || '—'}</div>
-          <div class="tl-adv">${j.t ? j.t : '—'}</div>
-        </div>
-        <span class="tl-placar">${j.p}</span>
-      </div>
-      ${golPanel}
-    </div>`;
-  }).join('');
+  // ── Timeline paginada ──
+  jogosSorted = sorted;
+  renderTimeline(0);
 
-  // ── Paywall ──
-  document.getElementById('paywall-sub').textContent =
-    `Veja quem mais marcou nos ${total} jogos contra ${adv}. Disponível no Dashboard com filtros por competição, técnico e período.`;
+  // ── Artilheiros (depende do nível de acesso) ──
+  advAtual = adv;
+  renderArtilheirosSection(adv, jogos);
 
   document.getElementById('empty-state').style.display = 'none';
   document.getElementById('confronto-resultado').style.display = '';
 }
+
+// ── AUTH: re-renderiza artilheiros quando o nível for conhecido ──
+onAuthReady(function(info) {
+  userNivel = info && info.nivel ? info.nivel : 'visitante';
+  if (advAtual) {
+    renderArtilheirosSection(advAtual, jogosGlobais.filter(j => j.adv === advAtual));
+  }
+});
 
 // ── CLICK EXPAND GOLS ─────────────────────────────────────
 document.addEventListener('click', function(e) {
