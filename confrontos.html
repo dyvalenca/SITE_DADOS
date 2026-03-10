@@ -858,10 +858,26 @@ function gerarImagemConfronto(adv, sorted) {
   for (var i = 0; i < sorted.length; i++) { if (!rNorm(sorted[i].r).includes('VITOR'))  sem++; else break; }
   var hasStreak = inv >= 2 || sem >= 2;
 
+  // ── Paleta dark ──
+  var C = {
+    bg:       '#18181b',
+    bgCard:   '#27272a',
+    bgDeep:   '#09090b',
+    border:   '#3f3f46',
+    textPri:  '#f4f4f5',
+    textSec:  '#a1a1aa',
+    textMut:  '#71717a',
+    blue:     '#3b82f6',
+    yellow:   '#f59e0b',
+    red:      '#ef4444',
+    purple:   '#a78bfa',
+    gold:     '#ca8a04',
+  };
+
   // ── Canvas setup ──
   var SC  = 2;
   var W   = 800;
-  var H   = 624 + (hasStreak ? 62 : 0);
+  var H   = 636 + (hasStreak ? 84 : 0);
   var PAD = 36;
   var FNT = '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
 
@@ -872,51 +888,58 @@ function gerarImagemConfronto(adv, sorted) {
   ctx.scale(SC, SC);
 
   // ── Fundo ──
-  ctx.fillStyle = '#ffffff';
+  ctx.fillStyle = C.bg;
   ctx.fillRect(0, 0, W, H);
 
+  // ── Helpers ──
+  function hline(y) {
+    ctx.strokeStyle = C.border; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(PAD, y); ctx.lineTo(W - PAD, y); ctx.stroke();
+  }
+  function box(x, y, w, h, label, val, color) {
+    ctx.fillStyle = C.bgCard;
+    rrect(ctx, x, y, w, h, 10); ctx.fill();
+    ctx.fillStyle = color;
+    ctx.font = 'bold 24px ' + FNT;
+    ctx.textAlign = 'center';
+    ctx.fillText(val, x + w / 2, y + h * 0.6);
+    ctx.fillStyle = C.textMut;
+    ctx.font = 'bold 9px ' + FNT;
+    ctx.fillText(label, x + w / 2, y + h - 8);
+    ctx.textAlign = 'left';
+  }
+
   // ── Header ──
-  ctx.fillStyle = '#18181b';
+  ctx.fillStyle = C.bgDeep;
   ctx.fillRect(0, 0, W, 52);
-  ctx.fillStyle = '#ffffff';
+  ctx.fillStyle = C.textPri;
   ctx.font = 'bold 15px ' + FNT;
   ctx.fillText('NÚMEROS FIEIS', PAD, 33);
-  ctx.fillStyle = '#71717a';
+  ctx.fillStyle = C.textMut;
   ctx.font = '13px ' + FNT;
   ctx.fillText('· Corinthians', PAD + 134, 33);
-  ctx.fillStyle = '#52525b';
+  ctx.fillStyle = C.textMut;
   ctx.font = '11px ' + FNT;
   ctx.textAlign = 'right';
   ctx.fillText('numerosfieis.com.br', W - PAD, 33);
   ctx.textAlign = 'left';
 
   // ── Título ──
-  ctx.fillStyle = '#18181b';
-  ctx.font = 'bold 28px ' + FNT;
-  ctx.fillText('Corinthians x ' + adv, PAD, 100);
-  ctx.fillStyle = '#71717a';
-  ctx.font = '13px ' + FNT;
-  ctx.fillText('Retrospecto — últimos ' + n + ' jogos', PAD, 122);
+  ctx.fillStyle = C.textPri;
+  ctx.font = 'bold 30px ' + FNT;
+  ctx.fillText('Corinthians x ' + adv, PAD, 98);
 
-  // ── Helpers ──
-  function hline(y) {
-    ctx.strokeStyle = '#e4e4e7'; ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(PAD, y); ctx.lineTo(W - PAD, y); ctx.stroke();
-  }
-  function box(x, y, w, h, label, val, color) {
-    ctx.fillStyle = '#f4f4f5';
-    rrect(ctx, x, y, w, h, 10); ctx.fill();
-    ctx.fillStyle = color;
-    ctx.font = 'bold 24px ' + FNT;
-    ctx.textAlign = 'center';
-    ctx.fillText(val, x + w / 2, y + h * 0.6);
-    ctx.fillStyle = '#71717a';
-    ctx.font = 'bold 9px ' + FNT;
-    ctx.fillText(label, x + w / 2, y + h - 8);
-    ctx.textAlign = 'left';
-  }
+  // Badge "ÚLTIMOS N JOGOS"
+  var badgeTxt = 'ÚLTIMOS ' + n + ' JOGOS';
+  ctx.font = 'bold 10px ' + FNT;
+  var badgeW = ctx.measureText(badgeTxt).width + 20;
+  ctx.fillStyle = C.blue;
+  rrect(ctx, PAD, 108, badgeW, 20, 5); ctx.fill();
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 10px ' + FNT;
+  ctx.fillText(badgeTxt, PAD + 10, 122);
 
-  hline(140);
+  hline(142);
 
   // ── 3 Grandes números (V/E/D) ──
   var colW = (W - PAD * 2) / 3;
@@ -925,77 +948,83 @@ function gerarImagemConfronto(adv, sorted) {
     ctx.fillStyle = color;
     ctx.font = 'bold 54px ' + FNT;
     ctx.textAlign = 'center';
-    ctx.fillText(String(val), cx, 204);
-    ctx.fillStyle = '#a1a1aa';
+    ctx.fillText(String(val), cx, 210);
+    ctx.fillStyle = C.textSec;
     ctx.font = 'bold 10px ' + FNT;
-    ctx.fillText(label, cx, 220);
+    ctx.fillText(label, cx, 226);
     ctx.textAlign = 'left';
   }
-  bigStat(0, 'VITÓRIAS',  v, '#2563eb');
-  bigStat(1, 'EMPATES',   e, '#ca8a04');
-  bigStat(2, 'DERROTAS',  d, '#dc2626');
+  bigStat(0, 'VITÓRIAS',  v, C.blue);
+  bigStat(1, 'EMPATES',   e, C.yellow);
+  bigStat(2, 'DERROTAS',  d, C.red);
 
-  // ── 4 caixas (2 linhas × 2) ──
+  // ── 4 caixas ──
   var bW = (W - PAD * 2 - 12) / 2;
   var bH = 52;
-  box(PAD,          236, bW, bH, 'APROVEITAMENTO', aprov + '%',                      '#7c3aed');
-  box(PAD + bW + 12, 236, bW, bH, 'SALDO DE GOLS',  (saldo >= 0 ? '+' : '') + saldo, saldo >= 0 ? '#2563eb' : '#dc2626');
-  box(PAD,          296, bW, bH, 'GOLS MARCADOS',  String(gp),                       '#2563eb');
-  box(PAD + bW + 12, 296, bW, bH, 'GOLS SOFRIDOS',  String(gc),                       '#dc2626');
+  box(PAD,           242, bW, bH, 'APROVEITAMENTO', aprov + '%',                      C.purple);
+  box(PAD + bW + 12, 242, bW, bH, 'SALDO DE GOLS',  (saldo >= 0 ? '+' : '') + saldo, saldo >= 0 ? C.blue : C.red);
+  box(PAD,           302, bW, bH, 'GOLS MARCADOS',  String(gp),                       C.blue);
+  box(PAD + bW + 12, 302, bW, bH, 'GOLS SOFRIDOS',  String(gc),                       C.red);
 
-  hline(364);
+  hline(370);
+
+  // ── Marca d'água (horizontal, acima das bolinhas) ──
+  ctx.save();
+  ctx.globalAlpha = 0.08;
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 15px ' + FNT;
+  ctx.textAlign = 'center';
+  ctx.fillText('www.numerosfieis.com.br', W / 2, 392);
+  ctx.restore();
 
   // ── Sequência dos últimos N jogos ──
-  var seqY = 378;
-  ctx.fillStyle = '#a1a1aa';
+  var seqLabelY = 408;
+  ctx.fillStyle = C.textMut;
   ctx.font = 'bold 9px ' + FNT;
-  ctx.fillText('ÚLTIMOS ' + n + ' JOGOS — MAIS RECENTE À ESQUERDA', PAD, seqY);
+  ctx.textAlign = 'center';
+  ctx.fillText('MAIS RECENTE À ESQUERDA', W / 2, seqLabelY);
+  ctx.textAlign = 'left';
 
   var icons = ult.map(function(j) {
     var ru = rNorm(j.r);
-    if (ru.includes('VITOR')) return { emoji: '🔵', color: '#2563eb' };
-    if (ru.includes('EMPAT')) return { emoji: '🟡', color: '#ca8a04' };
-    return { emoji: '🔴', color: '#dc2626' };
+    if (ru.includes('VITOR')) return { color: C.blue,   letra: 'V' };
+    if (ru.includes('EMPAT')) return { color: C.yellow, letra: 'E' };
+    return                           { color: C.red,    letra: 'D' };
   });
 
-  // Desenha bolinhas coloridas + letra (V / E / D) pois emoji pode variar entre OS
-  var dotSize = 32;
-  var dotGap  = 10;
-  var dotTotal = icons.length * (dotSize + dotGap) - dotGap;
-  var dotStartX = PAD;
-  var dotY = seqY + 12;
+  var dotSize  = 34;
+  var dotGap   = 10;
+  var totalDotW = icons.length * (dotSize + dotGap) - dotGap;
+  var dotStartX = (W - totalDotW) / 2;
+  var dotY      = seqLabelY + 10;
 
   icons.forEach(function(ic, idx) {
     var cx = dotStartX + idx * (dotSize + dotGap) + dotSize / 2;
     var cy = dotY + dotSize / 2;
-    // círculo colorido
     ctx.fillStyle = ic.color;
     ctx.beginPath();
     ctx.arc(cx, cy, dotSize / 2, 0, Math.PI * 2);
     ctx.fill();
-    // letra branca dentro
-    var letra = ic.color === '#2563eb' ? 'V' : ic.color === '#ca8a04' ? 'E' : 'D';
     ctx.fillStyle = '#ffffff';
     ctx.font = 'bold 13px ' + FNT;
     ctx.textAlign = 'center';
-    ctx.fillText(letra, cx, cy + 5);
+    ctx.fillText(ic.letra, cx, cy + 5);
     ctx.textAlign = 'left';
   });
 
-  hline(seqY + 12 + dotSize + 14);
+  hline(dotY + dotSize + 14);
 
   // ── Detalhes (última vitória / derrota) ──
-  var detY  = seqY + 12 + dotSize + 30;
+  var detY  = dotY + dotSize + 30;
   var detW2 = (W - PAD * 2 - 12) / 2;
 
   function detalhe(x, tipo, jogo) {
     var isVit    = tipo === 'vit';
     var labelTxt = isVit ? 'ÚLTIMA VITÓRIA (HISTÓRICO)' : 'ÚLTIMA DERROTA (HISTÓRICO)';
-    var color    = isVit ? '#18181b' : '#dc2626';   // preto para vitória, vermelho para derrota
+    var color    = isVit ? C.textPri : C.red;
     var marca    = isVit ? '✓' : '✗';
 
-    // Label com marca
-    ctx.fillStyle = color;
+    ctx.fillStyle = isVit ? C.textSec : C.red;
     ctx.font = 'bold 9px ' + FNT;
     ctx.fillText(marca + '  ' + labelTxt, x, detY);
 
@@ -1006,12 +1035,12 @@ function gerarImagemConfronto(adv, sorted) {
       var dias = diasAtras(jogo.d);
       var info = (dias !== null ? 'Há ' + dias + ' dia' + (dias !== 1 ? 's' : '') : jogo.d)
                + (jogo.c ? '  ·  ' + jogo.c : '');
-      ctx.fillStyle = '#52525b';
+      ctx.fillStyle = C.textMut;
       ctx.font = '12px ' + FNT;
       while (ctx.measureText(info).width > detW2 - 8 && info.length > 1) info = info.slice(0, -1);
       ctx.fillText(info, x, detY + 60);
     } else {
-      ctx.fillStyle = '#a1a1aa';
+      ctx.fillStyle = C.textMut;
       ctx.font = '13px ' + FNT;
       ctx.fillText('Não registrado', x, detY + 30);
     }
@@ -1020,59 +1049,43 @@ function gerarImagemConfronto(adv, sorted) {
   detalhe(PAD + detW2 + 12, 'der', ultDer);
 
   // ── Streak ──
-  var streakY = detY + 80;
   if (hasStreak) {
-    var isInv = inv >= 2;
-    var sBg    = isInv ? '#dbeafe' : '#fecaca';
-    var sBdr   = isInv ? '#93c5fd' : '#f87171';
-    var sAccent= isInv ? '#1d4ed8' : '#b91c1c';
-    var sClr   = isInv ? '#1e3a8a' : '#7f1d1d';
-    var sHead  = isInv
+    var streakY = detY + 82;
+    var isInv   = inv >= 2;
+    // dark tones para o streak
+    var sBg     = isInv ? '#172554' : '#450a0a';
+    var sAccent = isInv ? '#3b82f6' : '#ef4444';
+    var sClr    = isInv ? '#bfdbfe' : '#fecaca';
+    var sSubClr = isInv ? '#93c5fd' : '#f87171';
+    var sHead   = isInv
       ? 'INVICTO HÁ ' + inv + ' JOGO' + (inv !== 1 ? 'S' : '') + '!'
       : 'SEM VENCER HÁ ' + sem + ' JOGO' + (sem !== 1 ? 'S' : '');
-    var sSub   = isInv
+    var sSub    = isInv
       ? 'O Corinthians não perde para ' + adv + ' nos últimos ' + inv + ' confrontos'
       : 'O Corinthians não vence ' + adv + ' nos últimos ' + sem + ' confrontos';
 
-    // Fundo e borda
     ctx.fillStyle = sBg;
     rrect(ctx, PAD, streakY, W - PAD * 2, 72, 12); ctx.fill();
-    ctx.strokeStyle = sBdr; ctx.lineWidth = 1.5;
-    rrect(ctx, PAD, streakY, W - PAD * 2, 72, 12); ctx.stroke();
-
-    // Faixa de acento esquerda
     ctx.fillStyle = sAccent;
     rrect(ctx, PAD, streakY, 6, 72, 12); ctx.fill();
+    ctx.strokeStyle = sAccent; ctx.lineWidth = 1;
+    rrect(ctx, PAD, streakY, W - PAD * 2, 72, 12); ctx.stroke();
 
-    // Título
     ctx.fillStyle = sClr;
     ctx.font = 'bold 20px ' + FNT;
     ctx.fillText(sHead, PAD + 22, streakY + 30);
-
-    // Subtítulo
-    ctx.fillStyle = sAccent;
+    ctx.fillStyle = sSubClr;
     ctx.font = '12px ' + FNT;
     ctx.fillText(sSub, PAD + 22, streakY + 52);
   }
 
-  // ── Marca d'água central ──
-  ctx.save();
-  ctx.globalAlpha = 0.07;
-  ctx.translate(W / 2, H / 2);
-  ctx.rotate(-Math.PI / 8);
-  ctx.fillStyle = '#18181b';
-  ctx.font = 'bold 38px ' + FNT;
-  ctx.textAlign = 'center';
-  ctx.fillText('www.numerosfieis.com.br', 0, 0);
-  ctx.restore();
-
   // ── Rodapé ──
   var footY = H - 52;
-  ctx.fillStyle = '#18181b';
+  ctx.fillStyle = C.bgDeep;
   ctx.fillRect(0, footY, W, 52);
-  ctx.fillStyle = '#ca8a04';
+  ctx.fillStyle = C.gold;
   ctx.fillRect(0, footY, W, 3);
-  ctx.fillStyle = '#ffffff';
+  ctx.fillStyle = C.textPri;
   ctx.font = 'bold 15px ' + FNT;
   ctx.textAlign = 'center';
   ctx.fillText('www.numerosfieis.com.br', W / 2, footY + 32);
