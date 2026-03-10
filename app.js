@@ -14,6 +14,7 @@ let chartInstance = null;
 let chartCompInstance = null;
 let chartArtilheirosInstance = null;
 let chartReiGolsInstance = null;
+var reiGolsModo = 'gol'; // 'gol' | 'assist' | 'total'
 const itensPorPagina = 50;
 let metricaAtual = "aproveitamento";
 let sortColTec = 'jogos';
@@ -1117,20 +1118,42 @@ function renderizarGraficoArtilheiros() {
 // =====================================================================
 // GRÁFICO REI DOS GOLS — MELHOR ARTILHEIRO POR ANO
 // =====================================================================
+function setReiGolsModo(modo) {
+  reiGolsModo = modo;
+  ['gol', 'assist', 'total'].forEach(function(m) {
+    var btn = document.getElementById('rei-btn-' + m);
+    if (btn) btn.classList.toggle('ativo', m === modo);
+  });
+  renderizarGraficoReiDosGols();
+}
+
 function renderizarGraficoReiDosGols() {
   var el = document.getElementById('graficoReiDosGols');
   if (!el) return;
 
-  // Acumula gols por ano → jogador
+  var modo = reiGolsModo;
+  var labelSing = modo === 'gol' ? 'gol' : modo === 'assist' ? 'assistência' : 'participação';
+  var labelPlur = modo === 'gol' ? 'gols' : modo === 'assist' ? 'assistências' : 'participações';
+
+  // Acumula stat por ano → jogador
   var anoJogadorGols = {};
   dadosFiltrados.forEach(function(j) {
     var ano = parseInt(j.a);
     if (!ano) return;
     if (!anoJogadorGols[ano]) anoJogadorGols[ano] = {};
     (golsByDate[j.d] || []).forEach(function(g) {
-      if (!g.gol) return;
-      var chave = g.gol + '|' + (g.pos || '') + '|' + (g.pais || '');
-      anoJogadorGols[ano][chave] = (anoJogadorGols[ano][chave] || 0) + 1;
+      if (modo === 'gol' || modo === 'total') {
+        if (g.gol) {
+          var chave = g.gol + '|' + (g.pos || '') + '|' + (g.pais || '');
+          anoJogadorGols[ano][chave] = (anoJogadorGols[ano][chave] || 0) + 1;
+        }
+      }
+      if (modo === 'assist' || modo === 'total') {
+        if (g.assist) {
+          var chaveA = g.assist + '|' + (g.posA || '') + '|' + (g.paisA || '');
+          anoJogadorGols[ano][chaveA] = (anoJogadorGols[ano][chaveA] || 0) + 1;
+        }
+      }
     });
   });
 
@@ -1197,9 +1220,10 @@ function renderizarGraficoReiDosGols() {
               var jogadores = topJogadores[item.dataIndex];
               if (!jogadores || !jogadores.length) return 'Sem dados';
               if (jogadores.length === 1) {
-                return jogadores[0].nome + ' — ' + jogadores[0].gols + ' gol' + (jogadores[0].gols !== 1 ? 's' : '');
+                var n = jogadores[0].gols;
+                return jogadores[0].nome + ' — ' + n + ' ' + (n !== 1 ? labelPlur : labelSing);
               }
-              var linhas = ['⚖ Empate em ' + jogadores[0].gols + ' gols:'];
+              var linhas = ['⚖ Empate em ' + jogadores[0].gols + ' ' + labelPlur + ':'];
               jogadores.forEach(function(j) { linhas.push('  ' + j.nome); });
               return linhas;
             }

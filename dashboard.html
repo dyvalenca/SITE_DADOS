@@ -189,6 +189,16 @@
     }
     .btn-limpar:hover { background: #fef2f2; border-color: #dc2626; }
 
+    .btn-rei-modo {
+      font-size: 0.7rem; font-weight: 700; letter-spacing: 0.4px;
+      color: #52525b; background: #fff;
+      border: 1px solid #e4e4e7; border-radius: 8px;
+      padding: 6px 14px; cursor: pointer; font-family: 'Inter', sans-serif;
+      transition: all 0.15s;
+    }
+    .btn-rei-modo:hover { border-color: #18181b; color: #18181b; }
+    .btn-rei-modo.ativo { background: #18181b; color: #fff; border-color: #18181b; }
+
     /* ── MÉTRICAS ─────────────────────────────────────────── */
     .resumo-container {
       display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 8px;
@@ -771,7 +781,12 @@
     </div>
 
     <div class="card-section" style="margin-top:14px;">
-      <div class="section-title" style="margin-bottom:16px;">🥇 Melhor Artilheiro por Ano</div>
+      <div class="section-title" style="margin-bottom:12px;">🥇 Melhor Artilheiro por Ano</div>
+      <div style="display:flex;gap:6px;margin-bottom:14px;">
+        <button id="rei-btn-gol"    class="btn-rei-modo ativo" onclick="setReiGolsModo('gol')">⚽ Gol</button>
+        <button id="rei-btn-assist" class="btn-rei-modo"       onclick="setReiGolsModo('assist')">👟 Assistência</button>
+        <button id="rei-btn-total"  class="btn-rei-modo"       onclick="setReiGolsModo('total')">⚡ Participação</button>
+      </div>
       <canvas id="graficoReiDosGols" height="80"></canvas>
     </div>
   </section>
