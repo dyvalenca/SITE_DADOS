@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Confrontos Históricos — Números Fieis - Corinthians</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-0090007344741060" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="auth.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #f1f1f3;
+      color: #18181b;
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+    }
+
+    /* ── HEADER ──────────────────────────────────────────── */
+    header {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      background: #fff; border-bottom: 1px solid #e4e4e7;
+      padding: 0 28px; height: 58px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .logo { font-size: 1.05rem; font-weight: 900; letter-spacing: -0.5px; color: #18181b; }
+    .logo span { color: #52525b; font-weight: 600; }
+    .header-nav { display: flex; align-items: center; gap: 14px; }
+    .btn-nav {
+      color: #71717a; font-size: 0.8rem; text-decoration: none;
+      border: 1px solid #d4d4d8; border-radius: 8px; padding: 6px 14px;
+      transition: all 0.15s; white-space: nowrap;
+    }
+    .btn-nav:hover { color: #18181b; border-color: #a1a1aa; }
+
+    /* ── LAYOUT ──────────────────────────────────────────── */
+    main {
+      padding-top: 90px; padding-bottom: 80px;
+      max-width: 960px; margin: 0 auto;
+      padding-left: 20px; padding-right: 20px;
+    }
+    section { margin-bottom: 40px; }
+
+    .section-title {
+      font-size: 0.65rem; font-weight: 700;
+      letter-spacing: 2.5px; text-transform: uppercase;
+      color: #a1a1aa; margin-bottom: 18px;
+      padding-bottom: 10px; border-bottom: 1px solid #e4e4e7;
+    }
+
+    /* ── BUSCA ───────────────────────────────────────────── */
+    .page-intro {
+      font-size: 1.6rem; font-weight: 900; letter-spacing: -0.8px;
+      color: #18181b; margin-bottom: 6px;
+    }
+    .page-sub {
+      font-size: 0.82rem; color: #71717a; margin-bottom: 28px;
+    }
+    .search-wrap {
+      position: relative; max-width: 480px;
+    }
+    .search-input {
+      width: 100%; padding: 13px 18px;
+      font-size: 0.95rem; font-family: 'Inter', sans-serif;
+      border: 2px solid #e4e4e7; border-radius: 12px;
+      background: #fff; color: #18181b; outline: none;
+      transition: border-color 0.15s;
+    }
+    .search-input:focus { border-color: #18181b; }
+    .search-hint {
+      margin-top: 8px; font-size: 0.72rem; color: #a1a1aa;
+    }
+
+    /* ── EMPTY STATE ─────────────────────────────────────── */
+    .empty-state {
+      text-align: center; padding: 80px 20px;
+    }
+    .empty-icon { font-size: 3rem; margin-bottom: 16px; opacity: 0.4; }
+    .empty-title {
+      font-size: 1rem; font-weight: 700; color: #52525b; margin-bottom: 8px;
+    }
+    .empty-sub { font-size: 0.82rem; color: #a1a1aa; }
+
+    /* ── STATS GRID ──────────────────────────────────────── */
+    .adv-titulo {
+      font-size: 1.3rem; font-weight: 900; letter-spacing: -0.5px;
+      color: #18181b; margin-bottom: 20px;
+    }
+    .adv-titulo span { color: #7c3aed; }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-bottom: 0;
+    }
+    .stat-card {
+      background: #fff; border: 1px solid #e4e4e7; border-radius: 14px;
+      padding: 16px 14px; text-align: center;
+      border-top: 3px solid transparent;
+    }
+    .stat-card.vitorias { border-top-color: #16a34a; }
+    .stat-card.empates  { border-top-color: #ca8a04; }
+    .stat-card.derrotas { border-top-color: #dc2626; }
+    .stat-card.aprov    { border-top-color: #7c3aed; }
+    .stat-value {
+      font-size: 1.7rem; font-weight: 900; letter-spacing: -1px;
+      color: #18181b; line-height: 1;
+    }
+    .stat-card.vitorias .stat-value { color: #16a34a; }
+    .stat-card.empates  .stat-value { color: #ca8a04; }
+    .stat-card.derrotas .stat-value { color: #dc2626; }
+    .stat-card.aprov    .stat-value { color: #7c3aed; }
+    .stat-label {
+      font-size: 0.62rem; font-weight: 700; letter-spacing: 1.5px;
+      text-transform: uppercase; color: #a1a1aa; margin-top: 6px;
+    }
+
+    /* ── ÚLTIMOS RESULTADOS ──────────────────────────────── */
+    .mini-table {
+      width: 100%; border-collapse: collapse;
+      background: #fff; border-radius: 12px; overflow: hidden;
+      border: 1px solid #e4e4e7;
+    }
+    .mini-table th {
+      font-size: 0.6rem; font-weight: 700; letter-spacing: 1.5px;
+      text-transform: uppercase; color: #a1a1aa;
+      padding: 10px 14px; text-align: left;
+      border-bottom: 1px solid #e4e4e7; background: #fafafa;
+    }
+    .mini-table td {
+      padding: 11px 14px; font-size: 0.82rem; color: #3f3f46;
+      border-bottom: 1px solid #f4f4f5;
+    }
+    .mini-table tr:last-child td { border-bottom: none; }
+    .mini-table .placar {
+      font-weight: 800; font-size: 0.95rem; color: #18181b; white-space: nowrap;
+    }
+    .badge-r {
+      display: inline-block; font-size: 0.6rem; font-weight: 800;
+      letter-spacing: 1px; padding: 3px 8px; border-radius: 6px;
+      text-transform: uppercase;
+    }
+    .badge-v { background: #dcfce7; color: #15803d; }
+    .badge-e { background: #fef9c3; color: #92400e; }
+    .badge-d { background: #fee2e2; color: #b91c1c; }
+
+    /* ── MARCOS ──────────────────────────────────────────── */
+    .records-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
+    }
+    .record-card {
+      background: #fff; border: 1px solid #e4e4e7; border-radius: 14px;
+      padding: 20px 18px;
+    }
+    .record-tag {
+      font-size: 0.6rem; font-weight: 700; letter-spacing: 1.5px;
+      text-transform: uppercase; color: #a1a1aa; margin-bottom: 10px;
+    }
+    .record-placar {
+      font-size: 2rem; font-weight: 900; letter-spacing: -1px;
+      color: #18181b; line-height: 1; margin-bottom: 8px;
+    }
+    .record-placar.win { color: #16a34a; }
+    .record-placar.loss { color: #dc2626; }
+    .record-meta {
+      font-size: 0.75rem; color: #71717a; line-height: 1.6;
+    }
+    .record-meta strong { color: #3f3f46; }
+
+    /* ── PAYWALL ─────────────────────────────────────────── */
+    .paywall-block {
+      background: #fff; border: 1px solid #e4e4e7; border-radius: 18px;
+      padding: 28px 28px 24px;
+      position: relative; overflow: hidden;
+    }
+    .paywall-block::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      background: linear-gradient(90deg, #7c3aed, #2563eb);
+    }
+    .paywall-header {
+      display: flex; align-items: flex-start; gap: 14px; margin-bottom: 20px;
+    }
+    .paywall-lock { font-size: 1.8rem; line-height: 1; flex-shrink: 0; }
+    .paywall-title {
+      font-size: 0.95rem; font-weight: 800; color: #18181b; margin-bottom: 4px;
+    }
+    .paywall-subtitle { font-size: 0.78rem; color: #71717a; }
+    .paywall-features {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 22px;
+    }
+    .feature-item {
+      background: #f9f9fb; border: 1px solid #e4e4e7; border-radius: 10px;
+      padding: 12px 14px; font-size: 0.78rem; color: #3f3f46; line-height: 1.5;
+    }
+    .feature-item strong { color: #18181b; }
+    .btn-paywall {
+      display: inline-block; background: #18181b; color: #fff;
+      font-size: 0.8rem; font-weight: 700; letter-spacing: 0.3px;
+      padding: 11px 22px; border-radius: 10px; text-decoration: none;
+      transition: background 0.15s;
+    }
+    .btn-paywall:hover { background: #3f3f46; }
+
+    /* ── LOADING ─────────────────────────────────────────── */
+    .spinner {
+      width: 28px; height: 28px; border: 3px solid #e4e4e7;
+      border-top-color: #7c3aed; border-radius: 50%;
+      animation: spin 0.8s linear infinite; margin: 60px auto 14px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-text { text-align: center; color: #a1a1aa; font-size: 0.8rem; letter-spacing: 2px; }
+
+    /* ── FOOTER ──────────────────────────────────────────── */
+    .site-footer {
+      background: #fff; border-top: 1px solid #e4e4e7;
+      padding: 20px 28px; text-align: center;
+    }
+    .footer-links {
+      display: flex; justify-content: center; align-items: center;
+      flex-wrap: wrap; gap: 0;
+    }
+    .footer-links a {
+      font-size: 0.75rem; color: #71717a; text-decoration: none;
+      padding: 8px 10px; border-radius: 6px; transition: color 0.15s;
+    }
+    .footer-links a:hover { color: #18181b; }
+    .footer-sep { color: #d4d4d8; font-size: 0.75rem; line-height: 2.8; }
+    .footer-copy { margin-top: 8px; font-size: 0.68rem; color: #a1a1aa; }
+
+    @media (max-width: 600px) {
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .paywall-features { grid-template-columns: 1fr; }
+      .records-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Números Fieis <span>- Corinthians</span></div>
+  <div class="header-nav">
+    <div id="auth-header"></div>
+    <a href="index.html" class="btn-nav">← Início</a>
+  </div>
+</header>
+
+<main>
+  <!-- ── BUSCA ──────────────────────────────────────────── -->
+  <section>
+    <div class="page-intro">⚔️ Confrontos Históricos</div>
+    <div class="page-sub">Selecione um adversário para ver o histórico completo de confrontos do Corinthians.</div>
+    <div class="search-wrap">
+      <input type="text" id="inputAdv" list="dl-advs" class="search-input"
+        placeholder="Digite ou selecione um adversário..."
+        autocomplete="off" oninput="onAdvInput(this.value)">
+      <datalist id="dl-advs"></datalist>
+      <div class="search-hint" id="search-hint">Carregando adversários…</div>
+    </div>
+  </section>
+
+  <!-- ── LOADING ────────────────────────────────────────── -->
+  <div id="loading-wrap">
+    <div class="spinner"></div>
+    <div class="loading-text">CARREGANDO DADOS...</div>
+  </div>
+
+  <!-- ── EMPTY STATE ────────────────────────────────────── -->
+  <div id="empty-state" style="display:none;">
+    <div class="empty-state">
+      <div class="empty-icon">⚔️</div>
+      <div class="empty-title">Selecione um adversário</div>
+      <div class="empty-sub" id="empty-count"></div>
+    </div>
+  </div>
+
+  <!-- ── RESULTADO DO CONFRONTO ─────────────────────────── -->
+  <div id="confronto-resultado" style="display:none;">
+
+    <section>
+      <div class="adv-titulo">Corinthians vs <span id="adv-nome-titulo"></span></div>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-value" id="s-jogos">—</div>
+          <div class="stat-label">Jogos</div>
+        </div>
+        <div class="stat-card vitorias">
+          <div class="stat-value" id="s-vitorias">—</div>
+          <div class="stat-label">Vitórias</div>
+        </div>
+        <div class="stat-card empates">
+          <div class="stat-value" id="s-empates">—</div>
+          <div class="stat-label">Empates</div>
+        </div>
+        <div class="stat-card derrotas">
+          <div class="stat-value" id="s-derrotas">—</div>
+          <div class="stat-label">Derrotas</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="s-gols-pro">—</div>
+          <div class="stat-label">Gols Marcados</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="s-gols-con">—</div>
+          <div class="stat-label">Gols Sofridos</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="s-saldo">—</div>
+          <div class="stat-label">Saldo</div>
+        </div>
+        <div class="stat-card aprov">
+          <div class="stat-value" id="s-aprov">—</div>
+          <div class="stat-label">Aproveitamento</div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-title">Últimos 5 Resultados</div>
+      <table class="mini-table">
+        <thead>
+          <tr>
+            <th>Data</th>
+            <th>Competição</th>
+            <th>Placar</th>
+            <th>Resultado</th>
+          </tr>
+        </thead>
+        <tbody id="ultimos5-corpo"></tbody>
+      </table>
+    </section>
+
+    <section>
+      <div class="section-title">Marcos Históricos</div>
+      <div class="records-grid">
+        <div class="record-card">
+          <div class="record-tag">🏆 Maior Vitória</div>
+          <div class="record-placar win" id="rec-vitoria-placar">—</div>
+          <div class="record-meta" id="rec-vitoria-meta"></div>
+        </div>
+        <div class="record-card">
+          <div class="record-tag">😔 Maior Derrota</div>
+          <div class="record-placar loss" id="rec-derrota-placar">—</div>
+          <div class="record-meta" id="rec-derrota-meta"></div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-title">Análise Completa</div>
+      <div class="paywall-block">
+        <div class="paywall-header">
+          <div class="paywall-lock">🔒</div>
+          <div>
+            <div class="paywall-title">Conteúdo Exclusivo para Assinantes</div>
+            <div class="paywall-subtitle" id="paywall-subtitle">Acesse o histórico completo com filtros avançados no Dashboard.</div>
+          </div>
+        </div>
+        <div class="paywall-features">
+          <div class="feature-item">📋 <strong>Todos os jogos</strong> listados com data, competição e placar completo</div>
+          <div class="feature-item">📊 <strong>Aproveitamento por temporada</strong> — evolução histórica do confronto</div>
+          <div class="feature-item">👔 <strong>Filtros por técnico e período</strong> — como o time se saiu em cada era</div>
+          <div class="feature-item">⚽ <strong>Artilheiros nos confrontos</strong> — quem mais marcou contra este adversário</div>
+        </div>
+        <a href="index.html" class="btn-paywall">Acessar Dashboard Completo →</a>
+      </div>
+    </section>
+
+  </div>
+</main>
+
+<footer class="site-footer">
+  <nav class="footer-links">
+    <a href="sobre.html">Sobre Nós</a>
+    <span class="footer-sep">|</span>
+    <a href="contato.html">Contato</a>
+    <span class="footer-sep">|</span>
+    <a href="privacidade.html">Política de Privacidade</a>
+    <span class="footer-sep">|</span>
+    <a href="termos.html">Termos de Uso</a>
+  </nav>
+  <p class="footer-copy">© <span class="footer-year"></span> Números Fieis</p>
+</footer>
+<script>document.querySelector('.footer-year').textContent = new Date().getFullYear();</script>
+
+<script>
+const API_URL = '/api/dados';
+let jogosGlobais = [];
+let adversariosSet = new Set();
+
+// ── UTILS (mesmos do app.js) ──────────────────────────────
+function limparTexto(val) {
+  if (val === null || val === undefined || val === '') return '';
+  return String(val).normalize('NFC')
+    .replace(/[\u00A0\u200B-\u200D\uFEFF\u2028\u2029\u0000-\u001F\u007F]/g, '')
+    .replace(/\s+/g, ' ').trim();
+}
+function normKey(s) {
+  return String(s).toLowerCase().normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '').replace(/[\s_-]/g, '');
+}
+function normRow(rawRow) {
+  const out = {};
+  for (const [k, v] of Object.entries(rawRow)) out[normKey(k)] = v;
+  return out;
+}
+function campo(nrow, key) {
+  const v = nrow[normKey(key)];
+  return (v !== undefined && v !== null) ? v : '';
+}
+function formatarData(valor) {
+  if (!valor) return '';
+  if (typeof valor === 'string' && valor.includes('/')) return valor;
+  try {
+    const d = new Date(valor);
+    if (isNaN(d)) return String(valor);
+    const dia  = String(d.getUTCDate()).padStart(2, '0');
+    const mes  = String(d.getUTCMonth() + 1).padStart(2, '0');
+    const ano  = d.getUTCFullYear();
+    return `${dia}/${mes}/${ano}`;
+  } catch(e) { return String(valor); }
+}
+function parseDataBR(str) {
+  if (!str) return new Date(0);
+  const p = str.split('/');
+  if (p.length !== 3) return new Date(0);
+  return new Date(parseInt(p[2]), parseInt(p[1]) - 1, parseInt(p[0]));
+}
+function normalizarJogos(data) {
+  return data.map(rawRow => {
+    const row = normRow(rawRow);
+    const gc = campo(row, 'GOL CORINTHIANS');
+    const ga = campo(row, 'GOL ADVERSARIO');
+    return {
+      d:   formatarData(campo(row, 'DATA')),
+      a:   campo(row, 'ANO COMPETICAO'),
+      m:   limparTexto(campo(row, 'MANDO')),
+      p:   (gc || '0') + 'x' + (ga || '0'),
+      r:   limparTexto(campo(row, 'RESULTADO')),
+      adv: limparTexto(campo(row, 'TIME ADVERSARIO')),
+      c:   limparTexto(campo(row, 'COMPETIÇÃO')),
+      e:   limparTexto(campo(row, 'ESTADIO')),
+      t:   limparTexto(campo(row, 'TECNICO CORINTHIANS')),
+    };
+  });
+}
+function placarParts(p) {
+  if (!p) return { pro: 0, con: 0 };
+  const pts = p.toLowerCase().split('x');
+  return { pro: parseInt(pts[0]) || 0, con: parseInt(pts[1]) || 0 };
+}
+function resultadoBadge(r) {
+  const ru = (r || '').toUpperCase();
+  if (ru.includes('VIT')) return '<span class="badge-r badge-v">V</span>';
+  if (ru.includes('EMP')) return '<span class="badge-r badge-e">E</span>';
+  if (ru.includes('DER')) return '<span class="badge-r badge-d">D</span>';
+  return '<span class="badge-r">—</span>';
+}
+
+// ── CARREGAMENTO ──────────────────────────────────────────
+async function carregarDados() {
+  let rawData = null;
+  try {
+    const cached = sessionStorage.getItem('nf_dados_cache');
+    if (cached) rawData = JSON.parse(cached);
+  } catch(e) {}
+
+  if (!rawData) {
+    try {
+      const resp = await fetch(`${API_URL}?aba=jogo&limit=9999`);
+      const json = await resp.json();
+      rawData = json.data || [];
+      try { sessionStorage.setItem('nf_dados_cache', JSON.stringify(rawData)); } catch(e) {}
+    } catch(e) {
+      document.getElementById('loading-wrap').innerHTML =
+        '<div class="loading-text" style="padding:60px 0;">Erro ao carregar dados. Recarregue a página.</div>';
+      return;
+    }
+  }
+
+  jogosGlobais = normalizarJogos(rawData);
+  adversariosSet = new Set(jogosGlobais.map(j => j.adv).filter(Boolean).sort());
+
+  // Popula datalist
+  const dl = document.getElementById('dl-advs');
+  adversariosSet.forEach(adv => {
+    const opt = document.createElement('option');
+    opt.value = adv;
+    dl.appendChild(opt);
+  });
+
+  document.getElementById('loading-wrap').style.display = 'none';
+  document.getElementById('empty-state').style.display = '';
+  document.getElementById('empty-count').textContent =
+    adversariosSet.size + ' adversários disponíveis na base de dados.';
+  document.getElementById('search-hint').textContent =
+    adversariosSet.size + ' adversários disponíveis.';
+}
+
+// ── RENDER ────────────────────────────────────────────────
+function onAdvInput(val) {
+  const adv = val.trim();
+  if (!adv || !adversariosSet.has(adv)) {
+    if (document.getElementById('confronto-resultado').style.display !== 'none') {
+      document.getElementById('confronto-resultado').style.display = 'none';
+      document.getElementById('empty-state').style.display = '';
+    }
+    return;
+  }
+  mostrarConfronto(adv);
+}
+
+function mostrarConfronto(adv) {
+  const jogos = jogosGlobais.filter(j => j.adv === adv);
+  if (!jogos.length) return;
+
+  // ── Stats ──
+  let vitorias = 0, empates = 0, derrotas = 0, golsPro = 0, golsCon = 0;
+  jogos.forEach(j => {
+    const ru = j.r.toUpperCase();
+    if (ru.includes('VIT')) vitorias++;
+    else if (ru.includes('EMP')) empates++;
+    else derrotas++;
+    const { pro, con } = placarParts(j.p);
+    golsPro += pro;
+    golsCon += con;
+  });
+  const total = jogos.length;
+  const saldo = golsPro - golsCon;
+  const aprov = total > 0 ? Math.round((vitorias * 3 + empates) / (total * 3) * 100) : 0;
+
+  document.getElementById('adv-nome-titulo').textContent = adv;
+  document.getElementById('s-jogos').textContent    = total;
+  document.getElementById('s-vitorias').textContent = vitorias;
+  document.getElementById('s-empates').textContent  = empates;
+  document.getElementById('s-derrotas').textContent = derrotas;
+  document.getElementById('s-gols-pro').textContent = golsPro;
+  document.getElementById('s-gols-con').textContent = golsCon;
+  document.getElementById('s-saldo').textContent    = (saldo >= 0 ? '+' : '') + saldo;
+  document.getElementById('s-aprov').textContent    = aprov + '%';
+
+  // ── Últimos 5 ──
+  const sorted = jogos.slice().sort((a, b) => parseDataBR(b.d) - parseDataBR(a.d));
+  const ultimos = sorted.slice(0, 5);
+  const tbody = document.getElementById('ultimos5-corpo');
+  tbody.innerHTML = ultimos.map(j => `
+    <tr>
+      <td>${j.d}</td>
+      <td style="color:#52525b;">${j.c || '—'}</td>
+      <td class="placar">${j.p}</td>
+      <td>${resultadoBadge(j.r)}</td>
+    </tr>
+  `).join('');
+
+  // ── Marcos ──
+  const vits = jogos.filter(j => j.r.toUpperCase().includes('VIT'));
+  const ders = jogos.filter(j => j.r.toUpperCase().includes('DER'));
+
+  if (vits.length) {
+    const melhor = vits.sort((a, b) => {
+      const dA = placarParts(a.p), dB = placarParts(b.p);
+      return (dB.pro - dB.con) - (dA.pro - dA.con);
+    })[0];
+    document.getElementById('rec-vitoria-placar').textContent = melhor.p;
+    document.getElementById('rec-vitoria-meta').innerHTML =
+      `<strong>${melhor.d}</strong><br>${melhor.c || '—'}`;
+  } else {
+    document.getElementById('rec-vitoria-placar').textContent = '—';
+    document.getElementById('rec-vitoria-meta').textContent = 'Nenhuma vitória registrada';
+  }
+
+  if (ders.length) {
+    const pior = ders.sort((a, b) => {
+      const dA = placarParts(a.p), dB = placarParts(b.p);
+      return (dB.con - dB.pro) - (dA.con - dA.pro);
+    })[0];
+    document.getElementById('rec-derrota-placar').textContent = pior.p;
+    document.getElementById('rec-derrota-meta').innerHTML =
+      `<strong>${pior.d}</strong><br>${pior.c || '—'}`;
+  } else {
+    document.getElementById('rec-derrota-placar').textContent = '—';
+    document.getElementById('rec-derrota-meta').textContent = 'Nenhuma derrota registrada';
+  }
+
+  // ── Paywall subtitle ──
+  document.getElementById('paywall-subtitle').textContent =
+    `Acesse todos os ${total} jogos contra ${adv} com filtros avançados no Dashboard.`;
+
+  document.getElementById('empty-state').style.display = 'none';
+  document.getElementById('confronto-resultado').style.display = '';
+}
+
+window.addEventListener('DOMContentLoaded', carregarDados);
+</script>
+
+</body>
+</html>

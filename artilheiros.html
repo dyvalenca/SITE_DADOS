@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Artilheiros Históricos — Números Fieis - Corinthians</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-0090007344741060" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="auth.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #f1f1f3;
+      color: #18181b;
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+    }
+
+    /* ── HEADER ──────────────────────────────────────────── */
+    header {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      background: #fff; border-bottom: 1px solid #e4e4e7;
+      padding: 0 28px; height: 58px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .logo { font-size: 1.05rem; font-weight: 900; letter-spacing: -0.5px; color: #18181b; }
+    .logo span { color: #52525b; font-weight: 600; }
+    .header-nav { display: flex; align-items: center; gap: 14px; }
+    .btn-nav {
+      color: #71717a; font-size: 0.8rem; text-decoration: none;
+      border: 1px solid #d4d4d8; border-radius: 8px; padding: 6px 14px;
+      transition: all 0.15s; white-space: nowrap;
+    }
+    .btn-nav:hover { color: #18181b; border-color: #a1a1aa; }
+
+    /* ── LAYOUT ──────────────────────────────────────────── */
+    main {
+      padding-top: 90px; padding-bottom: 80px;
+      max-width: 960px; margin: 0 auto;
+      padding-left: 20px; padding-right: 20px;
+    }
+    section { margin-bottom: 40px; }
+    .section-title {
+      font-size: 0.65rem; font-weight: 700;
+      letter-spacing: 2.5px; text-transform: uppercase;
+      color: #a1a1aa; margin-bottom: 18px;
+      padding-bottom: 10px; border-bottom: 1px solid #e4e4e7;
+    }
+    .page-intro {
+      font-size: 1.6rem; font-weight: 900; letter-spacing: -0.8px;
+      color: #18181b; margin-bottom: 6px;
+    }
+    .page-sub { font-size: 0.82rem; color: #71717a; margin-bottom: 0; }
+
+    /* ── SUMÁRIO ─────────────────────────────────────────── */
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+    .summary-card {
+      background: #fff; border: 1px solid #e4e4e7; border-radius: 14px;
+      padding: 18px 16px; text-align: center;
+    }
+    .summary-value {
+      font-size: 2rem; font-weight: 900; letter-spacing: -1px;
+      color: #18181b; line-height: 1; margin-bottom: 6px;
+    }
+    .summary-label {
+      font-size: 0.62rem; font-weight: 700; letter-spacing: 1.5px;
+      text-transform: uppercase; color: #a1a1aa;
+    }
+
+    /* ── RANKING TABLE ───────────────────────────────────── */
+    .rank-table-wrap {
+      background: #fff; border: 1px solid #e4e4e7; border-radius: 14px;
+      overflow: hidden;
+    }
+    .rank-table {
+      width: 100%; border-collapse: collapse;
+    }
+    .rank-table th {
+      font-size: 0.6rem; font-weight: 700; letter-spacing: 1.5px;
+      text-transform: uppercase; color: #a1a1aa;
+      padding: 11px 14px; text-align: left;
+      border-bottom: 1px solid #e4e4e7; background: #fafafa;
+    }
+    .rank-table th.num { text-align: right; }
+    .rank-table td {
+      padding: 11px 14px; font-size: 0.85rem; color: #3f3f46;
+      border-bottom: 1px solid #f4f4f5;
+    }
+    .rank-table tbody tr:last-child td { border-bottom: none; }
+    .rank-table .pos {
+      font-size: 0.75rem; font-weight: 800; color: #a1a1aa;
+      width: 36px; text-align: center;
+    }
+    .rank-table .pos.top3 { color: #18181b; }
+    .rank-pos-1::before { content: '🥇'; }
+    .rank-pos-2::before { content: '🥈'; }
+    .rank-pos-3::before { content: '🥉'; }
+    .rank-table .nome { font-weight: 700; color: #18181b; }
+    .rank-table .meta { font-size: 0.72rem; color: #71717a; }
+    .rank-table .num-val {
+      font-size: 1.1rem; font-weight: 900; color: #18181b;
+      text-align: right; letter-spacing: -0.5px; white-space: nowrap;
+    }
+    .rank-table .num-label {
+      font-size: 0.62rem; font-weight: 600; color: #a1a1aa;
+      letter-spacing: 0.5px; text-align: right; display: block;
+    }
+
+    /* ── LOCKED ROWS ─────────────────────────────────────── */
+    .locked-wrap {
+      position: relative;
+    }
+    .locked-tbody tr td {
+      filter: blur(4px);
+      user-select: none;
+      pointer-events: none;
+      opacity: 0.5;
+    }
+    .locked-overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(to bottom, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0.95) 40%);
+    }
+    .locked-badge {
+      background: #fff; border: 1px solid #e4e4e7; border-radius: 12px;
+      padding: 14px 20px; text-align: center;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
+    .locked-badge-icon { font-size: 1.4rem; margin-bottom: 4px; }
+    .locked-badge-text {
+      font-size: 0.72rem; font-weight: 700; color: #52525b;
+      letter-spacing: 0.3px;
+    }
+
+    /* ── PAYWALL ─────────────────────────────────────────── */
+    .paywall-block {
+      background: #fff; border: 1px solid #e4e4e7; border-radius: 18px;
+      padding: 28px 28px 24px;
+      position: relative; overflow: hidden;
+    }
+    .paywall-block::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      background: linear-gradient(90deg, #7c3aed, #2563eb);
+    }
+    .paywall-header {
+      display: flex; align-items: flex-start; gap: 14px; margin-bottom: 20px;
+    }
+    .paywall-lock { font-size: 1.8rem; line-height: 1; flex-shrink: 0; }
+    .paywall-title {
+      font-size: 0.95rem; font-weight: 800; color: #18181b; margin-bottom: 4px;
+    }
+    .paywall-subtitle { font-size: 0.78rem; color: #71717a; }
+    .paywall-features {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 22px;
+    }
+    .feature-item {
+      background: #f9f9fb; border: 1px solid #e4e4e7; border-radius: 10px;
+      padding: 12px 14px; font-size: 0.78rem; color: #3f3f46; line-height: 1.5;
+    }
+    .feature-item strong { color: #18181b; }
+    .btn-paywall {
+      display: inline-block; background: #18181b; color: #fff;
+      font-size: 0.8rem; font-weight: 700; letter-spacing: 0.3px;
+      padding: 11px 22px; border-radius: 10px; text-decoration: none;
+      transition: background 0.15s;
+    }
+    .btn-paywall:hover { background: #3f3f46; }
+
+    /* ── TABS ────────────────────────────────────────────── */
+    .tabs { display: flex; gap: 8px; margin-bottom: 0; }
+    .tab-btn {
+      font-size: 0.72rem; font-weight: 700; letter-spacing: 0.4px;
+      color: #52525b; background: #fff;
+      border: 1px solid #e4e4e7; border-radius: 8px;
+      padding: 7px 16px; cursor: pointer; font-family: 'Inter', sans-serif;
+      transition: all 0.15s;
+    }
+    .tab-btn:hover { border-color: #18181b; color: #18181b; }
+    .tab-btn.ativo { background: #18181b; color: #fff; border-color: #18181b; }
+
+    /* ── LOADING ─────────────────────────────────────────── */
+    .spinner {
+      width: 28px; height: 28px; border: 3px solid #e4e4e7;
+      border-top-color: #7c3aed; border-radius: 50%;
+      animation: spin 0.8s linear infinite; margin: 60px auto 14px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-text { text-align: center; color: #a1a1aa; font-size: 0.8rem; letter-spacing: 2px; }
+
+    /* ── FOOTER ──────────────────────────────────────────── */
+    .site-footer {
+      background: #fff; border-top: 1px solid #e4e4e7;
+      padding: 20px 28px; text-align: center;
+    }
+    .footer-links {
+      display: flex; justify-content: center; align-items: center;
+      flex-wrap: wrap; gap: 0;
+    }
+    .footer-links a {
+      font-size: 0.75rem; color: #71717a; text-decoration: none;
+      padding: 8px 10px; border-radius: 6px; transition: color 0.15s;
+    }
+    .footer-links a:hover { color: #18181b; }
+    .footer-sep { color: #d4d4d8; font-size: 0.75rem; line-height: 2.8; }
+    .footer-copy { margin-top: 8px; font-size: 0.68rem; color: #a1a1aa; }
+
+    @media (max-width: 600px) {
+      .summary-grid { grid-template-columns: repeat(3, 1fr); }
+      .paywall-features { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Números Fieis <span>- Corinthians</span></div>
+  <div class="header-nav">
+    <div id="auth-header"></div>
+    <a href="index.html" class="btn-nav">← Início</a>
+  </div>
+</header>
+
+<main>
+
+  <!-- ── LOADING ────────────────────────────────────────── -->
+  <div id="loading-wrap">
+    <div class="spinner"></div>
+    <div class="loading-text">CARREGANDO DADOS...</div>
+  </div>
+
+  <!-- ── CONTEÚDO (aparece após carregamento) ───────────── -->
+  <div id="conteudo" style="display:none;">
+
+    <section style="margin-bottom:32px;">
+      <div class="page-intro">⚽ Artilheiros Históricos</div>
+      <div class="page-sub">Todos os tempos — gols e assistências registradas na base de dados.</div>
+    </section>
+
+    <!-- ── SUMÁRIO ──────────────────────────────────────── -->
+    <section>
+      <div class="section-title">Visão Geral</div>
+      <div class="summary-grid">
+        <div class="summary-card">
+          <div class="summary-value" id="s-total-gols">—</div>
+          <div class="summary-label">Gols Registrados</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-value" id="s-total-artilheiros">—</div>
+          <div class="summary-label">Jogadores com Gol</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-value" id="s-total-assist">—</div>
+          <div class="summary-label">Assistências</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── RANKING ARTILHEIROS ───────────────────────────── -->
+    <section>
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; padding-bottom:10px; border-bottom:1px solid #e4e4e7;">
+        <div class="section-title" style="margin-bottom:0; border-bottom:none; padding-bottom:0;">Ranking — Todos os Tempos</div>
+        <div class="tabs">
+          <button class="tab-btn ativo" onclick="mostrarTab('gols', this)">⚽ Gols</button>
+          <button class="tab-btn" onclick="mostrarTab('assists', this)">👟 Assistências</button>
+        </div>
+      </div>
+
+      <!-- Top 10 Gols (público) -->
+      <div id="tab-gols">
+        <div class="rank-table-wrap" style="margin-bottom:0;">
+          <table class="rank-table">
+            <thead>
+              <tr>
+                <th class="pos">#</th>
+                <th>Jogador</th>
+                <th class="num">Gols</th>
+              </tr>
+            </thead>
+            <tbody id="top10-gols"></tbody>
+          </table>
+
+          <!-- Linhas travadas (blur + overlay) -->
+          <div class="locked-wrap">
+            <table class="rank-table" style="border-top: 1px solid #f4f4f5;">
+              <tbody class="locked-tbody" id="locked-gols"></tbody>
+            </table>
+            <div class="locked-overlay">
+              <div class="locked-badge">
+                <div class="locked-badge-icon">🔒</div>
+                <div class="locked-badge-text">Ranking completo no Dashboard</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Top 10 Assistências (público) -->
+      <div id="tab-assists" style="display:none;">
+        <div class="rank-table-wrap" style="margin-bottom:0;">
+          <table class="rank-table">
+            <thead>
+              <tr>
+                <th class="pos">#</th>
+                <th>Jogador</th>
+                <th class="num">Assistências</th>
+              </tr>
+            </thead>
+            <tbody id="top10-assists"></tbody>
+          </table>
+
+          <!-- Linhas travadas -->
+          <div class="locked-wrap">
+            <table class="rank-table" style="border-top: 1px solid #f4f4f5;">
+              <tbody class="locked-tbody" id="locked-assists"></tbody>
+            </table>
+            <div class="locked-overlay">
+              <div class="locked-badge">
+                <div class="locked-badge-icon">🔒</div>
+                <div class="locked-badge-text">Ranking completo no Dashboard</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── PAYWALL ───────────────────────────────────────── -->
+    <section>
+      <div class="section-title">Análise Avançada</div>
+      <div class="paywall-block">
+        <div class="paywall-header">
+          <div class="paywall-lock">🔒</div>
+          <div>
+            <div class="paywall-title">Análise Completa para Assinantes</div>
+            <div class="paywall-subtitle">Explore artilheiros por competição, técnico, posição, nacionalidade e muito mais.</div>
+          </div>
+        </div>
+        <div class="paywall-features">
+          <div class="feature-item">📋 <strong>Ranking completo</strong> de todos os jogadores com gol ou assistência</div>
+          <div class="feature-item">📊 <strong>Evolução por temporada</strong> — gráfico dos top 5 ano a ano</div>
+          <div class="feature-item">🏆 <strong>Filtrar por competição</strong> — artilheiro do Brasileirão, Copa do Brasil…</div>
+          <div class="feature-item">🌍 <strong>Filtrar por posição e nacionalidade</strong> — estrangeiros, atacantes…</div>
+        </div>
+        <a href="index.html" class="btn-paywall">Acessar Dashboard Completo →</a>
+      </div>
+    </section>
+
+  </div>
+</main>
+
+<footer class="site-footer">
+  <nav class="footer-links">
+    <a href="sobre.html">Sobre Nós</a>
+    <span class="footer-sep">|</span>
+    <a href="contato.html">Contato</a>
+    <span class="footer-sep">|</span>
+    <a href="privacidade.html">Política de Privacidade</a>
+    <span class="footer-sep">|</span>
+    <a href="termos.html">Termos de Uso</a>
+  </nav>
+  <p class="footer-copy">© <span class="footer-year"></span> Números Fieis</p>
+</footer>
+<script>document.querySelector('.footer-year').textContent = new Date().getFullYear();</script>
+
+<script>
+const API_URL = '/api/dados';
+let _allPlayers = []; // { nome, pos, pais, gols, assists }
+
+// ── UTILS ─────────────────────────────────────────────────
+function limparTexto(val) {
+  if (val === null || val === undefined || val === '') return '';
+  return String(val).normalize('NFC')
+    .replace(/[\u00A0\u200B-\u200D\uFEFF\u2028\u2029\u0000-\u001F\u007F]/g, '')
+    .replace(/\s+/g, ' ').trim();
+}
+function normKey(s) {
+  return String(s).toLowerCase().normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '').replace(/[\s_-]/g, '');
+}
+function normRow(rawRow) {
+  const out = {};
+  for (const [k, v] of Object.entries(rawRow)) out[normKey(k)] = v;
+  return out;
+}
+function campo(nrow, key) {
+  const v = nrow[normKey(key)];
+  return (v !== undefined && v !== null) ? v : '';
+}
+function formatarData(valor) {
+  if (!valor) return '';
+  if (typeof valor === 'string' && valor.includes('/')) return valor;
+  try {
+    const d = new Date(valor);
+    if (isNaN(d)) return String(valor);
+    return String(d.getUTCDate()).padStart(2,'0') + '/' +
+           String(d.getUTCMonth()+1).padStart(2,'0') + '/' +
+           d.getUTCFullYear();
+  } catch(e) { return String(valor); }
+}
+function normalizarJogos(data) {
+  return data.map(rawRow => {
+    const row = normRow(rawRow);
+    return { d: formatarData(campo(row, 'DATA')) };
+  });
+}
+function normalizarGols(data) {
+  const byDate = {};
+  data.forEach(rawRow => {
+    const row = normRow(rawRow);
+    const d = formatarData(limparTexto(campo(row, 'DATA')));
+    if (!d) return;
+    if (!byDate[d]) byDate[d] = [];
+    byDate[d].push({
+      gol:    limparTexto(campo(row, 'JOGADOR GOL')),
+      pos:    limparTexto(campo(row, 'POSIÇÃO')),
+      pais:   limparTexto(campo(row, 'PAIS')),
+      assist: limparTexto(campo(row, 'JOGADOR ASSISTÊNCIA')),
+      posA:   limparTexto(campo(row, 'POSICAO ASSISTENCIA')),
+      paisA:  limparTexto(campo(row, 'PAIS ASSISTENCIA')),
+    });
+  });
+  return byDate;
+}
+
+// ── CARREGAMENTO ──────────────────────────────────────────
+async function carregarDados() {
+  let rawJogos = null, rawGols = null;
+  try {
+    const cj = sessionStorage.getItem('nf_dados_cache');
+    if (cj) rawJogos = JSON.parse(cj);
+  } catch(e) {}
+  try {
+    const cg = sessionStorage.getItem('nf_gols_cache');
+    if (cg) rawGols = JSON.parse(cg);
+  } catch(e) {}
+
+  try {
+    if (!rawJogos || !rawGols) {
+      const fetches = [];
+      if (!rawJogos) fetches.push(fetch(`${API_URL}?aba=jogo&limit=9999`).then(r => r.json()));
+      else fetches.push(Promise.resolve(null));
+      if (!rawGols) fetches.push(fetch(`${API_URL}?aba=gol&limit=9999`).then(r => r.json()));
+      else fetches.push(Promise.resolve(null));
+
+      const [resJ, resG] = await Promise.all(fetches);
+      if (resJ && resJ.data) {
+        rawJogos = resJ.data;
+        try { sessionStorage.setItem('nf_dados_cache', JSON.stringify(rawJogos)); } catch(e) {}
+      }
+      if (resG && resG.data) {
+        rawGols = resG.data;
+        try { sessionStorage.setItem('nf_gols_cache', JSON.stringify(rawGols)); } catch(e) {}
+      }
+    }
+  } catch(e) {
+    document.getElementById('loading-wrap').innerHTML =
+      '<div class="loading-text" style="padding:60px 0;">Erro ao carregar dados. Recarregue a página.</div>';
+    return;
+  }
+
+  const jogos = normalizarJogos(rawJogos || []);
+  const golsByDate = normalizarGols(rawGols || []);
+
+  // Agrega por jogador
+  const mapa = {};
+  const datasJogos = new Set(jogos.map(j => j.d));
+  datasJogos.forEach(data => {
+    (golsByDate[data] || []).forEach(g => {
+      if (g.gol) {
+        const k = g.gol + '|' + (g.pos || '') + '|' + (g.pais || '');
+        if (!mapa[k]) mapa[k] = { nome: g.gol, pos: g.pos, pais: g.pais, gols: 0, assists: 0 };
+        mapa[k].gols++;
+      }
+      if (g.assist) {
+        const k = g.assist + '|' + (g.posA || '') + '|' + (g.paisA || '');
+        if (!mapa[k]) mapa[k] = { nome: g.assist, pos: g.posA, pais: g.paisA, gols: 0, assists: 0 };
+        mapa[k].assists++;
+      }
+    });
+  });
+
+  _allPlayers = Object.values(mapa);
+  const totalGols   = _allPlayers.reduce((s, p) => s + p.gols, 0);
+  const totalAssist = _allPlayers.reduce((s, p) => s + p.assists, 0);
+  const comGol      = _allPlayers.filter(p => p.gols > 0).length;
+
+  document.getElementById('s-total-gols').textContent        = totalGols.toLocaleString('pt-BR');
+  document.getElementById('s-total-artilheiros').textContent = comGol.toLocaleString('pt-BR');
+  document.getElementById('s-total-assist').textContent      = totalAssist.toLocaleString('pt-BR');
+
+  renderizarRanking();
+
+  document.getElementById('loading-wrap').style.display = 'none';
+  document.getElementById('conteudo').style.display = '';
+}
+
+// ── RENDER RANKING ────────────────────────────────────────
+function posEmoji(i) {
+  if (i === 0) return '<span class="rank-pos-1"></span>';
+  if (i === 1) return '<span class="rank-pos-2"></span>';
+  if (i === 2) return '<span class="rank-pos-3"></span>';
+  return String(i + 1);
+}
+
+function renderizarRanking() {
+  const porGols    = _allPlayers.filter(p => p.gols > 0)
+    .sort((a, b) => b.gols - a.gols || b.assists - a.assists);
+  const porAssists = _allPlayers.filter(p => p.assists > 0)
+    .sort((a, b) => b.assists - a.assists || b.gols - a.gols);
+
+  function linhaRank(p, i, stat) {
+    const val   = stat === 'gols' ? p.gols : p.assists;
+    const meta  = [p.pos, p.pais].filter(Boolean).join(' · ');
+    const posEl = i < 3 ? `<span class="pos top3">${posEmoji(i)}</span>` : `<span class="pos">${i+1}</span>`;
+    return `<tr>
+      <td>${posEl}</td>
+      <td>
+        <div class="nome">${p.nome}</div>
+        ${meta ? `<div class="meta">${meta}</div>` : ''}
+      </td>
+      <td><div class="num-val">${val}</div></td>
+    </tr>`;
+  }
+
+  // Top 10 público
+  document.getElementById('top10-gols').innerHTML =
+    porGols.slice(0, 10).map((p, i) => linhaRank(p, i, 'gols')).join('');
+  document.getElementById('top10-assists').innerHTML =
+    porAssists.slice(0, 10).map((p, i) => linhaRank(p, i, 'assists')).join('');
+
+  // Linhas 11-15 travadas (blur preview)
+  document.getElementById('locked-gols').innerHTML =
+    porGols.slice(10, 15).map((p, i) => linhaRank(p, i + 10, 'gols')).join('');
+  document.getElementById('locked-assists').innerHTML =
+    porAssists.slice(10, 15).map((p, i) => linhaRank(p, i + 10, 'assists')).join('');
+}
+
+// ── TABS ──────────────────────────────────────────────────
+function mostrarTab(tab, btn) {
+  document.getElementById('tab-gols').style.display    = tab === 'gols'    ? '' : 'none';
+  document.getElementById('tab-assists').style.display = tab === 'assists' ? '' : 'none';
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('ativo'));
+  btn.classList.add('ativo');
+}
+
+window.addEventListener('DOMContentLoaded', carregarDados);
+</script>
+
+</body>
+</html>
