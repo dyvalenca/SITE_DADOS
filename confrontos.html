@@ -824,26 +824,51 @@ function renderArtilheirosSection(adv, jogos) {
 // ── TWITTER / COMPARTILHAR ────────────────────────────────
 var TWITTER_ICON = `<svg viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L1.254 2.25H8.08l4.253 5.622L18.244 2.25zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>`;
 
-function gerarTextoTweet(adv, dados) {
-  const { total, vitorias, empates, derrotas, aprov, saldo,
-          ultimaVitoria, ultimaDerrota, invictos, semVencer } = dados;
+function gerarTextoTweet(adv, sorted) {
+  // Últimos 10 jogos
+  var ultimos = sorted.slice(0, 10);
+  var v = 0, e = 0, d = 0, gp = 0, gc = 0;
+  ultimos.forEach(function(j) {
+    var ru = rNorm(j.r);
+    if (ru.includes('VITOR')) v++;
+    else if (ru.includes('EMPAT')) e++;
+    else d++;
+    var pts = placarParts(j.p);
+    gp += pts.pro; gc += pts.con;
+  });
+  var total = ultimos.length;
+  var aprov = total > 0 ? Math.round((v * 3 + e) / (total * 3) * 100) : 0;
+  var saldo = gp - gc;
+
+  // Última vitória e derrota nos últimos 10
+  var ultVit = ultimos.find(function(j) { return rNorm(j.r).includes('VITOR'); });
+  var ultDer = ultimos.find(function(j) { return rNorm(j.r).includes('DERROT'); });
+
+  // Streak nos últimos 10
+  var invictos = 0, semVencer = 0;
+  for (var i = 0; i < ultimos.length; i++) {
+    if (!rNorm(ultimos[i].r).includes('DERROT')) invictos++; else break;
+  }
+  for (var i = 0; i < ultimos.length; i++) {
+    if (!rNorm(ultimos[i].r).includes('VITOR')) semVencer++; else break;
+  }
 
   var linhas = [];
-  linhas.push('🔍 Corinthians x ' + adv);
+  linhas.push('🔍 Corinthians x ' + adv + ' (últimos ' + total + ' jogos)');
   linhas.push('');
-  linhas.push('📊 ' + total + ' jogos: ' + vitorias + 'V ' + empates + 'E ' + derrotas + 'D');
+  linhas.push('📊 ' + v + 'V ' + e + 'E ' + d + 'D');
   linhas.push('⚡ Aproveitamento: ' + aprov + '% | Saldo: ' + (saldo >= 0 ? '+' : '') + saldo);
 
-  if (ultimaVitoria) {
-    var dias = diasAtras(ultimaVitoria.d);
-    var dStr = dias !== null ? 'há ' + dias + ' dia' + (dias !== 1 ? 's' : '') : ultimaVitoria.d;
+  if (ultVit) {
+    var diasV = diasAtras(ultVit.d);
+    var dStrV = diasV !== null ? 'há ' + diasV + ' dia' + (diasV !== 1 ? 's' : '') : ultVit.d;
     linhas.push('');
-    linhas.push('✅ Última vitória: ' + ultimaVitoria.p + ' (' + dStr + ')' + (ultimaVitoria.c ? ' — ' + ultimaVitoria.c : ''));
+    linhas.push('✅ Última vitória: ' + ultVit.p + ' (' + dStrV + ')' + (ultVit.c ? ' — ' + ultVit.c : ''));
   }
-  if (ultimaDerrota) {
-    var diasD = diasAtras(ultimaDerrota.d);
-    var dStrD = diasD !== null ? 'há ' + diasD + ' dia' + (diasD !== 1 ? 's' : '') : ultimaDerrota.d;
-    linhas.push('❌ Última derrota: ' + ultimaDerrota.p + ' (' + dStrD + ')' + (ultimaDerrota.c ? ' — ' + ultimaDerrota.c : ''));
+  if (ultDer) {
+    var diasD = diasAtras(ultDer.d);
+    var dStrD = diasD !== null ? 'há ' + diasD + ' dia' + (diasD !== 1 ? 's' : '') : ultDer.d;
+    linhas.push('❌ Última derrota: ' + ultDer.p + ' (' + dStrD + ')' + (ultDer.c ? ' — ' + ultDer.c : ''));
   }
 
   if (invictos >= 2) {
@@ -856,12 +881,13 @@ function gerarTextoTweet(adv, dados) {
 
   linhas.push('');
   linhas.push('#Corinthians #FielTorcida');
+  linhas.push('Acesse www.numerosfieis.com.br');
   return linhas.join('\n');
 }
 
 function compartilharDetalhes() {
-  if (!dadosConfronto || !advAtual) return;
-  var texto = gerarTextoTweet(advAtual, dadosConfronto);
+  if (!jogosSorted.length || !advAtual) return;
+  var texto = gerarTextoTweet(advAtual, jogosSorted);
   var url = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(texto);
   window.open(url, '_blank', 'noopener,noreferrer,width=600,height=500');
 }
