@@ -13,6 +13,7 @@ let paginaAtual = 1;
 let chartInstance = null;
 let chartCompInstance = null;
 let chartArtilheirosInstance = null;
+let chartReiGolsInstance = null;
 const itensPorPagina = 50;
 let metricaAtual = "aproveitamento";
 let sortColTec = 'jogos';
@@ -1038,6 +1039,7 @@ function renderArtilheiros(jogos) {
   fillLista('dash-art-total-lista', top5Total);
 
   renderizarGraficoArtilheiros();
+  renderizarGraficoReiDosGols();
 }
 
 // =====================================================================
@@ -1113,6 +1115,96 @@ function renderizarGraficoArtilheiros() {
 }
 
 // =====================================================================
+// GRÁFICO REI DOS GOLS — MELHOR ARTILHEIRO POR ANO
+// =====================================================================
+function renderizarGraficoReiDosGols() {
+  var el = document.getElementById('graficoReiDosGols');
+  if (!el) return;
+
+  // Acumula gols por ano → jogador
+  var anoJogadorGols = {};
+  dadosFiltrados.forEach(function(j) {
+    var ano = parseInt(j.a);
+    if (!ano) return;
+    if (!anoJogadorGols[ano]) anoJogadorGols[ano] = {};
+    (golsByDate[j.d] || []).forEach(function(g) {
+      if (!g.gol) return;
+      var chave = g.gol + '|' + (g.pos || '') + '|' + (g.pais || '');
+      anoJogadorGols[ano][chave] = (anoJogadorGols[ano][chave] || 0) + 1;
+    });
+  });
+
+  var anos = Object.keys(anoJogadorGols).map(Number).sort(function(a, b) { return a - b; });
+  if (!anos.length) {
+    if (chartReiGolsInstance) { chartReiGolsInstance.destroy(); chartReiGolsInstance = null; }
+    return;
+  }
+
+  var valores = [];
+  var topJogadores = [];
+  var rotuloDatalabel = [];
+
+  anos.forEach(function(ano) {
+    var mapa = anoJogadorGols[ano];
+    var maximo = Math.max.apply(null, Object.values(mapa));
+    var vencedores = Object.keys(mapa)
+      .filter(function(k) { return mapa[k] === maximo; })
+      .map(function(k) { return { nome: k.split('|')[0], gols: maximo }; });
+    valores.push(maximo);
+    topJogadores.push(vencedores);
+    rotuloDatalabel.push(vencedores.length > 1 ? maximo + ' ⚖' : String(maximo));
+  });
+
+  var ctx = el.getContext('2d');
+  if (chartReiGolsInstance) chartReiGolsInstance.destroy();
+  chartReiGolsInstance = new Chart(ctx, {
+    type: 'bar',
+    plugins: [ChartDataLabels],
+    data: {
+      labels: anos,
+      datasets: [{
+        data: valores,
+        backgroundColor: anos.map(function(_, i) {
+          return topJogadores[i].length > 1 ? '#7c3aed' : '#18181b';
+        }),
+        borderRadius: 3
+      }]
+    },
+    options: {
+      responsive: true,
+      layout: { padding: { top: 28 } },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            title: function(items) { return 'Ano ' + items[0].label; },
+            label: function(item) {
+              var jogadores = topJogadores[item.dataIndex];
+              if (jogadores.length === 1) {
+                return jogadores[0].nome + ' — ' + jogadores[0].gols + ' gol' + (jogadores[0].gols !== 1 ? 's' : '');
+              }
+              var linhas = ['⚖ Empate em ' + jogadores[0].gols + ' gols:'];
+              jogadores.forEach(function(j) { linhas.push('  ' + j.nome); });
+              return linhas;
+            }
+          }
+        },
+        datalabels: {
+          anchor: 'end', align: 'end', offset: 2,
+          color: '#18181b',
+          font: { weight: '700', size: 10 },
+          formatter: function(_, ctx) { return rotuloDatalabel[ctx.dataIndex]; }
+        }
+      },
+      scales: {
+        y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: 'rgba(0,0,0,0.05)' } },
+        x: { grid: { display: false }, ticks: { font: { size: 10 } } }
+      }
+    }
+  });
+}
+
+// =====================================================================
 // COMPARTILHAR ARTILHEIROS NO X (Twitter)
 // =====================================================================
 function compartilharArtilheiros(tipo) {
@@ -1160,6 +1252,7 @@ async function atualizarDados() {
   if (chartInstance)          { chartInstance.destroy();          chartInstance = null; }
   if (chartCompInstance)      { chartCompInstance.destroy();      chartCompInstance = null; }
   if (chartArtilheirosInstance){ chartArtilheirosInstance.destroy(); chartArtilheirosInstance = null; }
+  if (chartReiGolsInstance)    { chartReiGolsInstance.destroy();     chartReiGolsInstance = null; }
 
   const overlay = document.getElementById('loading-overlay');
   if (overlay) {
