@@ -1134,11 +1134,17 @@ function renderizarGraficoReiDosGols() {
     });
   });
 
-  var anos = Object.keys(anoJogadorGols).map(Number).sort(function(a, b) { return a - b; });
-  if (!anos.length) {
+  var anosComDados = Object.keys(anoJogadorGols).map(Number).sort(function(a, b) { return a - b; });
+  if (!anosComDados.length) {
     if (chartReiGolsInstance) { chartReiGolsInstance.destroy(); chartReiGolsInstance = null; }
     return;
   }
+
+  // Gera intervalo contínuo do primeiro ao último ano com dados
+  var anoMin = anosComDados[0];
+  var anoMax = anosComDados[anosComDados.length - 1];
+  var anos = [];
+  for (var y = anoMin; y <= anoMax; y++) anos.push(y);
 
   var valores = [];
   var topJogadores = [];
@@ -1146,6 +1152,12 @@ function renderizarGraficoReiDosGols() {
 
   anos.forEach(function(ano) {
     var mapa = anoJogadorGols[ano];
+    if (!mapa || !Object.keys(mapa).length) {
+      valores.push(0);
+      topJogadores.push([]);
+      rotuloDatalabel.push('');
+      return;
+    }
     var maximo = Math.max.apply(null, Object.values(mapa));
     var vencedores = Object.keys(mapa)
       .filter(function(k) { return mapa[k] === maximo; })
@@ -1180,6 +1192,7 @@ function renderizarGraficoReiDosGols() {
             title: function(items) { return 'Ano ' + items[0].label; },
             label: function(item) {
               var jogadores = topJogadores[item.dataIndex];
+              if (!jogadores || !jogadores.length) return 'Sem dados';
               if (jogadores.length === 1) {
                 return jogadores[0].nome + ' — ' + jogadores[0].gols + ' gol' + (jogadores[0].gols !== 1 ? 's' : '');
               }
