@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Editor de Dados — Números Fieis</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="auth.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #f1f1f3;
+      color: #18181b;
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+    }
+
+    /* HEADER */
+    header {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      background: #fff; border-bottom: 1px solid #e4e4e7;
+      padding: 0 28px; height: 58px;
+      display: flex; align-items: center; gap: 12px;
+    }
+    .logo { font-size: 1.05rem; font-weight: 900; letter-spacing: -0.5px; color: #18181b; text-decoration: none; }
+    .logo span { color: #52525b; font-weight: 600; }
+    .back-link {
+      margin-left: auto;
+      font-size: 0.75rem; color: #71717a; text-decoration: none;
+      padding: 6px 12px; border: 1px solid #e4e4e7; border-radius: 8px;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .back-link:hover { color: #18181b; border-color: #a1a1aa; }
+
+    /* MAIN */
+    main { padding: 78px 20px 60px; max-width: 1100px; margin: 0 auto; }
+
+    /* PASSWORD SCREEN */
+    .pwd-screen {
+      min-height: calc(100vh - 120px);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .pwd-card {
+      background: #fff; border: 1px solid #e4e4e7; border-radius: 18px;
+      padding: 44px 36px; width: 100%; max-width: 380px; text-align: center;
+    }
+    .pwd-icon { font-size: 2.8rem; margin-bottom: 18px; }
+    .pwd-title { font-size: 1.1rem; font-weight: 900; letter-spacing: -0.4px; margin-bottom: 6px; }
+    .pwd-sub { font-size: 0.78rem; color: #71717a; margin-bottom: 26px; line-height: 1.5; }
+
+    /* CARDS */
+    .card {
+      background: #fff; border: 1px solid #e4e4e7;
+      border-radius: 16px; padding: 26px 28px; margin-bottom: 14px;
+    }
+    .card-label {
+      font-size: 0.6rem; font-weight: 700; letter-spacing: 2px;
+      text-transform: uppercase; color: #a1a1aa; margin-bottom: 18px;
+    }
+
+    /* PAGE HEADER */
+    .page-header {
+      display: flex; align-items: center; gap: 14px;
+      margin-bottom: 18px; flex-wrap: wrap;
+    }
+    .page-title { font-size: 1.35rem; font-weight: 900; letter-spacing: -0.5px; }
+    .mode-badge {
+      display: inline-flex; align-items: center; padding: 4px 12px;
+      border-radius: 20px; font-size: 0.62rem; font-weight: 700;
+      letter-spacing: 1px; text-transform: uppercase;
+    }
+    .badge-new  { background: #dbeafe; color: #1d4ed8; }
+    .badge-edit { background: #fef9c3; color: #a16207; }
+
+    /* FORM */
+    .form-row { display: grid; gap: 14px; margin-bottom: 14px; }
+    .form-row:last-child { margin-bottom: 0; }
+    .cols-2 { grid-template-columns: 1fr 1fr; }
+    .cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+    .cols-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+    .cols-5 { grid-template-columns: 1fr 1fr 1fr 1fr 1fr; }
+
+    .form-group { display: flex; flex-direction: column; gap: 5px; }
+    .form-label {
+      font-size: 0.65rem; font-weight: 700; letter-spacing: 0.5px;
+      text-transform: uppercase; color: #71717a;
+    }
+    .form-control {
+      padding: 8px 12px; border: 1px solid #e4e4e7; border-radius: 8px;
+      font-family: inherit; font-size: 0.82rem; color: #18181b;
+      background: #fff; outline: none; transition: border-color 0.15s;
+      width: 100%;
+    }
+    .form-control:focus { border-color: #a1a1aa; }
+    .form-control:disabled { background: #f4f4f5; color: #71717a; cursor: default; }
+    select.form-control { cursor: pointer; }
+
+    /* SEARCH */
+    .search-row { display: flex; gap: 10px; align-items: flex-end; }
+    .search-row .form-group { flex: 1; }
+    .search-status { font-size: 0.72rem; margin-top: 10px; min-height: 16px; }
+    .st-ok   { color: #16a34a; }
+    .st-err  { color: #dc2626; }
+    .st-info { color: #71717a; }
+
+    /* SECTION DIVIDER */
+    .section-divider {
+      font-size: 0.58rem; font-weight: 700; letter-spacing: 2px;
+      text-transform: uppercase; color: #a1a1aa;
+      border-bottom: 1px solid #f0f0f2; padding-bottom: 10px;
+      margin: 22px 0 16px;
+    }
+    .section-divider:first-child { margin-top: 0; }
+
+    /* GOL TABLE */
+    .gol-header {
+      display: flex; align-items: center;
+      justify-content: space-between; margin-bottom: 14px;
+    }
+    .table-wrap { overflow-x: auto; }
+    table.gol-table {
+      width: 100%; border-collapse: collapse;
+      font-size: 0.73rem; min-width: 1060px;
+    }
+    .gol-table th {
+      background: #18181b; color: #fff;
+      padding: 8px 6px; font-size: 0.56rem;
+      font-weight: 700; letter-spacing: 1px;
+      text-transform: uppercase; white-space: nowrap;
+      text-align: center;
+    }
+    .gol-table th:first-child { text-align: center; width: 32px; }
+    .gol-table td { padding: 5px 4px; border-bottom: 1px solid #f4f4f5; vertical-align: middle; }
+    .gol-table .form-control { padding: 5px 8px; font-size: 0.75rem; }
+    .gol-table td.center { text-align: center; }
+    .gol-empty {
+      text-align: center; color: #a1a1aa;
+      font-size: 0.78rem; font-style: italic; padding: 22px;
+    }
+    .btn-remove {
+      background: none; border: none; color: #dc2626;
+      cursor: pointer; font-size: 1.1rem; padding: 2px 7px;
+      border-radius: 6px; line-height: 1;
+    }
+    .btn-remove:hover { background: #fef2f2; }
+    .row-num { font-size: 0.65rem; color: #a1a1aa; text-align: center; padding: 0 8px; }
+
+    /* BUTTONS */
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 9px 18px; border-radius: 10px; border: none;
+      font-family: inherit; font-size: 0.78rem; font-weight: 700;
+      cursor: pointer; transition: opacity 0.15s, background 0.15s;
+      white-space: nowrap;
+    }
+    .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+    .btn-primary { background: #18181b; color: #fff; }
+    .btn-primary:not(:disabled):hover { opacity: 0.82; }
+    .btn-secondary {
+      background: #f4f4f5; color: #18181b;
+      border: 1px solid #e4e4e7;
+    }
+    .btn-secondary:not(:disabled):hover { background: #e9e9eb; }
+    .btn-sm { padding: 6px 13px; font-size: 0.72rem; }
+    .btn-danger { background: #dc2626; color: #fff; }
+    .btn-danger:not(:disabled):hover { opacity: 0.85; }
+
+    /* ACTIONS */
+    .actions-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .save-status { font-size: 0.75rem; min-height: 20px; font-weight: 600; }
+
+    /* FOOTER */
+    .site-footer {
+      background: #fff; border-top: 1px solid #e4e4e7;
+      padding: 20px 28px; text-align: center;
+    }
+    .footer-copy { font-size: 0.68rem; color: #a1a1aa; }
+
+    /* LOADING INDICATOR */
+    .base-loading {
+      font-size: 0.68rem; color: #a1a1aa; font-style: italic;
+      padding: 4px 0; min-height: 18px;
+    }
+
+    @media (max-width: 640px) {
+      .cols-2, .cols-3, .cols-4, .cols-5 { grid-template-columns: 1fr; }
+      .search-row { flex-direction: column; align-items: stretch; }
+      .actions-row { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Datalists globais (preenchidos via JS) -->
+<datalist id="dl-adversario"></datalist>
+<datalist id="dl-competicao"></datalist>
+<datalist id="dl-estadio"></datalist>
+<datalist id="dl-tecnico"></datalist>
+<datalist id="dl-jogador-gol"></datalist>
+<datalist id="dl-camisa-gol"></datalist>
+<datalist id="dl-posicao-gol"></datalist>
+<datalist id="dl-pais-gol"></datalist>
+<datalist id="dl-jogador-assist"></datalist>
+<datalist id="dl-posicao-assist"></datalist>
+<datalist id="dl-pais-assist"></datalist>
+
+<header>
+  <a href="index.html" class="logo">Números Fieis <span>- Corinthians</span></a>
+  <div id="auth-header" style="margin-left:auto; margin-right:12px;"></div>
+  <a href="index.html" class="back-link">← Menu</a>
+</header>
+
+<main>
+
+  <!-- ── TELA DE ACESSO ── -->
+  <div id="pwd-screen" class="pwd-screen">
+    <div class="pwd-card">
+      <div class="pwd-icon">⏳</div>
+      <div class="pwd-title">Verificando acesso…</div>
+      <div class="pwd-sub">Aguarde enquanto verificamos sua sessão.</div>
+    </div>
+  </div>
+
+  <!-- ── TELA EDITOR ── -->
+  <div id="admin-screen" style="display:none">
+
+    <div class="page-header">
+      <div class="page-title">Editor de Dados</div>
+      <span id="mode-badge" class="mode-badge badge-new">Novo Registro</span>
+      <span id="base-loading" class="base-loading">Carregando valores da base…</span>
+    </div>
+
+    <!-- ── BUSCA ── -->
+    <div class="card">
+      <div class="card-label">Buscar / Carregar Registro Existente</div>
+      <div class="search-row">
+        <div class="form-group">
+          <label class="form-label">Data do Jogo</label>
+          <input type="date" id="busca-data" class="form-control">
+        </div>
+        <button class="btn btn-secondary" onclick="buscarJogo()">Buscar</button>
+        <button class="btn btn-secondary" onclick="novoRegistro()">Limpar / Novo</button>
+      </div>
+      <div id="busca-status" class="search-status st-info"></div>
+    </div>
+
+    <!-- ── JOGO (Master) ── -->
+    <div class="card">
+      <div class="card-label">Dados do Jogo — Tabela JOGO</div>
+
+      <!-- Linha 1: Identificação -->
+      <div class="section-divider">Identificação</div>
+      <div class="form-row cols-4">
+        <div class="form-group" style="grid-column: span 2">
+          <label class="form-label">Data *</label>
+          <input type="date" id="j-data" class="form-control" oninput="onDataChange()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Ano Competição</label>
+          <input type="text" id="j-ano" class="form-control" disabled placeholder="Auto">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Mando</label>
+          <select id="j-mando" class="form-control">
+            <option value="">—</option>
+            <option>CASA</option>
+            <option>FORA</option>
+            <option>NEUTRO</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Linha 2: Adversário e Placar -->
+      <div class="section-divider">Adversário e Placar</div>
+      <div class="form-row cols-4">
+        <div class="form-group" style="grid-column: span 2">
+          <label class="form-label">Time Adversário *</label>
+          <input type="text" id="j-adversario" class="form-control" list="dl-adversario" placeholder="Ex: PALMEIRAS-SP">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Gols Corinthians *</label>
+          <input type="number" id="j-gol-cor" class="form-control" min="0" placeholder="0" oninput="calcResultado()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Gols Adversário *</label>
+          <input type="number" id="j-gol-adv" class="form-control" min="0" placeholder="0" oninput="calcResultado()">
+        </div>
+      </div>
+
+      <div class="form-row cols-4">
+        <div class="form-group">
+          <label class="form-label">Resultado</label>
+          <input type="text" id="j-resultado" class="form-control" disabled placeholder="Auto">
+        </div>
+        <div class="form-group" style="grid-column: span 3">
+          <label class="form-label">Competição</label>
+          <input type="text" id="j-comp" class="form-control" list="dl-competicao" placeholder="Ex: BRASILEIRO">
+        </div>
+      </div>
+
+      <!-- Linha 3: Local e Técnico -->
+      <div class="section-divider">Local e Comissão</div>
+      <div class="form-row cols-2">
+        <div class="form-group">
+          <label class="form-label">Estádio</label>
+          <input type="text" id="j-estadio" class="form-control" list="dl-estadio" placeholder="Ex: NEO QUIMICA ARENA">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Técnico Corinthians</label>
+          <input type="text" id="j-tecnico" class="form-control" list="dl-tecnico" placeholder="Ex: RAMÓN DÍAZ">
+        </div>
+      </div>
+
+      <!-- Linha 4: Link -->
+      <div class="section-divider">Mídia</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Link (YouTube / Highlight)</label>
+          <input type="url" id="j-link" class="form-control" placeholder="https://...">
+        </div>
+      </div>
+    </div>
+
+    <!-- ── GOL (Detail) ── -->
+    <div class="card">
+      <div class="gol-header">
+        <div class="card-label" style="margin-bottom:0">Gols do Jogo — Tabela GOL</div>
+        <button class="btn btn-secondary btn-sm" onclick="adicionarLinha()">+ Adicionar Gol</button>
+      </div>
+      <div class="table-wrap">
+        <table class="gol-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Jogador Gol</th>
+              <th>Camisa</th>
+              <th>Posição</th>
+              <th>País</th>
+              <th>Pênalti</th>
+              <th>Banco</th>
+              <th>Jogador Assist.</th>
+              <th>Pos. Assist.</th>
+              <th>País Assist.</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="gol-tbody">
+            <tr><td colspan="11" class="gol-empty">Nenhum gol adicionado. Clique em "+ Adicionar Gol".</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── AÇÕES ── -->
+    <div class="card">
+      <div class="actions-row">
+        <button id="btn-salvar" class="btn btn-primary" onclick="salvar()">💾 Salvar Jogo</button>
+        <button class="btn btn-danger btn-sm" id="btn-excluir" onclick="excluirJogo()" style="display:none">🗑 Excluir Jogo</button>
+        <button class="btn btn-secondary" onclick="novoRegistro()">Limpar Formulário</button>
+        <div id="save-status" class="save-status st-info"></div>
+      </div>
+    </div>
+
+  </div><!-- /admin-screen -->
+</main>
+
+<footer class="site-footer">
+  <p class="footer-copy">© <span id="footer-year"></span> Números Fieis — Editor de Dados</p>
+</footer>
+
+<script>
+// ============================================================
+// SUPABASE
+// ============================================================
+const db = authDB;
+
+document.getElementById('footer-year').textContent = new Date().getFullYear();
+
+// ============================================================
+// CONTROLE DE ACESSO
+// ============================================================
+onAuthReady(function ({ user, nivel }) {
+  const pwdScreen   = document.getElementById('pwd-screen');
+  const adminScreen = document.getElementById('admin-screen');
+
+  if (!user) {
+    pwdScreen.innerHTML =
+      '<div class="pwd-card">' +
+      '<div class="pwd-icon">🔐</div>' +
+      '<div class="pwd-title">Editor de Dados</div>' +
+      '<div class="pwd-sub">Faça login com sua conta Google para continuar.</div>' +
+      '<button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:8px" onclick="entrarComGoogle()">Entrar com Google</button>' +
+      '</div>';
+  } else if (nivel !== 'admin') {
+    pwdScreen.innerHTML =
+      '<div class="pwd-card">' +
+      '<div class="pwd-icon">🚫</div>' +
+      '<div class="pwd-title">Acesso Negado</div>' +
+      '<div class="pwd-sub">Sua conta não tem permissão de administrador.</div>' +
+      '<button class="btn btn-secondary" style="width:100%;justify-content:center;margin-top:8px" onclick="sair()">Sair</button>' +
+      '</div>';
+  } else {
+    pwdScreen.style.display  = 'none';
+    adminScreen.style.display = '';
+    carregarValoresBase();
+  }
+});
+
+// ============================================================
+// ESTADO
+// ============================================================
+let isEditMode   = false;
+let dataOriginal = null;
+let golRowCount  = 0;
+
+// ============================================================
+// CARREGAR VALORES DISTINTOS DA BASE (datalists)
+// ============================================================
+async function carregarValoresBase() {
+  const loadingEl = document.getElementById('base-loading');
+  try {
+    // Busca valores distintos das colunas da tabela JOGO
+    const [
+      resAdv, resComp, resEst, resTec,
+      resJogGol, resCamisa, resPosGol, resPaisGol,
+      resJogAss, resPosAss, resPaisAss
+    ] = await Promise.all([
+      db.from('JOGO').select('TIME ADVERSARIO').order('TIME ADVERSARIO'),
+      db.from('JOGO').select('COMPETIÇÃO').order('COMPETIÇÃO'),
+      db.from('JOGO').select('ESTADIO').order('ESTADIO'),
+      db.from('JOGO').select('TECNICO CORINTHIANS').order('TECNICO CORINTHIANS'),
+      db.from('GOL').select('JOGADOR GOL').order('JOGADOR GOL'),
+      db.from('GOL').select('CAMISA GOL').order('CAMISA GOL'),
+      db.from('GOL').select('POSIÇÃO').order('POSIÇÃO'),
+      db.from('GOL').select('PAIS').order('PAIS'),
+      db.from('GOL').select('JOGADOR ASSISTÊNCIA').order('JOGADOR ASSISTÊNCIA'),
+      db.from('GOL').select('POSICAO ASSISTENCIA').order('POSICAO ASSISTENCIA'),
+      db.from('GOL').select('PAIS ASSISTENCIA').order('PAIS ASSISTENCIA'),
+    ]);
+
+    const preencher = (dlId, rows, col) => {
+      const dl = document.getElementById(dlId);
+      if (!dl || !rows) return;
+      const unicos = [...new Set(rows.map(r => r[col]).filter(Boolean))].sort();
+      dl.innerHTML = unicos.map(v => `<option value="${v.replace(/"/g,'&quot;')}">`).join('');
+    };
+
+    preencher('dl-adversario',   resAdv.data,    'TIME ADVERSARIO');
+    preencher('dl-competicao',   resComp.data,   'COMPETIÇÃO');
+    preencher('dl-estadio',      resEst.data,    'ESTADIO');
+    preencher('dl-tecnico',      resTec.data,    'TECNICO CORINTHIANS');
+    preencher('dl-jogador-gol',  resJogGol.data, 'JOGADOR GOL');
+    preencher('dl-camisa-gol',   resCamisa.data, 'CAMISA GOL');
+    preencher('dl-posicao-gol',  resPosGol.data, 'POSIÇÃO');
+    preencher('dl-pais-gol',     resPaisGol.data,'PAIS');
+    preencher('dl-jogador-assist',resJogAss.data,'JOGADOR ASSISTÊNCIA');
+    preencher('dl-posicao-assist',resPosAss.data,'POSICAO ASSISTENCIA');
+    preencher('dl-pais-assist',  resPaisAss.data,'PAIS ASSISTENCIA');
+
+    loadingEl.textContent = '';
+  } catch (e) {
+    loadingEl.textContent = '⚠ Erro ao carregar valores: ' + e.message;
+  }
+}
+
+// ============================================================
+// UTILITÁRIOS DE FORMULÁRIO
+// ============================================================
+function onDataChange() {
+  const v = document.getElementById('j-data').value;
+  document.getElementById('j-ano').value = v ? v.split('-')[0] : '';
+  calcResultado();
+}
+
+function calcResultado() {
+  const cor = document.getElementById('j-gol-cor').value;
+  const adv = document.getElementById('j-gol-adv').value;
+  if (cor === '' || adv === '') { document.getElementById('j-resultado').value = ''; return; }
+  const c = parseInt(cor), a = parseInt(adv);
+  document.getElementById('j-resultado').value =
+    c > a ? 'VITORIA' : c === a ? 'EMPATE' : 'DERROTA';
+}
+
+function setSearchStatus(msg, tipo) {
+  const el = document.getElementById('busca-status');
+  el.textContent = msg;
+  el.className = 'search-status ' + tipo;
+}
+
+function setSaveStatus(msg, tipo) {
+  const el = document.getElementById('save-status');
+  el.textContent = msg;
+  el.className = 'save-status ' + tipo;
+}
+
+function parseInputDate(iso) {
+  const [y, m, d] = iso.split('-');
+  return { iso, br: `${d}/${m}/${y}` };
+}
+
+async function queryByData(table, dataISO, dataBR) {
+  let { data, error } = await db.from(table).select('*').eq('DATA', dataISO);
+  if (error) throw error;
+  if (!data || data.length === 0) {
+    const res2 = await db.from(table).select('*').eq('DATA', dataBR);
+    if (res2.error) throw res2.error;
+    data = res2.data;
+  }
+  return data || [];
+}
+
+// ============================================================
+// LINHAS GOL (Detail)
+// ============================================================
+function adicionarLinha(dados = {}) {
+  golRowCount++;
+  const tbody = document.getElementById('gol-tbody');
+
+  const emptyRow = tbody.querySelector('tr:has(.gol-empty)');
+  if (emptyRow) emptyRow.remove();
+
+  const n = golRowCount;
+  const tr = document.createElement('tr');
+  tr.dataset.row = n;
+
+  // input com datalist
+  const inp = (id, val = '', list = '', w = '') =>
+    `<input type="text" class="form-control" id="g-${id}-${n}" value="${String(val).replace(/"/g, '&quot;')}"${list ? ` list="${list}"` : ''}${w ? ` style="width:${w}"` : ''}>`;
+
+  const chk = (id, val = '') =>
+    `<input type="checkbox" id="g-${id}-${n}" ${(val === 'SIM' || val === 'NÃO' && false) ? '' : val === 'SIM' ? 'checked' : ''} style="width:18px;height:18px;cursor:pointer">`;
+
+  const dc = k => dados[k] || '';
+
+  tr.innerHTML = `
+    <td class="row-num">${n}</td>
+    <td>${inp('jogador',    dc('JOGADOR GOL'),         'dl-jogador-gol',   '148px')}</td>
+    <td>${inp('camisa',     dc('CAMISA GOL'),          'dl-camisa-gol',    '52px')}</td>
+    <td>${inp('posicao',    dc('POSIÇÃO'),             'dl-posicao-gol',   '88px')}</td>
+    <td>${inp('pais',       dc('PAIS'),                'dl-pais-gol',      '80px')}</td>
+    <td class="center">${chk('penalti', dc('PENALTI'))}</td>
+    <td class="center">${chk('banco',   dc('BANCO'))}</td>
+    <td>${inp('assistencia',dc('JOGADOR ASSISTÊNCIA'), 'dl-jogador-assist','148px')}</td>
+    <td>${inp('pos-assist', dc('POSICAO ASSISTENCIA'), 'dl-posicao-assist', '88px')}</td>
+    <td>${inp('pais-assist',dc('PAIS ASSISTENCIA'),    'dl-pais-assist',   '80px')}</td>
+    <td class="center"><button class="btn-remove" onclick="removerLinha(this)" title="Remover">×</button></td>
+  `;
+
+  // Aplica checked corretamente (o atributo checked no template não funciona pra valor dinâmico)
+  tbody.appendChild(tr);
+  const penEl = document.getElementById(`g-penalti-${n}`);
+  const banEl = document.getElementById(`g-banco-${n}`);
+  if (penEl) penEl.checked = dc('PENALTI') === 'SIM';
+  if (banEl) banEl.checked = dc('BANCO')   === 'SIM';
+}
+
+function removerLinha(btn) {
+  btn.closest('tr').remove();
+  const tbody = document.getElementById('gol-tbody');
+  if (!tbody.querySelector('tr[data-row]')) {
+    tbody.innerHTML = '<tr><td colspan="11" class="gol-empty">Nenhum gol adicionado. Clique em "+ Adicionar Gol".</td></tr>';
+  }
+}
+
+function coletarGols(data) {
+  const rows = document.querySelectorAll('#gol-tbody tr[data-row]');
+  return Array.from(rows).map(tr => {
+    const n = tr.dataset.row;
+    const g = id => document.getElementById(`g-${id}-${n}`);
+    const val = id => g(id)?.value.trim() || null;
+    return {
+      "DATA":                data,
+      "JOGADOR GOL":         val('jogador'),
+      "CAMISA GOL":          val('camisa'),
+      "POSIÇÃO":             val('posicao'),
+      "PAIS":                val('pais'),
+      "PENALTI":             g('penalti')?.checked ? 'SIM' : 'NÃO',
+      "BANCO":               g('banco')?.checked   ? 'SIM' : 'NÃO',
+      "JOGADOR ASSISTÊNCIA": val('assistencia'),
+      "POSICAO ASSISTENCIA": val('pos-assist'),
+      "PAIS ASSISTENCIA":    val('pais-assist'),
+    };
+  }).filter(r => r["JOGADOR GOL"]);
+}
+
+// ============================================================
+// BUSCAR JOGO
+// ============================================================
+async function buscarJogo() {
+  const inputVal = document.getElementById('busca-data').value;
+  if (!inputVal) { setSearchStatus('Informe uma data para buscar.', 'st-err'); return; }
+
+  setSearchStatus('Buscando…', 'st-info');
+
+  try {
+    const { iso, br } = parseInputDate(inputVal);
+
+    const jogoRows = await queryByData('JOGO', iso, br);
+    if (!jogoRows.length) {
+      setSearchStatus(`Nenhum jogo encontrado para ${br}.`, 'st-err');
+      return;
+    }
+
+    const j = jogoRows[0];
+    dataOriginal = j['DATA'] ?? j.data;
+
+    let dataISO = j['DATA'] ?? j.data;
+    if (typeof dataISO === 'string' && dataISO.includes('/')) {
+      const [d, m, y] = dataISO.split('/');
+      dataISO = `${y}-${m}-${d}`;
+    } else if (dataISO && typeof dataISO === 'object') {
+      dataISO = new Date(dataISO).toISOString().slice(0, 10);
+    }
+
+    const v = (a, b) => (a !== undefined && a !== null) ? a : (b ?? '');
+    document.getElementById('j-data').value        = dataISO || inputVal;
+    document.getElementById('j-mando').value       = v(j['MANDO'],               j.mando)                || '';
+    document.getElementById('j-adversario').value  = v(j['TIME ADVERSARIO'],     j.time_adversario)      || '';
+    document.getElementById('j-gol-cor').value     = v(j['GOL CORINTHIANS'],     j.gol_corinthians)      ?? '';
+    document.getElementById('j-gol-adv').value     = v(j['GOL ADVERSARIO'],      j.gol_adversario)       ?? '';
+    document.getElementById('j-resultado').value   = v(j['RESULTADO'],           j.resultado)            || '';
+    document.getElementById('j-comp').value        = v(j['COMPETIÇÃO'],          j.competicao)           || '';
+    document.getElementById('j-estadio').value     = v(j['ESTADIO'],             j.estadio)              || '';
+    document.getElementById('j-tecnico').value     = v(j['TECNICO CORINTHIANS'], j.tecnico_corinthians)  || '';
+    document.getElementById('j-link').value        = v(j['LINK'],                j.link)                 || '';
+    document.getElementById('j-ano').value         = v(j['ANO COMPETICAO'],      j.ano_competicao)       || '';
+
+    const golRows = await queryByData('GOL', dataOriginal, br);
+    document.getElementById('gol-tbody').innerHTML =
+      '<tr><td colspan="11" class="gol-empty">Nenhum gol adicionado.</td></tr>';
+    golRowCount = 0;
+    golRows.forEach(g => adicionarLinha(g));
+
+    isEditMode = true;
+    document.getElementById('mode-badge').className  = 'mode-badge badge-edit';
+    document.getElementById('mode-badge').textContent = 'Editar Registro';
+    document.getElementById('btn-excluir').style.display = '';
+
+    setSearchStatus(
+      `✓ Jogo carregado: ${j['TIME ADVERSARIO'] ?? ''} — ${j['RESULTADO'] ?? ''} (${golRows.length} gol${golRows.length !== 1 ? 's' : ''})`,
+      'st-ok'
+    );
+  } catch (err) {
+    setSearchStatus('Erro: ' + err.message, 'st-err');
+  }
+}
+
+// ============================================================
+// LIMPAR / NOVO
+// ============================================================
+function novoRegistro() {
+  isEditMode   = false;
+  dataOriginal = null;
+  golRowCount  = 0;
+
+  ['j-data','j-mando','j-adversario','j-gol-cor','j-gol-adv',
+   'j-resultado','j-comp','j-estadio','j-tecnico','j-link','j-ano',
+   'busca-data'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+
+  document.getElementById('gol-tbody').innerHTML =
+    '<tr><td colspan="11" class="gol-empty">Nenhum gol adicionado. Clique em "+ Adicionar Gol".</td></tr>';
+  document.getElementById('mode-badge').className  = 'mode-badge badge-new';
+  document.getElementById('mode-badge').textContent = 'Novo Registro';
+  document.getElementById('btn-excluir').style.display = 'none';
+  setSearchStatus('', 'st-info');
+  setSaveStatus('', 'st-info');
+}
+
+// ============================================================
+// SALVAR
+// ============================================================
+async function salvar() {
+  const dataInput = document.getElementById('j-data').value;
+  if (!dataInput) { setSaveStatus('⚠ Informe a data do jogo.', 'st-err'); return; }
+
+  const golCor = document.getElementById('j-gol-cor').value;
+  const golAdv = document.getElementById('j-gol-adv').value;
+  if (golCor === '' || golAdv === '') {
+    setSaveStatus('⚠ Informe os gols de ambas as equipes.', 'st-err');
+    return;
+  }
+
+  const btn = document.getElementById('btn-salvar');
+  btn.disabled = true;
+  setSaveStatus('Salvando…', 'st-info');
+
+  const jogoData = {
+    "DATA":                dataInput,
+    "MANDO":               document.getElementById('j-mando').value.trim()       || null,
+    "TIME ADVERSARIO":     document.getElementById('j-adversario').value.trim()  || null,
+    "GOL CORINTHIANS":     Number(golCor),
+    "GOL ADVERSARIO":      Number(golAdv),
+    "RESULTADO":           document.getElementById('j-resultado').value          || null,
+    "COMPETIÇÃO":          document.getElementById('j-comp').value.trim()        || null,
+    "ESTADIO":             document.getElementById('j-estadio').value.trim()     || null,
+    "TECNICO CORINTHIANS": document.getElementById('j-tecnico').value.trim()     || null,
+    "LINK":                document.getElementById('j-link').value.trim()        || null,
+    "ANO COMPETICAO":      dataInput ? Number(dataInput.split('-')[0])           : null,
+  };
+
+  const golLinhas = coletarGols(dataInput);
+
+  try {
+    if (isEditMode && dataOriginal) {
+      const { error: eJogo } = await db.from('JOGO').update(jogoData).eq('DATA', dataOriginal);
+      if (eJogo) throw eJogo;
+
+      const { error: eDel } = await db.from('GOL').delete().eq('DATA', dataOriginal);
+      if (eDel) throw eDel;
+
+      if (dataOriginal !== dataInput) {
+        await db.from('GOL').delete().eq('DATA', dataInput);
+      }
+    } else {
+      const { error: eJogo } = await db.from('JOGO').insert(jogoData);
+      if (eJogo) throw eJogo;
+    }
+
+    if (golLinhas.length > 0) {
+      const { error: eGol } = await db.from('GOL').insert(golLinhas);
+      if (eGol) throw eGol;
+    }
+
+    try {
+      sessionStorage.removeItem('nf_dados_cache');
+      sessionStorage.removeItem('nf_gols_cache');
+    } catch (_) {}
+
+    setSaveStatus(`✓ Jogo salvo com sucesso! (${golLinhas.length} gol${golLinhas.length !== 1 ? 's' : ''})`, 'st-ok');
+
+    dataOriginal = dataInput;
+    isEditMode   = true;
+    document.getElementById('mode-badge').className  = 'mode-badge badge-edit';
+    document.getElementById('mode-badge').textContent = 'Editar Registro';
+    document.getElementById('btn-excluir').style.display = '';
+
+    // Atualiza datalists com possíveis novos valores
+    carregarValoresBase();
+
+  } catch (err) {
+    setSaveStatus('Erro: ' + err.message, 'st-err');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+// ============================================================
+// EXCLUIR JOGO
+// ============================================================
+async function excluirJogo() {
+  if (!isEditMode || !dataOriginal) return;
+  if (!confirm(`Excluir o jogo de ${dataOriginal} e todos os seus gols? Esta ação não pode ser desfeita.`)) return;
+
+  const btn = document.getElementById('btn-excluir');
+  btn.disabled = true;
+  setSaveStatus('Excluindo…', 'st-info');
+
+  try {
+    const { error: eGol } = await db.from('GOL').delete().eq('DATA', dataOriginal);
+    if (eGol) throw eGol;
+
+    const { error: eJogo } = await db.from('JOGO').delete().eq('DATA', dataOriginal);
+    if (eJogo) throw eJogo;
+
+    try {
+      sessionStorage.removeItem('nf_dados_cache');
+      sessionStorage.removeItem('nf_gols_cache');
+    } catch (_) {}
+
+    setSaveStatus('✓ Jogo excluído com sucesso.', 'st-ok');
+    novoRegistro();
+  } catch (err) {
+    setSaveStatus('Erro: ' + err.message, 'st-err');
+    btn.disabled = false;
+  }
+}
+</script>
+</body>
+</html>
