@@ -156,18 +156,17 @@
     .streak-badge.jejum   { border-color: #fecaca; background: #fff5f5; }
     .streak-badge.jejum   .streak-title { color: #b91c1c; }
 
-    /* Botão compartilhar Twitter */
-    .btn-share-twitter {
+    /* Botão gerar imagem */
+    .btn-download-img {
       display: inline-flex; align-items: center; gap: 7px;
-      background: #000; color: #fff;
+      background: #18181b; color: #fff;
       font-size: 0.75rem; font-weight: 700;
       padding: 8px 16px; border-radius: 8px;
-      text-decoration: none; border: none; cursor: pointer;
+      border: none; cursor: pointer;
       font-family: 'Inter', sans-serif;
       transition: background 0.15s; white-space: nowrap;
     }
-    .btn-share-twitter:hover { background: #333; }
-    .btn-share-twitter svg  { width: 14px; height: 14px; fill: currentColor; flex-shrink: 0; }
+    .btn-download-img:hover { background: #3f3f46; }
 
     .btn-share-locked {
       display: inline-flex; align-items: center; gap: 7px;
@@ -821,74 +820,203 @@ function renderArtilheirosSection(adv, jogos) {
   </div>`;
 }
 
-// ── TWITTER / COMPARTILHAR ────────────────────────────────
-var TWITTER_ICON = `<svg viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L1.254 2.25H8.08l4.253 5.622L18.244 2.25zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>`;
+// ── GERAR IMAGEM ──────────────────────────────────────────
+function rrect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
 
-function gerarTextoTweet(adv, sorted) {
-  // Retrospecto: últimos 10 jogos
-  var ultimos = sorted.slice(0, 10);
+function gerarImagemConfronto(adv, sorted) {
+  // ── Stats últimos 10 ──
+  var ult = sorted.slice(0, 10);
   var v = 0, e = 0, d = 0, gp = 0, gc = 0;
-  ultimos.forEach(function(j) {
+  ult.forEach(function(j) {
     var ru = rNorm(j.r);
     if (ru.includes('VITOR')) v++;
     else if (ru.includes('EMPAT')) e++;
     else d++;
-    var pts = placarParts(j.p);
-    gp += pts.pro; gc += pts.con;
+    var p = placarParts(j.p); gp += p.pro; gc += p.con;
   });
-  var total = ultimos.length;
-  var aprov = total > 0 ? Math.round((v * 3 + e) / (total * 3) * 100) : 0;
+  var n     = ult.length;
+  var aprov = n > 0 ? Math.round((v * 3 + e) / (n * 3) * 100) : 0;
   var saldo = gp - gc;
 
-  // Última vitória, última derrota e streak: base completa
+  // ── Histórico completo ──
   var ultVit = sorted.find(function(j) { return rNorm(j.r).includes('VITOR'); });
   var ultDer = sorted.find(function(j) { return rNorm(j.r).includes('DERROT'); });
+  var inv = 0, sem = 0;
+  for (var i = 0; i < sorted.length; i++) { if (!rNorm(sorted[i].r).includes('DERROT')) inv++; else break; }
+  for (var i = 0; i < sorted.length; i++) { if (!rNorm(sorted[i].r).includes('VITOR'))  sem++; else break; }
+  var hasStreak = inv >= 2 || sem >= 2;
 
-  var invictos = 0, semVencer = 0;
-  for (var i = 0; i < sorted.length; i++) {
-    if (!rNorm(sorted[i].r).includes('DERROT')) invictos++; else break;
+  // ── Canvas setup ──
+  var SC  = 2; // retina
+  var W   = 800;
+  var H   = hasStreak ? 586 : 524;
+  var PAD = 36;
+  var FNT = '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+
+  var cv  = document.createElement('canvas');
+  cv.width  = W * SC;
+  cv.height = H * SC;
+  var ctx = cv.getContext('2d');
+  ctx.scale(SC, SC);
+
+  // ── Fundo ──
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, W, H);
+
+  // ── Header ──
+  ctx.fillStyle = '#18181b';
+  ctx.fillRect(0, 0, W, 52);
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 15px ' + FNT;
+  ctx.fillText('NÚMEROS FIEIS', PAD, 33);
+  ctx.fillStyle = '#71717a';
+  ctx.font = '13px ' + FNT;
+  ctx.fillText('· Corinthians', PAD + 134, 33);
+  ctx.fillStyle = '#52525b';
+  ctx.font = '11px ' + FNT;
+  ctx.textAlign = 'right';
+  ctx.fillText('numerosfieis.com.br', W - PAD, 33);
+  ctx.textAlign = 'left';
+
+  // ── Título ──
+  ctx.fillStyle = '#18181b';
+  ctx.font = 'bold 28px ' + FNT;
+  ctx.fillText('Corinthians x ' + adv, PAD, 100);
+  ctx.fillStyle = '#71717a';
+  ctx.font = '13px ' + FNT;
+  ctx.fillText('Retrospecto — últimos ' + n + ' jogos', PAD, 122);
+
+  // ── Linha divisória ──
+  function hline(y) {
+    ctx.strokeStyle = '#e4e4e7'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(PAD, y); ctx.lineTo(W - PAD, y); ctx.stroke();
   }
-  for (var i = 0; i < sorted.length; i++) {
-    if (!rNorm(sorted[i].r).includes('VITOR')) semVencer++; else break;
+  hline(140);
+
+  // ── 3 Grandes números ──
+  var colW = (W - PAD * 2) / 3;
+  function bigStat(col, label, val, color) {
+    var cx = PAD + col * colW + colW / 2;
+    ctx.fillStyle = color;
+    ctx.font = 'bold 54px ' + FNT;
+    ctx.textAlign = 'center';
+    ctx.fillText(String(val), cx, 204);
+    ctx.fillStyle = '#a1a1aa';
+    ctx.font = 'bold 10px ' + FNT;
+    ctx.fillText(label, cx, 220);
+    ctx.textAlign = 'left';
+  }
+  bigStat(0, 'VITÓRIAS',  v, '#2563eb');
+  bigStat(1, 'EMPATES',   e, '#ca8a04');
+  bigStat(2, 'DERROTAS',  d, '#dc2626');
+
+  // ── Caixas secundárias ──
+  var boxY = 236, boxH = 56, boxW = (W - PAD * 2 - 12) / 2;
+  function box(x, label, val, color) {
+    ctx.fillStyle = '#f4f4f5';
+    rrect(ctx, x, boxY, boxW, boxH, 10); ctx.fill();
+    ctx.fillStyle = color;
+    ctx.font = 'bold 24px ' + FNT;
+    ctx.textAlign = 'center';
+    ctx.fillText(val, x + boxW / 2, boxY + 34);
+    ctx.fillStyle = '#71717a';
+    ctx.font = 'bold 9px ' + FNT;
+    ctx.fillText(label, x + boxW / 2, boxY + 50);
+    ctx.textAlign = 'left';
+  }
+  box(PAD,              'APROVEITAMENTO',  aprov + '%',                       '#7c3aed');
+  box(PAD + boxW + 12,  'SALDO DE GOLS',   (saldo >= 0 ? '+' : '') + saldo,  saldo >= 0 ? '#2563eb' : '#dc2626');
+
+  hline(310);
+
+  // ── Detalhes (última vitória / derrota) ──
+  var detW = (W - PAD * 2 - 12) / 2;
+  function detalhe(x, tipo, jogo) {
+    var isVit = tipo === 'vit';
+    var labelTxt = isVit ? 'ULTIMA VITORIA (HISTORICO)' : 'ULTIMA DERROTA (HISTORICO)';
+    var color    = isVit ? '#2563eb' : '#dc2626';
+    var marca    = isVit ? '✅' : '❌';
+    var y = 334;
+
+    ctx.fillStyle = '#a1a1aa';
+    ctx.font = 'bold 9px ' + FNT;
+    ctx.fillText(marca + '  ' + labelTxt, x, y);
+
+    if (jogo) {
+      ctx.fillStyle = color;
+      ctx.font = 'bold 34px ' + FNT;
+      ctx.fillText(jogo.p, x, y + 40);
+      var dias = diasAtras(jogo.d);
+      var info = (dias !== null ? 'Há ' + dias + ' dia' + (dias !== 1 ? 's' : '') : jogo.d)
+               + (jogo.c ? '  ·  ' + jogo.c : '');
+      ctx.fillStyle = '#52525b';
+      ctx.font = '12px ' + FNT;
+      while (ctx.measureText(info).width > detW - 8 && info.length > 1) info = info.slice(0, -1);
+      if (info.length < (dias !== null ? 10 : 8)) info += '…';
+      ctx.fillText(info, x, y + 60);
+    } else {
+      ctx.fillStyle = '#a1a1aa';
+      ctx.font = '13px ' + FNT;
+      ctx.fillText('Não registrado', x, y + 30);
+    }
+  }
+  detalhe(PAD,             'vit', ultVit);
+  detalhe(PAD + detW + 12, 'der', ultDer);
+
+  // ── Streak ──
+  var nextY = 422;
+  if (hasStreak) {
+    var sBg  = inv >= 2 ? '#eff6ff' : '#fff5f5';
+    var sClr = inv >= 2 ? '#1e40af' : '#b91c1c';
+    var sTxt = inv >= 2
+      ? '🛡️  Invicto há ' + inv + ' jogo' + (inv !== 1 ? 's' : '') + '!'
+      : '🚫  Sem vencer há ' + sem + ' jogo' + (sem !== 1 ? 's' : '');
+    ctx.fillStyle = sBg;
+    rrect(ctx, PAD, nextY, W - PAD * 2, 50, 10); ctx.fill();
+    ctx.fillStyle = sClr;
+    ctx.font = 'bold 16px ' + FNT;
+    ctx.fillText(sTxt, PAD + 20, nextY + 31);
+    nextY += 62;
   }
 
-  var linhas = [];
-  linhas.push('🔍 Corinthians x ' + adv + ' (últimos ' + total + ' jogos)');
-  linhas.push('');
-  linhas.push('📊 ' + v + 'V ' + e + 'E ' + d + 'D');
-  linhas.push('⚡ Aproveitamento: ' + aprov + '% | Saldo: ' + (saldo >= 0 ? '+' : '') + saldo);
+  // ── Rodapé ──
+  var footY = H - 52;
+  ctx.fillStyle = '#18181b';
+  ctx.fillRect(0, footY, W, 52);
 
-  if (ultVit) {
-    var diasV = diasAtras(ultVit.d);
-    var dStrV = diasV !== null ? 'há ' + diasV + ' dia' + (diasV !== 1 ? 's' : '') : ultVit.d;
-    linhas.push('');
-    linhas.push('✅ Última vitória: ' + ultVit.p + ' (' + dStrV + ')' + (ultVit.c ? ' — ' + ultVit.c : ''));
-  }
-  if (ultDer) {
-    var diasD = diasAtras(ultDer.d);
-    var dStrD = diasD !== null ? 'há ' + diasD + ' dia' + (diasD !== 1 ? 's' : '') : ultDer.d;
-    linhas.push('❌ Última derrota: ' + ultDer.p + ' (' + dStrD + ')' + (ultDer.c ? ' — ' + ultDer.c : ''));
-  }
+  // Linha dourada decorativa
+  ctx.fillStyle = '#ca8a04';
+  ctx.fillRect(0, footY, W, 3);
 
-  if (invictos >= 2) {
-    linhas.push('');
-    linhas.push('🛡️ Invicto há ' + invictos + ' jogos!');
-  } else if (semVencer >= 2) {
-    linhas.push('');
-    linhas.push('🚫 Sem vencer há ' + semVencer + ' jogos');
-  }
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 15px ' + FNT;
+  ctx.textAlign = 'center';
+  ctx.fillText('www.numerosfieis.com.br', W / 2, footY + 32);
+  ctx.textAlign = 'left';
 
-  linhas.push('');
-  linhas.push('#Corinthians #FielTorcida');
-  linhas.push('Acesse www.numerosfieis.com.br');
-  return linhas.join('\n');
+  // ── Download ──
+  var slug = adv.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '-');
+  var a = document.createElement('a');
+  a.download = 'corinthians-x-' + slug + '.png';
+  a.href = cv.toDataURL('image/png');
+  a.click();
 }
 
-function compartilharDetalhes() {
+function baixarImagem() {
   if (!jogosSorted.length || !advAtual) return;
-  var texto = gerarTextoTweet(advAtual, jogosSorted);
-  var url = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(texto);
-  window.open(url, '_blank', 'noopener,noreferrer,width=600,height=500');
+  gerarImagemConfronto(advAtual, jogosSorted);
 }
 
 function renderShareButton() {
@@ -896,12 +1024,12 @@ function renderShareButton() {
   if (!wrap) return;
   var temAcesso = (userNivel === 'premium' || userNivel === 'admin');
   if (temAcesso) {
-    wrap.innerHTML = `<button class="btn-share-twitter" onclick="compartilharDetalhes()">
-      ${TWITTER_ICON} Compartilhar no X
+    wrap.innerHTML = `<button class="btn-download-img" onclick="baixarImagem()">
+      📥 Baixar Imagem
     </button>`;
   } else {
     wrap.innerHTML = `<div>
-      <div class="btn-share-locked">${TWITTER_ICON} Compartilhar no X &nbsp;🔒</div>
+      <div class="btn-share-locked">📥 Baixar Imagem &nbsp;🔒</div>
       <div class="share-locked-hint">Disponível para assinantes</div>
     </div>`;
   }
