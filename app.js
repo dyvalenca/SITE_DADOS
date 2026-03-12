@@ -462,7 +462,7 @@ function aplicarFiltros() {
       && (selGolsCon.length === 0 || selGolsCon.includes(con))
       && (selSaldo.length === 0 || selSaldo.includes(saldo));
     return matchAno && matchData && matchComp && matchAdv && matchMando && matchEspecial && matchEst && matchTec && matchGols;
-  });
+  }).sort((a, b) => parseDataBR(b.d) - parseDataBR(a.d));
 
   // Pós-filtro: primeiros X jogos por temporada (ordenados por data)
   const fPJ = parseInt(document.getElementById('fPrimeirosJogos')?.value);
