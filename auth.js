@@ -84,6 +84,7 @@
         const nomeExibicao = user.user_metadata?.full_name || user.email || 'Usuário';
         const { error: insertError } = await authDB.from('perfis').insert({
           id: user.id,
+          email: user.email,
           nivel_acesso: 'comum',
           NOME_EXIBICAO: nomeExibicao,
         });
