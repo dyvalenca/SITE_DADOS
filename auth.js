@@ -82,17 +82,20 @@
       /* PGRST116 = nenhuma linha encontrada → novo usuário */
       if (error && error.code === 'PGRST116') {
         const nomeExibicao = user.user_metadata?.full_name || user.email || 'Usuário';
-        await authDB.from('perfis').insert({
+        const { error: insertError } = await authDB.from('perfis').insert({
           id: user.id,
           nivel_acesso: 'comum',
           NOME_EXIBICAO: nomeExibicao,
         });
+        if (insertError) console.error('[auth] insert perfis:', insertError);
         _nivel = 'comum';
         return;
       }
 
+      if (error) console.error('[auth] select perfis:', error);
       _nivel = data?.nivel_acesso || 'comum';
-    } catch (_) {
+    } catch (e) {
+      console.error('[auth] _carregarPerfil:', e);
       _nivel = 'comum';
     }
   }
