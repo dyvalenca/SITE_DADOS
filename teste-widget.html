@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Teste Widget — Números Fieis</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #f1f1f3;
+      color: #18181b;
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      padding: 40px 20px 80px;
+    }
+
+    .post-wrap {
+      max-width: 680px;
+      margin: 0 auto;
+    }
+
+    /* ── Breadcrumb ── */
+    .breadcrumb {
+      font-size: 0.72rem; color: #a1a1aa;
+      margin-bottom: 28px;
+    }
+    .breadcrumb a { color: #71717a; text-decoration: none; }
+    .breadcrumb a:hover { color: #18181b; }
+    .breadcrumb span { margin: 0 6px; }
+
+    /* ── Categoria ── */
+    .post-categoria {
+      display: inline-block;
+      font-size: 0.62rem; font-weight: 700; letter-spacing: 2px;
+      text-transform: uppercase; color: #2563eb;
+      background: #dbeafe; border-radius: 20px;
+      padding: 4px 12px; margin-bottom: 16px;
+    }
+
+    /* ── Título ── */
+    .post-titulo {
+      font-size: 1.8rem; font-weight: 900;
+      letter-spacing: -0.8px; line-height: 1.25;
+      color: #18181b; margin-bottom: 14px;
+    }
+
+    /* ── Meta ── */
+    .post-meta {
+      display: flex; align-items: center; gap: 14px;
+      font-size: 0.74rem; color: #71717a;
+      margin-bottom: 28px; padding-bottom: 24px;
+      border-bottom: 1px solid #e4e4e7;
+    }
+    .post-meta-sep { color: #d4d4d8; }
+
+    /* ── Corpo do post ── */
+    .post-body p {
+      font-size: 0.95rem; line-height: 1.75;
+      color: #3f3f46; margin-bottom: 18px;
+    }
+    .post-body strong { color: #18181b; }
+
+    /* ── Destaque inline ── */
+    .stat-inline {
+      display: inline-flex; align-items: baseline; gap: 4px;
+      background: #f4f4f5; border-radius: 6px;
+      padding: 2px 8px; font-weight: 700; color: #18181b;
+      font-size: 0.88rem;
+    }
+
+    /* ── Bloco de widget (card de contexto) ── */
+    .widget-bloco {
+      background: #fff;
+      border: 1px solid #e4e4e7;
+      border-radius: 18px;
+      padding: 24px;
+      margin: 32px 0;
+    }
+    .widget-bloco-titulo {
+      font-size: 0.62rem; font-weight: 700; letter-spacing: 2px;
+      text-transform: uppercase; color: #a1a1aa;
+      margin-bottom: 16px;
+    }
+
+    /* Sobrescreve max-width do widget dentro do card */
+    .widget-bloco .nf-widget { max-width: 100%; }
+  </style>
+</head>
+<body>
+
+<div class="post-wrap">
+
+  <!-- Breadcrumb -->
+  <div class="breadcrumb">
+    <a href="index.html">Início</a>
+    <span>›</span>
+    <a href="#">Dados em Números</a>
+    <span>›</span>
+    Neo Química Arena
+  </div>
+
+  <!-- Categoria -->
+  <div class="post-categoria">Dados em Números</div>
+
+  <!-- Título -->
+  <h1 class="post-titulo">
+    Quem mais balançou as redes na Neo Química Arena?
+  </h1>
+
+  <!-- Meta -->
+  <div class="post-meta">
+    <span>📅 Atualizado automaticamente</span>
+    <span class="post-meta-sep">·</span>
+    <span>⚽ Números Fieis</span>
+    <span class="post-meta-sep">·</span>
+    <span>🏟️ Neo Química Arena</span>
+  </div>
+
+  <!-- Corpo -->
+  <div class="post-body">
+    <p>
+      Desde a inauguração da <strong>Neo Química Arena</strong> em 2014, o estádio do Corinthians
+      se tornou uma das maiores fortalezas do futebol brasileiro. Com capacidade para mais de
+      49 mil torcedores, a arena já foi palco de histórias memoráveis — e, claro, de muitos gols.
+    </p>
+    <p>
+      Mas afinal, <strong>quem são os jogadores que mais marcaram dentro de casa?</strong>
+      Os dados do Números Fieis registram cada gol marcado pelo Corinthians desde 2007,
+      permitindo montar um ranking preciso de quem mais contribuiu com gols na Neo Química.
+    </p>
+    <p>
+      Abaixo, o ranking completo dos <strong>Top 10 artilheiros da história do Corinthians
+      na Neo Química Arena</strong>, atualizado em tempo real diretamente da nossa base de dados:
+    </p>
+  </div>
+
+  <!-- Widget -->
+  <div class="widget-bloco">
+    <div class="widget-bloco-titulo">⚽ Ranking — Top 10 Artilheiros</div>
+    <div data-widget="artilheiros-estadio" data-estadio="NEO QUIMICA ARENA"></div>
+  </div>
+
+  <!-- Continuação do post -->
+  <div class="post-body">
+    <p>
+      O ranking acima considera apenas gols marcados pelo Corinthians — ou seja,
+      <strong>gols contra adversários não entram na contagem</strong>.
+      Os dados são atualizados sempre que novos jogos são registrados na base.
+    </p>
+    <p>
+      Quer explorar mais estatísticas? Acesse o
+      <a href="index.html" style="color:#2563eb;font-weight:600;">painel completo</a>
+      com filtros por competição, técnico, período e muito mais.
+    </p>
+  </div>
+
+</div>
+
+<script src="widget.js"></script>
+</body>
+</html>
