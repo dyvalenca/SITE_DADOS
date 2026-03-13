@@ -73,11 +73,24 @@
   async function _carregarPerfil(user) {
     if (!user) { _nivel = null; return; }
     try {
-      const { data } = await authDB
+      const { data, error } = await authDB
         .from('perfis')
         .select('nivel_acesso')
         .eq('id', user.id)
         .single();
+
+      /* PGRST116 = nenhuma linha encontrada → novo usuário */
+      if (error && error.code === 'PGRST116') {
+        const nomeExibicao = user.user_metadata?.full_name || user.email || 'Usuário';
+        await authDB.from('perfis').insert({
+          id: user.id,
+          nivel_acesso: 'comum',
+          NOME_EXIBICAO: nomeExibicao,
+        });
+        _nivel = 'comum';
+        return;
+      }
+
       _nivel = data?.nivel_acesso || 'comum';
     } catch (_) {
       _nivel = 'comum';
