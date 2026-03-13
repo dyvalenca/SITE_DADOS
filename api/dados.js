@@ -10,6 +10,16 @@ const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
 const TABLE_MAP = { jogo: 'JOGO', gol: 'GOL' };
 
+// Estádios permitidos para o widget (validação de segurança)
+const ESTADIOS_PERMITIDOS = [
+  'NEO QUIMICA ARENA',
+  'ARENA CORINTHIANS',
+];
+
+function normalizar(str) {
+  return (str || '').toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+}
+
 async function fetchAll(table) {
   const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
   const allRows = [];
@@ -32,19 +42,48 @@ async function fetchAll(table) {
   return allRows;
 }
 
-module.exports = async function handler(req, res) {
-  const { aba } = req.query;
+async function fetchArtilheirosEstadio(estadio) {
+  const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+  const { data, error } = await supabase.rpc('get_artilheiros_estadio', {
+    estadio_nome: estadio,
+  });
+  if (error) throw new Error(`RPC get_artilheiros_estadio: ${error.message}`);
+  return data || [];
+}
 
+module.exports = async function handler(req, res) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Cache-Control', 'public, max-age=3600');
+
+  const { aba, tipo, estadio } = req.query;
+
+  // ── Rota: widget artilheiros por estádio ──────────────────────────────────
+  if (tipo === 'artilheiros-estadio') {
+    if (!estadio || typeof estadio !== 'string') {
+      return res.status(400).json({ erro: 'Parâmetro estadio obrigatório.' });
+    }
+    const estadioNorm = normalizar(estadio);
+    const valido = ESTADIOS_PERMITIDOS.some(e => normalizar(e) === estadioNorm);
+    if (!valido) {
+      return res.status(400).json({ erro: 'Estádio não permitido.' });
+    }
+    try {
+      const rows = await fetchArtilheirosEstadio(estadio.trim().toUpperCase());
+      return res.json({ data: rows, total: rows.length });
+    } catch (err) {
+      return res.status(500).json({ erro: err.message });
+    }
+  }
+
+  // ── Rota: tabelas brutas (jogo / gol) ─────────────────────────────────────
   if (aba !== 'jogo' && aba !== 'gol') {
     return res.status(400).json({ erro: 'Parâmetro aba inválido. Use jogo ou gol.' });
   }
 
   try {
+    res.setHeader('Cache-Control', 'no-store');
     const table = TABLE_MAP[aba];
     const rows = await fetchAll(table);
-
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Cache-Control', 'no-store');
     res.json({ data: rows, total: rows.length });
   } catch (err) {
     res.status(500).json({ erro: err.message });

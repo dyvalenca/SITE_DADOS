@@ -80,3 +80,83 @@ body { background-color: #fdfdfd; padding: 20px; font-family: 'Segoe UI', sans-s
 }
 .loading-box { text-align: center; background: white; padding: 40px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); max-width: 400px; }
 .spinner-corinthians { width: 3rem; height: 3rem; margin-bottom: 20px; color: #000; }
+
+/* ── WIDGET: Artilheiros por Estádio ──────────────────────────────────────── */
+.nf-widget {
+  background: #fff;
+  border: 1px solid #e4e4e7;
+  border-radius: 14px;
+  overflow: hidden;
+  font-family: 'Inter', 'Segoe UI', sans-serif;
+  max-width: 480px;
+}
+.nf-widget-header {
+  display: flex; align-items: center; gap: 10px;
+  background: #18181b; color: #f4f4f5;
+  padding: 14px 18px;
+}
+.nf-widget-icon  { font-size: 1.1rem; line-height: 1; flex-shrink: 0; }
+.nf-widget-titulo {
+  font-size: 0.82rem; font-weight: 700;
+  letter-spacing: 0.3px; white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis;
+}
+.nf-widget-table {
+  width: 100%; border-collapse: collapse;
+}
+.nf-art-row {
+  border-bottom: 1px solid #f4f4f5;
+  transition: background 0.1s;
+}
+.nf-art-row:last-child { border-bottom: none; }
+.nf-art-row:hover { background: #fafafa; }
+.nf-art-pos {
+  width: 36px; padding: 10px 6px 10px 14px;
+  font-size: 0.9rem; text-align: center;
+}
+.nf-art-nome {
+  padding: 10px 8px;
+  font-size: 0.82rem; font-weight: 600;
+  color: #18181b; white-space: nowrap;
+}
+.nf-art-barra {
+  padding: 10px 8px; width: 40%;
+}
+.nf-art-barra-outer {
+  background: #f4f4f5; border-radius: 4px; height: 6px; overflow: hidden;
+}
+.nf-art-barra-inner {
+  background: #2563eb; height: 100%; border-radius: 4px;
+  transition: width 0.4s ease;
+}
+.nf-art-gols {
+  padding: 10px 14px 10px 4px;
+  font-size: 0.88rem; font-weight: 900;
+  color: #18181b; white-space: nowrap; text-align: right;
+}
+.nf-art-label { font-size: 0.65rem; font-weight: 400; color: #a1a1aa; }
+.nf-widget-footer {
+  padding: 8px 14px;
+  font-size: 0.65rem; color: #a1a1aa;
+  border-top: 1px solid #f4f4f5; text-align: right;
+}
+.nf-widget-footer a { color: #71717a; text-decoration: none; }
+.nf-widget-footer a:hover { text-decoration: underline; }
+
+/* Estados de loading / erro */
+.nf-widget-loading {
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  padding: 28px; color: #a1a1aa; font-size: 0.8rem;
+}
+.nf-widget-spinner {
+  width: 18px; height: 18px;
+  border: 2px solid #e4e4e7; border-top-color: #2563eb;
+  border-radius: 50%; animation: nf-spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+@keyframes nf-spin { to { transform: rotate(360deg); } }
+.nf-widget-erro {
+  padding: 20px 16px;
+  font-size: 0.78rem; color: #dc2626;
+  background: #fff5f5; border-radius: 8px;
+}
