@@ -282,7 +282,7 @@
 
     var { data: comments, error: cmErr } = await d
       .from('COMMENT')
-      .select('IDCOMMENT, CONTEUDO, DATA_COMENTARIO, STATUS, ID_COMENTARIO_PAI, IDUSER, perfis(NOME_EXIBICAO, foto_url)')
+      .select('IDCOMMENT, CONTEUDO, DATA_COMENTARIO, STATUS, ID_COMENTARIO_PAI, IDUSER, perfis!comment_iduser_fkey(NOME_EXIBICAO, foto_url)')
       .eq('PAGINA_URL', PAGE_URL)
       .order('DATA_COMENTARIO', { ascending: true });
 
