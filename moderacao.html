@@ -180,7 +180,7 @@ function renderShell() {
 async function carregarTodos() {
   var { data, error } = await authDB
     .from('COMMENT')
-    .select('IDCOMMENT, PAGINA_URL, CONTEUDO, DATA_COMENTARIO, STATUS, ID_COMENTARIO_PAI, IDUSER, perfis!comment_iduser_fkey(NOME_EXIBICAO, foto_url)')
+    .select('IDCOMMENT, PAGINA_URL, CONTEUDO, DATA_COMENTARIO, STATUS, ID_COMENTARIO_PAI, IDUSER, perfis(NOME_EXIBICAO, foto_url)')
     .order('DATA_COMENTARIO', { ascending: false });
 
   if (error) {

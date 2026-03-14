@@ -280,15 +280,11 @@
     var d = db();
     if (!d) return;
 
-    var { data: comments, error: cmErr } = await d
+    var { data: comments } = await d
       .from('COMMENT')
-      .select('IDCOMMENT, CONTEUDO, DATA_COMENTARIO, STATUS, ID_COMENTARIO_PAI, IDUSER, perfis!comment_iduser_fkey(NOME_EXIBICAO, foto_url)')
+      .select('IDCOMMENT, CONTEUDO, DATA_COMENTARIO, STATUS, ID_COMENTARIO_PAI, IDUSER, perfis(NOME_EXIBICAO, foto_url)')
       .eq('PAGINA_URL', PAGE_URL)
       .order('DATA_COMENTARIO', { ascending: true });
-
-    console.log('[nf-cm] PAGE_URL:', PAGE_URL);
-    console.log('[nf-cm] comments:', comments);
-    console.log('[nf-cm] error:', cmErr);
 
     var ids = (comments || []).map(function (c) { return c.IDCOMMENT; });
     var likes = [];
