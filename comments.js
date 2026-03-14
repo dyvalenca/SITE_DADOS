@@ -304,12 +304,13 @@
     if (btn) { btn.disabled = true; btn.textContent = 'Enviando…'; }
 
     var d = db();
+    var status = (window.isAdmin && window.isAdmin()) ? 'APROVADO' : 'PENDENTE';
     var { error } = await d.from('COMMENT').insert({
       PAGINA_URL: PAGE_URL,
       IDUSER: user.id,
       ID_COMENTARIO_PAI: parentId || null,
       CONTEUDO: conteudo,
-      STATUS: 'PENDENTE',
+      STATUS: status,
     });
 
     if (btn) { btn.disabled = false; btn.textContent = parentId ? 'Responder' : 'Publicar'; }
