@@ -180,7 +180,7 @@ function renderShell() {
 async function carregarTodos() {
   var { data, error } = await authDB
     .from('COMMENT')
-    .select('IDCOMMENT, PAGINA_URL, CONTEUDO, DATA_COMENTARIO, STATUS, ID_COMENTARIO_PAI, IDUSER, perfis(NOME_EXIBICAO, foto_url)')
+    .select('IDCOMMENT, PAGINA_URL, CONTEUDO, DATA_COMENTARIO, STATUS, ID_COMENTARIO_PAI, IDUSER')
     .order('DATA_COMENTARIO', { ascending: false });
 
   if (error) {
@@ -188,7 +188,17 @@ async function carregarTodos() {
     return;
   }
 
-  todosComentarios = data || [];
+  var comments = data || [];
+  if (comments.length > 0) {
+    var userIds = comments.map(function (c) { return c.IDUSER; }).filter(Boolean)
+      .filter(function (v, i, a) { return a.indexOf(v) === i; });
+    var perfisRes = await authDB.from('perfis').select('id, NOME_EXIBICAO, foto_url').in('id', userIds);
+    var perfisMap = {};
+    (perfisRes.data || []).forEach(function (p) { perfisMap[p.id] = p; });
+    comments.forEach(function (c) { c.perfis = perfisMap[c.IDUSER] || null; });
+  }
+
+  todosComentarios = comments;
   atualizarContadores();
   renderLista(tabAtiva);
 }

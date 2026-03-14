@@ -280,12 +280,24 @@
     var d = db();
     if (!d) return;
 
-    var { data: comments, error: cmErr } = await d
+    var { data: comments } = await d
       .from('COMMENT')
-      .select('IDCOMMENT, CONTEUDO, DATA_COMENTARIO, STATUS, ID_COMENTARIO_PAI, IDUSER, perfis(NOME_EXIBICAO, foto_url)')
+      .select('IDCOMMENT, CONTEUDO, DATA_COMENTARIO, STATUS, ID_COMENTARIO_PAI, IDUSER')
       .eq('PAGINA_URL', PAGE_URL)
       .order('DATA_COMENTARIO', { ascending: true });
-    console.log('[nf-cm] PAGE_URL:', PAGE_URL, '| comments:', comments, '| error:', cmErr);
+
+    // Busca perfis separadamente para evitar ambiguidade de FK no JOIN
+    if (comments && comments.length > 0) {
+      var userIds = comments.map(function (c) { return c.IDUSER; }).filter(Boolean)
+        .filter(function (v, i, a) { return a.indexOf(v) === i; });
+      var { data: perfisData } = await d
+        .from('perfis')
+        .select('id, NOME_EXIBICAO, foto_url')
+        .in('id', userIds);
+      var perfisMap = {};
+      (perfisData || []).forEach(function (p) { perfisMap[p.id] = p; });
+      comments.forEach(function (c) { c.perfis = perfisMap[c.IDUSER] || null; });
+    }
 
     var ids = (comments || []).map(function (c) { return c.IDCOMMENT; });
     var likes = [];
