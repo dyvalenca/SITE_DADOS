@@ -95,6 +95,7 @@
           email: user.email,
           nivel_acesso: 'comum',
           NOME_EXIBICAO: nomeExibicao,
+          foto_url: user.user_metadata?.avatar_url || '',
         });
         if (insertError) console.error('[auth] insert perfis:', insertError);
         _nivel        = 'comum';
@@ -107,6 +108,12 @@
       _nivel        = data?.nivel_acesso  || 'comum';
       _nomeExibicao = data?.NOME_EXIBICAO || user.user_metadata?.full_name || '';
       _createdAt    = data?.criado_em      || null;
+
+      /* Atualiza foto_url se mudou */
+      const fotoAtual = user.user_metadata?.avatar_url || '';
+      if (fotoAtual && data?.foto_url !== fotoAtual) {
+        authDB.from('perfis').update({ foto_url: fotoAtual }).eq('id', user.id);
+      }
     } catch (e) {
       console.error('[auth] _carregarPerfil:', e);
       _nivel = 'comum';

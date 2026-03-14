@@ -365,6 +365,16 @@
     </div>
 
   </div><!-- /admin-screen -->
+
+  <!-- ── MODERAÇÃO DE COMENTÁRIOS ─────────────────────────────────── -->
+  <div id="mod-screen" style="display:none; max-width:860px; margin:32px auto 0; padding:0 20px 60px;">
+    <div style="font-size:1rem;font-weight:800;letter-spacing:-0.3px;color:#18181b;
+                padding-bottom:14px;border-bottom:1px solid #e4e4e7;margin-bottom:20px;">
+      Moderação de Comentários
+    </div>
+    <div id="mod-lista" style="font-size:0.82rem;color:#a1a1aa;">Carregando…</div>
+  </div>
+
 </main>
 
 <footer class="site-footer">
@@ -780,6 +790,84 @@ async function excluirJogo() {
     btn.disabled = false;
   }
 }
+</script>
+
+<script>
+// ── MODERAÇÃO DE COMENTÁRIOS ──────────────────────────────────────────────
+
+async function carregarModeracao() {
+  var el = document.getElementById('mod-lista');
+  if (!el) return;
+
+  var { data: comments, error } = await db
+    .from('COMMENT')
+    .select('IDCOMMENT, PAGINA_URL, CONTEUDO, DATA_COMENTARIO, STATUS, IDUSER, perfis(NOME_EXIBICAO, foto_url)')
+    .eq('STATUS', 'PENDENTE')
+    .order('DATA_COMENTARIO', { ascending: true });
+
+  if (error) { el.textContent = 'Erro: ' + error.message; return; }
+  if (!comments || comments.length === 0) {
+    el.innerHTML = '<p style="color:#a1a1aa;font-size:0.82rem;">Nenhum comentário pendente.</p>';
+    return;
+  }
+
+  el.innerHTML = comments.map(function (c) {
+    var nome = c.perfis && c.perfis.NOME_EXIBICAO ? c.perfis.NOME_EXIBICAO : 'Usuário';
+    var foto = c.perfis && c.perfis.foto_url ? c.perfis.foto_url : '';
+    var d    = new Date(c.DATA_COMENTARIO);
+    var data = ('0'+d.getDate()).slice(-2)+'/'+('0'+(d.getMonth()+1)).slice(-2)+'/'+d.getFullYear();
+    var avatarHtml = foto
+      ? '<img src="'+escMod(foto)+'" style="width:30px;height:30px;border-radius:50%;object-fit:cover;border:1px solid #e4e4e7;flex-shrink:0;" alt="">'
+      : '<div style="width:30px;height:30px;border-radius:50%;background:#e4e4e7;display:flex;align-items:center;justify-content:center;font-size:0.8rem;font-weight:700;color:#71717a;flex-shrink:0;">'+escMod(nome.charAt(0).toUpperCase())+'</div>';
+
+    return '<div id="mod-item-'+c.IDCOMMENT+'" style="background:#fff;border:1px solid #e4e4e7;border-radius:12px;padding:16px;margin-bottom:12px;">' +
+      '<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">' +
+        avatarHtml +
+        '<div>' +
+          '<div style="font-size:0.82rem;font-weight:700;color:#18181b;">'+escMod(nome)+'</div>' +
+          '<div style="font-size:0.7rem;color:#a1a1aa;">'+escMod(c.PAGINA_URL)+' · '+data+'</div>' +
+        '</div>' +
+      '</div>' +
+      '<div style="font-size:0.85rem;color:#3f3f46;line-height:1.6;white-space:pre-wrap;word-break:break-word;margin-bottom:14px;">'+escMod(c.CONTEUDO)+'</div>' +
+      '<div style="display:flex;gap:8px;">' +
+        '<button onclick="modAprovar('+c.IDCOMMENT+')" style="background:#18181b;color:#fff;border:none;border-radius:8px;padding:7px 16px;font-size:0.75rem;font-weight:700;font-family:Inter,sans-serif;cursor:pointer;">✓ Aprovar</button>' +
+        '<button onclick="modRejeitar('+c.IDCOMMENT+')" style="background:#fff;color:#991b1b;border:1px solid #fca5a5;border-radius:8px;padding:7px 16px;font-size:0.75rem;font-weight:700;font-family:Inter,sans-serif;cursor:pointer;">✕ Rejeitar</button>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+async function modAprovar(id) {
+  var { error } = await db.from('COMMENT').update({ STATUS: 'APROVADO' }).eq('IDCOMMENT', id);
+  if (!error) document.getElementById('mod-item-'+id).remove();
+  var el = document.getElementById('mod-lista');
+  if (el && !el.querySelector('[id^="mod-item-"]')) {
+    el.innerHTML = '<p style="color:#a1a1aa;font-size:0.82rem;">Nenhum comentário pendente.</p>';
+  }
+}
+
+async function modRejeitar(id) {
+  var { error } = await db.from('COMMENT').update({ STATUS: 'REJEITADO' }).eq('IDCOMMENT', id);
+  if (!error) document.getElementById('mod-item-'+id).remove();
+  var el = document.getElementById('mod-lista');
+  if (el && !el.querySelector('[id^="mod-item-"]')) {
+    el.innerHTML = '<p style="color:#a1a1aa;font-size:0.82rem;">Nenhum comentário pendente.</p>';
+  }
+}
+
+function escMod(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/* Exibe seção de moderação somente para admin */
+onAuthReady(function (p) {
+  var el = document.getElementById('mod-screen');
+  if (!el) return;
+  if (p.nivel === 'admin') {
+    el.style.display = '';
+    carregarModeracao();
+  }
+});
 </script>
 </body>
 </html>
