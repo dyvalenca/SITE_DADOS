@@ -206,6 +206,14 @@
         <div id="dashboard-cta" class="menu-card-cta">Acessar →</div>
       </a>
 
+      <!-- Meu Perfil — visível apenas para logados -->
+      <a id="perfil-card" href="perfil.html" class="menu-card" style="display:none;">
+        <div class="menu-card-icon">👤</div>
+        <div class="menu-card-title">Meu Perfil</div>
+        <div class="menu-card-desc">Visualize e edite suas informações de cadastro</div>
+        <div class="menu-card-cta">Acessar →</div>
+      </a>
+
       <!-- 4. Administrativo — visível apenas para admin -->
       <a id="admin-card" href="editor-dados.html" class="menu-card" style="grid-column: 1 / -1; display:none; border-color:#fef9c3;">
         <div class="menu-card-icon">⚙️</div>
@@ -232,7 +240,10 @@
 <script>document.querySelector('.footer-year').textContent = new Date().getFullYear();</script>
 
 <script>
-onAuthReady(function ({ nivel }) {
+onAuthReady(function ({ user, nivel }) {
+  // Perfil card: só para logados
+  document.getElementById('perfil-card').style.display = user ? '' : 'none';
+
   // Admin card: só para admin
   document.getElementById('admin-card').style.display =
     (nivel === 'admin') ? '' : 'none';

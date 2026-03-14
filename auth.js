@@ -16,10 +16,12 @@
   const authDB = createClient(SUPABASE_URL, SUPABASE_KEY);
 
   /* ── Estado interno ───────────────────────────────────────── */
-  let _user      = null;
-  let _nivel     = null;   // 'comum' | 'premium' | 'admin'
-  let _ready     = false;
-  let _listeners = [];     // chamados na resolução inicial e em cada mudança posterior
+  let _user          = null;
+  let _nivel         = null;   // 'comum' | 'premium' | 'admin'
+  let _nomeExibicao  = null;
+  let _createdAt     = null;
+  let _ready         = false;
+  let _listeners     = [];     // chamados na resolução inicial e em cada mudança posterior
 
   /*
    * Fila de processamento serializado.
@@ -69,13 +71,13 @@
     document.head.appendChild(s);
   })();
 
-  /* ── Carrega nivel_acesso da tabela perfis ────────────────── */
+  /* ── Carrega perfil da tabela perfis ──────────────────────── */
   async function _carregarPerfil(user) {
-    if (!user) { _nivel = null; return; }
+    if (!user) { _nivel = null; _nomeExibicao = null; _createdAt = null; return; }
     try {
       const { data, error } = await authDB
         .from('perfis')
-        .select('nivel_acesso')
+        .select('nivel_acesso, NOME_EXIBICAO, created_at')
         .eq('id', user.id)
         .single();
 
@@ -89,12 +91,16 @@
           NOME_EXIBICAO: nomeExibicao,
         });
         if (insertError) console.error('[auth] insert perfis:', insertError);
-        _nivel = 'comum';
+        _nivel        = 'comum';
+        _nomeExibicao = nomeExibicao;
+        _createdAt    = new Date().toISOString();
         return;
       }
 
       if (error) console.error('[auth] select perfis:', error);
-      _nivel = data?.nivel_acesso || 'comum';
+      _nivel        = data?.nivel_acesso  || 'comum';
+      _nomeExibicao = data?.NOME_EXIBICAO || user.user_metadata?.full_name || '';
+      _createdAt    = data?.created_at    || null;
     } catch (e) {
       console.error('[auth] _carregarPerfil:', e);
       _nivel = 'comum';
@@ -119,7 +125,7 @@
     }
 
     const foto  = _user.user_metadata?.avatar_url || '';
-    const nome  = _user.user_metadata?.full_name  || _user.email || '';
+    const nome  = _nomeExibicao || _user.user_metadata?.full_name || _user.email || '';
     const badge = _nivel === 'admin'
       ? '<span class="auth-badge auth-badge-admin">Admin</span>'
       : _nivel === 'premium'
@@ -157,8 +163,10 @@
     var newUser = (session && session.user) ? session.user : null;
 
     if (event === 'SIGNED_OUT') {
-      _user  = null;
-      _nivel = null;
+      _user         = null;
+      _nivel        = null;
+      _nomeExibicao = null;
+      _createdAt    = null;
       _renderAuthHeader();
       _ready = true;
       _notificar();
@@ -231,18 +239,29 @@
     }
   }
 
-  function getUser()   { return _user; }
-  function getNivel()  { return _nivel; }
-  function isAdmin()   { return _nivel === 'admin'; }
-  function isPremium() { return _nivel === 'admin' || _nivel === 'premium'; }
+  function getUser()          { return _user; }
+  function getNivel()         { return _nivel; }
+  function getNomeExibicao()  { return _nomeExibicao; }
+  function getCreatedAt()     { return _createdAt; }
+  function isAdmin()          { return _nivel === 'admin'; }
+  function isPremium()        { return _nivel === 'admin' || _nivel === 'premium'; }
+
+  /* Permite que perfil.html atualize o nome no header sem recarregar */
+  function _atualizarNomeHeader(novoNome) {
+    _nomeExibicao = novoNome;
+    _renderAuthHeader();
+  }
 
   /* Expõe globalmente */
-  window.authDB          = authDB;
-  window.getUser         = getUser;
-  window.getNivel        = getNivel;
-  window.isAdmin         = isAdmin;
-  window.isPremium       = isPremium;
-  window.entrarComGoogle = entrarComGoogle;
-  window.sair            = sair;
-  window.onAuthReady     = onAuthReady;
+  window.authDB                = authDB;
+  window.getUser               = getUser;
+  window.getNivel              = getNivel;
+  window.getNomeExibicao       = getNomeExibicao;
+  window.getCreatedAt          = getCreatedAt;
+  window.isAdmin               = isAdmin;
+  window.isPremium             = isPremium;
+  window.entrarComGoogle       = entrarComGoogle;
+  window.sair                  = sair;
+  window.onAuthReady           = onAuthReady;
+  window._atualizarNomeHeader  = _atualizarNomeHeader;
 })();

@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Meu Perfil — Números Fieis</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="auth.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #f1f1f3;
+      color: #18181b;
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+    }
+
+    header {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      background: #fff; border-bottom: 1px solid #e4e4e7;
+      padding: 0 28px; height: 58px;
+      display: flex; align-items: center; gap: 16px;
+    }
+    .logo { font-size: 1.05rem; font-weight: 900; letter-spacing: -0.5px; color: #18181b; text-decoration: none; }
+    .logo span { color: #52525b; font-weight: 600; }
+
+    main {
+      padding: 94px 20px 60px;
+      display: flex; justify-content: center;
+    }
+
+    .perfil-wrap {
+      width: 100%; max-width: 480px;
+    }
+
+    .perfil-card {
+      background: #fff;
+      border: 1px solid #e4e4e7;
+      border-radius: 20px;
+      padding: 36px 32px;
+    }
+
+    /* foto + info topo */
+    .perfil-topo {
+      display: flex; align-items: center; gap: 20px;
+      margin-bottom: 32px;
+    }
+    .perfil-foto {
+      width: 72px; height: 72px; border-radius: 50%;
+      object-fit: cover; border: 2px solid #e4e4e7;
+      flex-shrink: 0;
+    }
+    .perfil-foto-placeholder {
+      width: 72px; height: 72px; border-radius: 50%;
+      background: #e4e4e7; display: flex; align-items: center;
+      justify-content: center; font-size: 2rem; flex-shrink: 0;
+    }
+    .perfil-topo-info { min-width: 0; }
+    .perfil-nome-display {
+      font-size: 1.15rem; font-weight: 800;
+      letter-spacing: -0.4px; color: #18181b;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .perfil-email {
+      font-size: 0.78rem; color: #71717a;
+      margin-top: 4px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+
+    /* campos */
+    .perfil-campo {
+      margin-bottom: 20px;
+    }
+    .perfil-label {
+      display: block;
+      font-size: 0.68rem; font-weight: 700; letter-spacing: 1px;
+      text-transform: uppercase; color: #a1a1aa;
+      margin-bottom: 6px;
+    }
+    .perfil-valor {
+      font-size: 0.9rem; color: #3f3f46;
+      background: #f4f4f5; border-radius: 10px;
+      padding: 10px 14px;
+    }
+    .perfil-input {
+      width: 100%;
+      font-size: 0.9rem; color: #18181b;
+      font-family: 'Inter', sans-serif;
+      background: #fff; border: 1px solid #e4e4e7;
+      border-radius: 10px; padding: 10px 14px;
+      outline: none; transition: border-color 0.15s;
+    }
+    .perfil-input:focus { border-color: #2563eb; }
+
+    .perfil-actions {
+      display: flex; gap: 10px; margin-top: 28px;
+    }
+    .btn-salvar {
+      flex: 1;
+      background: #18181b; color: #fff;
+      border: none; border-radius: 10px;
+      padding: 11px 20px; font-size: 0.82rem; font-weight: 700;
+      font-family: 'Inter', sans-serif; cursor: pointer;
+      transition: background 0.15s;
+    }
+    .btn-salvar:hover { background: #3f3f46; }
+    .btn-salvar:disabled { background: #a1a1aa; cursor: not-allowed; }
+    .btn-voltar {
+      background: #fff; color: #71717a;
+      border: 1px solid #e4e4e7; border-radius: 10px;
+      padding: 11px 20px; font-size: 0.82rem; font-weight: 600;
+      font-family: 'Inter', sans-serif; cursor: pointer;
+      text-decoration: none; display: inline-flex; align-items: center;
+      transition: border-color 0.15s;
+    }
+    .btn-voltar:hover { border-color: #a1a1aa; color: #18181b; }
+
+    .perfil-msg {
+      margin-top: 14px;
+      font-size: 0.8rem; font-weight: 600;
+      border-radius: 8px; padding: 10px 14px;
+      display: none;
+    }
+    .perfil-msg.ok  { background: #dcfce7; color: #166534; display: block; }
+    .perfil-msg.err { background: #fee2e2; color: #991b1b; display: block; }
+
+    /* estado de não-logado */
+    .perfil-nao-logado {
+      text-align: center; padding: 60px 20px; color: #71717a;
+    }
+    .perfil-nao-logado p { margin-bottom: 20px; font-size: 0.9rem; }
+  </style>
+</head>
+<body>
+
+<header>
+  <a href="index.html" class="logo">Números Fieis <span>- Corinthians</span></a>
+  <div id="auth-header" style="margin-left:auto;"></div>
+</header>
+
+<main>
+  <div class="perfil-wrap">
+
+    <!-- Conteúdo injetado via JS -->
+    <div id="perfil-conteudo"></div>
+
+  </div>
+</main>
+
+<script>
+onAuthReady(function ({ user }) {
+  var el = document.getElementById('perfil-conteudo');
+
+  if (!user) {
+    el.innerHTML =
+      '<div class="perfil-nao-logado">' +
+        '<p>Você precisa estar logado para ver seu perfil.</p>' +
+        '<button class="btn-salvar" onclick="entrarComGoogle()">Entrar com Google</button>' +
+      '</div>';
+    return;
+  }
+
+  var foto      = user.user_metadata && user.user_metadata.avatar_url ? user.user_metadata.avatar_url : '';
+  var email     = user.email || '';
+  var nome      = getNomeExibicao() || '';
+  var createdAt = getCreatedAt();
+  var dataCadastro = '';
+  if (createdAt) {
+    var d = new Date(createdAt);
+    dataCadastro = ('0' + d.getDate()).slice(-2) + '/' +
+                   ('0' + (d.getMonth() + 1)).slice(-2) + '/' + d.getFullYear();
+  }
+
+  var fotoHtml = foto
+    ? '<img src="' + _esc(foto) + '" class="perfil-foto" alt="Foto de perfil">'
+    : '<div class="perfil-foto-placeholder">👤</div>';
+
+  el.innerHTML =
+    '<div class="perfil-card">' +
+      '<div class="perfil-topo">' +
+        fotoHtml +
+        '<div class="perfil-topo-info">' +
+          '<div class="perfil-nome-display" id="display-nome">' + _esc(nome) + '</div>' +
+          '<div class="perfil-email">' + _esc(email) + '</div>' +
+        '</div>' +
+      '</div>' +
+
+      '<div class="perfil-campo">' +
+        '<label class="perfil-label">E-mail</label>' +
+        '<div class="perfil-valor">' + _esc(email) + '</div>' +
+      '</div>' +
+
+      '<div class="perfil-campo">' +
+        '<label class="perfil-label">Membro desde</label>' +
+        '<div class="perfil-valor">' + (dataCadastro || '—') + '</div>' +
+      '</div>' +
+
+      '<div class="perfil-campo">' +
+        '<label class="perfil-label" for="input-nome">Nome de exibição</label>' +
+        '<input id="input-nome" class="perfil-input" type="text" maxlength="80" value="' + _esc(nome) + '">' +
+      '</div>' +
+
+      '<div class="perfil-actions">' +
+        '<a href="index.html" class="btn-voltar">← Voltar</a>' +
+        '<button class="btn-salvar" id="btn-salvar" onclick="salvarNome()">Salvar</button>' +
+      '</div>' +
+
+      '<div class="perfil-msg" id="perfil-msg"></div>' +
+    '</div>';
+});
+
+function _esc(s) {
+  return String(s || '')
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+async function salvarNome() {
+  var input = document.getElementById('input-nome');
+  var btn   = document.getElementById('btn-salvar');
+  var msg   = document.getElementById('perfil-msg');
+  var novoNome = (input.value || '').trim();
+
+  if (!novoNome) {
+    msg.className = 'perfil-msg err';
+    msg.textContent = 'O nome não pode ficar em branco.';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Salvando…';
+  msg.className = 'perfil-msg';
+
+  var user = getUser();
+  var { error } = await authDB
+    .from('perfis')
+    .update({ NOME_EXIBICAO: novoNome })
+    .eq('id', user.id);
+
+  btn.disabled = false;
+  btn.textContent = 'Salvar';
+
+  if (error) {
+    msg.className = 'perfil-msg err';
+    msg.textContent = 'Erro ao salvar: ' + error.message;
+    return;
+  }
+
+  /* Atualiza o nome exibido no topo do card e no header */
+  document.getElementById('display-nome').textContent = novoNome;
+  /* Força re-renderização do header com novo nome */
+  window._atualizarNomeHeader && window._atualizarNomeHeader(novoNome);
+
+  msg.className = 'perfil-msg ok';
+  msg.textContent = 'Nome atualizado com sucesso!';
+}
+</script>
+
+</body>
+</html>
