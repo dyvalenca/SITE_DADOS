@@ -340,20 +340,28 @@
 
     if (btn) { btn.disabled = false; btn.textContent = parentId ? 'Responder' : 'Publicar'; }
 
-    if (!error) {
-      textarea.value = '';
-      if (parentId) {
-        document.getElementById('nf-cm-reply-' + parentId).innerHTML = '';
-      } else {
-        var msgEl = document.createElement('div');
-        msgEl.className = 'nf-cm-enviado';
-        msgEl.textContent = 'Comentário enviado! Aguardando aprovação.';
-        textarea.parentElement.insertBefore(msgEl, textarea.nextSibling);
-        setTimeout(function () { msgEl.remove(); }, 5000);
-      }
-      // Recarrega lista
-      await carregar(user);
+    if (error) {
+      var errEl = document.createElement('div');
+      errEl.className = 'nf-cm-enviado';
+      errEl.style.cssText = 'background:#fee2e2;color:#991b1b;';
+      errEl.textContent = 'Erro ao enviar: ' + error.message;
+      textarea.parentElement.insertBefore(errEl, textarea.nextSibling);
+      setTimeout(function () { errEl.remove(); }, 6000);
+      return;
     }
+
+    textarea.value = '';
+    if (parentId) {
+      document.getElementById('nf-cm-reply-' + parentId).innerHTML = '';
+    } else {
+      var msgEl = document.createElement('div');
+      msgEl.className = 'nf-cm-enviado';
+      var isAdmin = window.isAdmin && window.isAdmin();
+      msgEl.textContent = isAdmin ? 'Comentário publicado!' : 'Comentário enviado! Aguardando aprovação.';
+      textarea.parentElement.insertBefore(msgEl, textarea.nextSibling);
+      setTimeout(function () { msgEl.remove(); }, 5000);
+    }
+    await carregar(user);
   };
 
   window.nfCmAbrirResposta = function (parentId) {
