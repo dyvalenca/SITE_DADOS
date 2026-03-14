@@ -39,6 +39,12 @@
     s.id = 'auth-style';
     s.textContent = `
       #auth-header { display: flex; align-items: center; gap: 8px; }
+      .auth-perfil-link {
+        display: inline-flex; align-items: center; gap: 6px;
+        text-decoration: none; border-radius: 8px; padding: 2px 4px;
+        transition: background 0.15s;
+      }
+      .auth-perfil-link:hover { background: #f4f4f5; }
       .auth-btn {
         display: inline-flex; align-items: center; gap: 6px;
         padding: 6px 13px; border-radius: 8px; border: 1px solid #e4e4e7;
@@ -132,8 +138,10 @@
       ? '<span class="auth-badge auth-badge-premium">Premium</span>'
       : '';
     el.innerHTML =
-      (foto ? '<img src="' + foto + '" class="auth-avatar" alt="">' : '') +
-      '<span class="auth-name">' + _esc(nome) + '</span>' +
+      '<a href="/perfil.html" class="auth-perfil-link" title="Editar perfil">' +
+        (foto ? '<img src="' + foto + '" class="auth-avatar" alt="">' : '') +
+        '<span class="auth-name">' + _esc(nome) + '</span>' +
+      '</a>' +
       badge +
       '<button class="auth-btn auth-btn-logout" onclick="sair()">Sair</button>';
   }
