@@ -77,7 +77,7 @@
     try {
       const { data, error } = await authDB
         .from('perfis')
-        .select('nivel_acesso, NOME_EXIBICAO, created_at')
+        .select('nivel_acesso, NOME_EXIBICAO, criado_em')
         .eq('id', user.id)
         .single();
 
@@ -100,7 +100,7 @@
       if (error) console.error('[auth] select perfis:', error);
       _nivel        = data?.nivel_acesso  || 'comum';
       _nomeExibicao = data?.NOME_EXIBICAO || user.user_metadata?.full_name || '';
-      _createdAt    = data?.created_at    || null;
+      _createdAt    = data?.criado_em      || null;
     } catch (e) {
       console.error('[auth] _carregarPerfil:', e);
       _nivel = 'comum';
