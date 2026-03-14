@@ -120,6 +120,13 @@
         padding: 3px 6px; border-radius: 6px; transition: color 0.15s;
       }
       .nf-cm-reply-btn:hover { color: #18181b; background: #f4f4f5; }
+      .nf-cm-del-btn {
+        background: none; border: none; font-size: 0.75rem;
+        color: #fca5a5; cursor: pointer; font-family: 'Inter', sans-serif;
+        padding: 3px 6px; border-radius: 6px; margin-left: auto;
+        transition: color 0.15s, background 0.15s;
+      }
+      .nf-cm-del-btn:hover { color: #991b1b; background: #fee2e2; }
       /* ── Form resposta ── */
       .nf-cm-form-reply { margin: 10px 0 0 44px; }
       @media (max-width: 480px) {
@@ -232,9 +239,11 @@
     var meuLike    = userLikes[c.IDCOMMENT + '_LIKE'];
     var meuDislike = userLikes[c.IDCOMMENT + '_DISLIKE'];
     var isPendente = c.STATUS === 'PENDENTE';
+    var podeDeletar = user && (c.IDUSER === user.id || (window.isAdmin && window.isAdmin()));
 
     var avatarHtml = foto
-      ? '<img src="' + esc(foto) + '" class="nf-cm-avatar" alt="">'
+      ? '<img src="' + esc(foto) + '" class="nf-cm-avatar" alt="" onerror="this.style.display=\'none\';this.nextSibling.style.display=\'flex\'">' +
+        '<div class="nf-cm-avatar nf-cm-avatar-fallback" style="display:none">' + esc(nome.charAt(0).toUpperCase()) + '</div>'
       : '<div class="nf-cm-avatar nf-cm-avatar-fallback">' + esc(nome.charAt(0).toUpperCase()) + '</div>';
 
     return (
@@ -246,6 +255,9 @@
             '<span class="nf-cm-data">' + formatarData(c.DATA_COMENTARIO) + '</span>' +
             (isPendente ? '<span class="nf-cm-badge-pendente">Aguardando aprovação</span>' : '') +
           '</div>' +
+          (podeDeletar
+            ? '<button class="nf-cm-del-btn" onclick="nfCmExcluir(' + c.IDCOMMENT + ')" title="Excluir comentário">🗑️</button>'
+            : '') +
         '</div>' +
         '<div class="nf-cm-conteudo">' + esc(c.CONTEUDO) + '</div>' +
         (!isPendente
@@ -379,6 +391,15 @@
       await d.from('COMMENT_LIKE').insert({ IDCOMMENT: commentId, IDUSER: user.id, TIPO: tipo });
     }
     await carregar(user);
+  };
+
+  window.nfCmExcluir = async function (commentId) {
+    if (!confirm('Excluir este comentário? As respostas também serão removidas.')) return;
+    var user = window.getUser && window.getUser();
+    if (!user) return;
+    var d = db();
+    var { error } = await d.from('COMMENT').delete().eq('IDCOMMENT', commentId);
+    if (!error) await carregar(user);
   };
 
   // ── Init ──────────────────────────────────────────────────────────────────

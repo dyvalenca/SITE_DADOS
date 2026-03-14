@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Moderação de Comentários — Números Fieis</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="auth.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #f1f1f3; color: #18181b; font-family: 'Inter', sans-serif; min-height: 100vh; }
+
+    header {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      background: #fff; border-bottom: 1px solid #e4e4e7;
+      padding: 0 28px; height: 58px;
+      display: flex; align-items: center; gap: 12px;
+    }
+    .logo { font-size: 1.05rem; font-weight: 900; letter-spacing: -0.5px; color: #18181b; text-decoration: none; }
+    .logo span { color: #52525b; font-weight: 600; }
+    .back-link {
+      font-size: 0.75rem; color: #71717a; text-decoration: none;
+      display: flex; align-items: center; gap: 4px;
+    }
+    .back-link:hover { color: #18181b; }
+
+    main { padding: 78px 20px 60px; }
+
+    .wrap { max-width: 760px; margin: 0 auto; }
+
+    /* ── Stats ── */
+    .mod-stats {
+      display: flex; gap: 12px; margin-bottom: 28px; flex-wrap: wrap;
+    }
+    .mod-stat {
+      background: #fff; border: 1px solid #e4e4e7; border-radius: 12px;
+      padding: 14px 20px; flex: 1; min-width: 120px;
+    }
+    .mod-stat-num { font-size: 1.5rem; font-weight: 900; color: #18181b; }
+    .mod-stat-label { font-size: 0.7rem; color: #a1a1aa; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; }
+
+    /* ── Tabs ── */
+    .mod-tabs {
+      display: flex; gap: 4px; margin-bottom: 20px;
+      background: #fff; border: 1px solid #e4e4e7;
+      border-radius: 12px; padding: 4px;
+    }
+    .mod-tab {
+      flex: 1; padding: 8px 12px; border: none; background: none;
+      font-family: 'Inter', sans-serif; font-size: 0.78rem; font-weight: 600;
+      color: #71717a; cursor: pointer; border-radius: 8px; transition: all 0.15s;
+    }
+    .mod-tab.ativo { background: #18181b; color: #fff; }
+    .mod-tab:not(.ativo):hover { background: #f4f4f5; }
+
+    /* ── Lista ── */
+    .mod-lista { display: flex; flex-direction: column; gap: 12px; }
+    .mod-vazio { font-size: 0.85rem; color: #a1a1aa; text-align: center; padding: 40px 0; }
+
+    /* ── Item ── */
+    .mod-item {
+      background: #fff; border: 1px solid #e4e4e7; border-radius: 14px;
+      padding: 18px; transition: border-color 0.15s;
+    }
+    .mod-item.pendente { border-left: 3px solid #fbbf24; }
+    .mod-item.aprovado { border-left: 3px solid #86efac; }
+    .mod-item.rejeitado { border-left: 3px solid #fca5a5; opacity: 0.7; }
+
+    .mod-item-header {
+      display: flex; align-items: center; gap: 10px; margin-bottom: 12px;
+    }
+    .mod-avatar {
+      width: 34px; height: 34px; border-radius: 50%;
+      object-fit: cover; border: 1px solid #e4e4e7; flex-shrink: 0;
+    }
+    .mod-avatar-fallback {
+      width: 34px; height: 34px; border-radius: 50%;
+      background: #e4e4e7; display: flex; align-items: center;
+      justify-content: center; font-size: 0.85rem; font-weight: 700;
+      color: #71717a; flex-shrink: 0;
+    }
+    .mod-meta { flex: 1; min-width: 0; }
+    .mod-autor { font-size: 0.82rem; font-weight: 700; color: #18181b; }
+    .mod-info { font-size: 0.7rem; color: #a1a1aa; margin-top: 2px; }
+    .mod-pagina {
+      display: inline-block; background: #f4f4f5; border-radius: 4px;
+      padding: 1px 6px; font-size: 0.68rem; color: #71717a; margin-left: 6px;
+    }
+
+    .mod-conteudo {
+      font-size: 0.85rem; color: #3f3f46; line-height: 1.65;
+      white-space: pre-wrap; word-break: break-word;
+      background: #f9f9fb; border-radius: 8px; padding: 10px 14px;
+      margin-bottom: 14px;
+    }
+    .mod-resposta-de {
+      font-size: 0.7rem; color: #a1a1aa; margin-bottom: 6px;
+    }
+
+    .mod-acoes { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn-aprovar {
+      background: #18181b; color: #fff; border: none; border-radius: 8px;
+      padding: 7px 18px; font-size: 0.75rem; font-weight: 700;
+      font-family: 'Inter', sans-serif; cursor: pointer; transition: background 0.15s;
+    }
+    .btn-aprovar:hover { background: #3f3f46; }
+    .btn-rejeitar {
+      background: #fff; color: #991b1b; border: 1px solid #fca5a5;
+      border-radius: 8px; padding: 7px 18px; font-size: 0.75rem; font-weight: 700;
+      font-family: 'Inter', sans-serif; cursor: pointer; transition: all 0.15s;
+    }
+    .btn-rejeitar:hover { background: #fee2e2; }
+    .btn-excluir {
+      background: #fff; color: #71717a; border: 1px solid #e4e4e7;
+      border-radius: 8px; padding: 7px 14px; font-size: 0.75rem; font-weight: 600;
+      font-family: 'Inter', sans-serif; cursor: pointer; transition: all 0.15s;
+      margin-left: auto;
+    }
+    .btn-excluir:hover { background: #fee2e2; color: #991b1b; border-color: #fca5a5; }
+
+    /* ── Acesso negado ── */
+    .sem-acesso {
+      text-align: center; padding: 80px 20px; color: #71717a;
+    }
+    .sem-acesso p { font-size: 0.9rem; margin-top: 8px; }
+
+    @media (max-width: 480px) {
+      .mod-stats { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <a href="index.html" class="logo">Números Fieis <span>- Corinthians</span></a>
+  <a href="editor-dados.html" class="back-link">← Editor</a>
+  <div id="auth-header" style="margin-left:auto;"></div>
+</header>
+
+<main>
+  <div class="wrap" id="conteudo">
+    <div class="sem-acesso">
+      <div style="font-size:2rem;">🔐</div>
+      <p>Verificando acesso…</p>
+    </div>
+  </div>
+</main>
+
+<script>
+var todosComentarios = [];
+var tabAtiva = 'PENDENTE';
+
+onAuthReady(function (p) {
+  if (!p.user || p.nivel !== 'admin') {
+    document.getElementById('conteudo').innerHTML =
+      '<div class="sem-acesso"><div style="font-size:2rem;">🚫</div><p>Acesso restrito a administradores.</p></div>';
+    return;
+  }
+  renderShell();
+  carregarTodos();
+});
+
+function renderShell() {
+  document.getElementById('conteudo').innerHTML =
+    '<div class="mod-stats">' +
+      '<div class="mod-stat"><div class="mod-stat-num" id="cnt-pendente">—</div><div class="mod-stat-label">Pendentes</div></div>' +
+      '<div class="mod-stat"><div class="mod-stat-num" id="cnt-aprovado">—</div><div class="mod-stat-label">Aprovados</div></div>' +
+      '<div class="mod-stat"><div class="mod-stat-num" id="cnt-rejeitado">—</div><div class="mod-stat-label">Rejeitados</div></div>' +
+    '</div>' +
+    '<div class="mod-tabs">' +
+      '<button class="mod-tab ativo" id="tab-PENDENTE"    onclick="trocarTab(\'PENDENTE\')">⏳ Pendentes</button>' +
+      '<button class="mod-tab"        id="tab-APROVADO"   onclick="trocarTab(\'APROVADO\')">✓ Aprovados</button>' +
+      '<button class="mod-tab"        id="tab-REJEITADO"  onclick="trocarTab(\'REJEITADO\')">✕ Rejeitados</button>' +
+    '</div>' +
+    '<div class="mod-lista" id="mod-lista"><p class="mod-vazio">Carregando…</p></div>';
+}
+
+async function carregarTodos() {
+  var { data, error } = await authDB
+    .from('COMMENT')
+    .select('IDCOMMENT, PAGINA_URL, CONTEUDO, DATA_COMENTARIO, STATUS, ID_COMENTARIO_PAI, IDUSER, perfis(NOME_EXIBICAO, foto_url)')
+    .order('DATA_COMENTARIO', { ascending: false });
+
+  if (error) {
+    document.getElementById('mod-lista').innerHTML = '<p class="mod-vazio">Erro: ' + esc(error.message) + '</p>';
+    return;
+  }
+
+  todosComentarios = data || [];
+  atualizarContadores();
+  renderLista(tabAtiva);
+}
+
+function atualizarContadores() {
+  ['PENDENTE','APROVADO','REJEITADO'].forEach(function (s) {
+    var el = document.getElementById('cnt-' + s.toLowerCase());
+    if (el) el.textContent = todosComentarios.filter(function (c) { return c.STATUS === s; }).length;
+  });
+}
+
+function trocarTab(status) {
+  tabAtiva = status;
+  document.querySelectorAll('.mod-tab').forEach(function (b) { b.classList.remove('ativo'); });
+  document.getElementById('tab-' + status).classList.add('ativo');
+  renderLista(status);
+}
+
+function renderLista(status) {
+  var el = document.getElementById('mod-lista');
+  var lista = todosComentarios.filter(function (c) { return c.STATUS === status; });
+
+  if (lista.length === 0) {
+    el.innerHTML = '<p class="mod-vazio">Nenhum comentário ' + status.toLowerCase() + '.</p>';
+    return;
+  }
+
+  el.innerHTML = lista.map(function (c) {
+    var perfil = c.perfis || {};
+    var nome   = perfil.NOME_EXIBICAO || 'Usuário';
+    var foto   = perfil.foto_url || '';
+    var d      = new Date(c.DATA_COMENTARIO);
+    var data   = ('0'+d.getDate()).slice(-2)+'/'+('0'+(d.getMonth()+1)).slice(-2)+'/'+d.getFullYear()+
+                 ' '+('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2);
+
+    var avatarHtml = foto
+      ? '<img src="'+esc(foto)+'" class="mod-avatar" alt="" onerror="this.style.display=\'none\';this.nextSibling.style.display=\'flex\'">' +
+        '<div class="mod-avatar-fallback" style="display:none">'+esc(nome.charAt(0).toUpperCase())+'</div>'
+      : '<div class="mod-avatar-fallback">'+esc(nome.charAt(0).toUpperCase())+'</div>';
+
+    var pai = c.ID_COMENTARIO_PAI
+      ? '<div class="mod-resposta-de">↩ Resposta ao comentário #' + c.ID_COMENTARIO_PAI + '</div>'
+      : '';
+
+    var acoes = '';
+    if (status === 'PENDENTE') {
+      acoes = '<button class="btn-aprovar"  onclick="modAcao('+c.IDCOMMENT+',\'APROVADO\')">✓ Aprovar</button>' +
+              '<button class="btn-rejeitar" onclick="modAcao('+c.IDCOMMENT+',\'REJEITADO\')">✕ Rejeitar</button>';
+    } else if (status === 'REJEITADO') {
+      acoes = '<button class="btn-aprovar" onclick="modAcao('+c.IDCOMMENT+',\'APROVADO\')">✓ Aprovar</button>';
+    } else if (status === 'APROVADO') {
+      acoes = '<button class="btn-rejeitar" onclick="modAcao('+c.IDCOMMENT+',\'REJEITADO\')">✕ Rejeitar</button>';
+    }
+    acoes += '<button class="btn-excluir" onclick="modExcluir('+c.IDCOMMENT+')">🗑️ Excluir</button>';
+
+    return '<div class="mod-item '+status.toLowerCase()+'" id="mod-'+c.IDCOMMENT+'">' +
+      '<div class="mod-item-header">' +
+        avatarHtml +
+        '<div class="mod-meta">' +
+          '<div class="mod-autor">'+esc(nome)+'</div>' +
+          '<div class="mod-info">'+data+'<span class="mod-pagina">'+esc(c.PAGINA_URL)+'</span></div>' +
+        '</div>' +
+      '</div>' +
+      pai +
+      '<div class="mod-conteudo">'+esc(c.CONTEUDO)+'</div>' +
+      '<div class="mod-acoes">'+acoes+'</div>' +
+    '</div>';
+  }).join('');
+}
+
+async function modAcao(id, novoStatus) {
+  var { error } = await authDB.from('COMMENT').update({ STATUS: novoStatus }).eq('IDCOMMENT', id);
+  if (!error) {
+    var c = todosComentarios.find(function (x) { return x.IDCOMMENT === id; });
+    if (c) c.STATUS = novoStatus;
+    atualizarContadores();
+    renderLista(tabAtiva);
+  }
+}
+
+async function modExcluir(id) {
+  if (!confirm('Excluir este comentário? As respostas também serão removidas.')) return;
+  var { error } = await authDB.from('COMMENT').delete().eq('IDCOMMENT', id);
+  if (!error) {
+    todosComentarios = todosComentarios.filter(function (c) { return c.IDCOMMENT !== id; });
+    atualizarContadores();
+    renderLista(tabAtiva);
+  }
+}
+
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
+
+</body>
+</html>
